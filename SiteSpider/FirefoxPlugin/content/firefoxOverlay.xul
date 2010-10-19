@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<overlay id="sitespiderplugin-overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+	<script type="text/javascript" src="jquery-1.4.2.min.js"></script>
+	<script type="text/javascript" src="json2.js"></script>
+	<script type="text/javascript" src="sitespider.js"></script>
+	
+  <!-- bottom status bar button -->
+  <statusbar id="status-bar">
+		<statusbarpanel id="sitespider-panel" context="sitespider-ctx-menu">
+			<image id="sitespider-display" tooltiptext="Click to start!" onclick="togglePanel()" src="chrome://sitespiderplugin/content/nomus-title.gif" style="width: 72px; height: 14px;"></image>
+		</statusbarpanel>
+   </statusbar>
+   
+   <!-- browser window on bottom -->
+   <window id="main-window">
+	   <splitter id="sitespider-splitter" insertbefore="browser-bottombox" collapsed="true"></splitter>
+	   <vbox id="sitespider-vbox" insertbefore="browser-bottombox" collapsed="true">
+			<iframe id="sitespider-frame" insertbefore="status-bar" flex="1" src="chrome://sitespiderplugin/content/blank.html" collapsed="false"></iframe>
+		</vbox>
+    </window>
+</overlay>

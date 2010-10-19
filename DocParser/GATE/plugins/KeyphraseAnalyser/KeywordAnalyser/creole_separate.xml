@@ -1,0 +1,116 @@
+<!-- creole.xml KeywordAnalyser -->
+<!--  alesch, 28/4/2008 -->
+
+<CREOLE-DIRECTORY>
+
+	<CREOLE>
+
+		<!-- resource for keywordanalyser -->
+		<RESOURCE>
+			<NAME>KeywordAnalyser</NAME>
+			<JAR>KeywordAnalyser.jar</JAR>
+			<JAR>lib/secondstring-20060615.jar</JAR>
+			<CLASS>
+				ie.deri.sw.smile.nlp.gate.keyword.KeywordAnalyser
+			</CLASS>
+			<PARAMETER COMMENT="The document to be processed"
+				NAME="document" RUNTIME="true">
+				gate.Document
+			</PARAMETER>
+			<PARAMETER NAME="resourceDir"
+				COMMENT="the directory holding the frequency lists relative to this"
+				DEFAULT="resources" RUNTIME="false">
+				java.net.URL
+			</PARAMETER>
+			<PARAMETER NAME="annotationSetName"
+				COMMENT="The name used for the input annotation set" RUNTIME="true"
+				OPTIONAL="true">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="encoding"
+				COMMENT="The encoding used for reading the frequency list files"
+				DEFAULT="UTF-8">
+				java.lang.String
+			</PARAMETER>
+
+			<!-- THIS MUST CORRESPOND TO THE VALUE OF POSTAGMAPPER RUN PRIOR TO THIS -->
+			<PARAMETER NAME="coarseCategoryFeatureName"
+				COMMENT="The token feature to contain the coarse category information"
+				RUNTIME="true" DEFAULT="coarse_category">
+				java.lang.String
+			</PARAMETER>
+
+			<!-- THIS MUST CORRESPOND TO THE VALUE OF PROCESSING RESOURCES RUN PRIOR TO THIS -->
+			<PARAMETER NAME="lemmaFeatureName"
+				COMMENT="The token feature to contain the lemma/root information"
+				RUNTIME="true" DEFAULT="lemma">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="languageFeatureName"
+				COMMENT="The feature to contain the language information"
+				RUNTIME="true" DEFAULT="language">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="nounchunkAnnotationType"
+				COMMENT="The annotation type of noun chunk"
+				RUNTIME="true" DEFAULT="NP">
+				java.lang.String
+			</PARAMETER>
+
+			<PARAMETER NAME="tokenFrequencyFeatureName"
+				COMMENT="The document feature containing the overall token frequencies"
+				RUNTIME="true" DEFAULT="overall-token_frequency">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="lemmaFrequencyFeatureName"
+				COMMENT="The document feature containing the overall lemma frequencies"
+				RUNTIME="true" DEFAULT="overall-lemma_frequency">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="lemmaNounFrequencyFeatureName"
+				COMMENT="The document feature containing the lemma frequencies for nouns"
+				RUNTIME="true" DEFAULT="noun-lemma_frequency">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="lemmaVerbFrequencyFeatureName"
+				COMMENT="The document feature containing the lemma frequencies for verbs"
+				RUNTIME="true" DEFAULT="verb-lemma_frequency">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="lemmaAdjectiveFrequencyFeatureName"
+				COMMENT="The document feature containing the lemma frequencies for adjectives"
+				RUNTIME="true" DEFAULT="adj-lemma_frequency">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="documentSizeFeatureName"
+				COMMENT="The document feature containing the size of the document (in tokens)"
+				RUNTIME="true" DEFAULT="document_size">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="lexiconSizeFeatureName"
+				COMMENT="The document feature containing the size of the lexicon (number of different lemmas)"
+				RUNTIME="true" DEFAULT="lexicon_size">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="unknownLemmaValue"
+				COMMENT="The lemma value assigned to unknown words" RUNTIME="true"
+				DEFAULT="&lt;unknown&gt;">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="keywordFeatureName"
+				COMMENT="The document feature containing the keywords" RUNTIME="true"
+				DEFAULT="keywords">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="stopwordFeatureName"
+				COMMENT="The token feature containing the stopword information" RUNTIME="true"
+				DEFAULT="stopword">
+				java.lang.String
+			</PARAMETER>
+
+
+		</RESOURCE>
+
+	</CREOLE>
+
+</CREOLE-DIRECTORY>

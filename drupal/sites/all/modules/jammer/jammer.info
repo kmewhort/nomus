@@ -1,0 +1,12 @@
+; $Id: jammer.info,v 1.2.2.1 2010/03/15 14:53:49 afreeman Exp $
+name = Content Form Jammer
+description = "Remove or hide parts of forms."
+package = Jammer
+core = 6.x
+
+; Information added by drupal.org packaging script on 2010-03-30
+version = "6.x-1.2"
+core = "6.x"
+project = "jammer"
+datestamp = "1269978026"
+

@@ -1,0 +1,49 @@
+<!-- creole.xml posTagMapper -->
+<!--  alesch, 30/5/2008 -->
+<!-- $Id: creole.xml 7419 2006-04-25 18:51:58Z ian_roberts $ -->
+
+<CREOLE-DIRECTORY>
+
+<CREOLE>
+  <RESOURCE>
+    <NAME>POSTagMapper</NAME>
+    <JAR>POSTagMapper.jar</JAR>
+    <CLASS>ie.deri.sw.smile.nlp.gate.postag.mapper.PosTagMapper</CLASS>
+    
+    <PARAMETER COMMENT="The document to be processed"
+               NAME="document" RUNTIME="true">
+      gate.Document
+    </PARAMETER>
+    <PARAMETER NAME="resourceDir"
+               COMMENT="the directory holding the mapping files for part-of-speech tags relative to this"
+               DEFAULT="resources" RUNTIME="false">
+      java.net.URL
+    </PARAMETER>
+    <PARAMETER NAME="annotationSetName"
+               COMMENT="The name used for the input annotation set" RUNTIME="true"
+               OPTIONAL="true">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="encoding"
+               COMMENT="The encoding used for reading the mapping files"
+               DEFAULT="UTF-8">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="coarseCategoryFeatureName"
+               COMMENT="The token feature to contain the coarse category information"
+               RUNTIME="true"
+               DEFAULT="coarse_category">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="languageFeatureName"
+               COMMENT="The document feature containing the language information"
+               RUNTIME="true"
+               DEFAULT="language">
+      java.lang.String
+    </PARAMETER>
+
+    
+  </RESOURCE>
+</CREOLE>
+
+</CREOLE-DIRECTORY>

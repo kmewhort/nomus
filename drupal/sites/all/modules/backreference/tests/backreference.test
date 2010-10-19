@@ -1,0 +1,296 @@
+<?php
+// $Id: backreference.test,v 1.2 2010/05/05 21:09:24 joelstein Exp $
+
+/**
+ * @file
+ * Backreference tests.
+ */
+
+// Include CCK class
+module_load_include('test', 'content', 'tests/content.crud');
+
+/**
+ * Wrapper class.
+ */
+class BackReferenceTestCase extends ContentCrudTestCase {
+
+  public $permissions = array(
+      'access content',
+      'administer content types',
+      'administer nodes',
+      'administer filters',
+      'access comments',
+      'post comments',
+      'post comments without approval',
+      'access administration pages',
+  );
+
+  function setup() {
+    parent::setup('nodereference', 'backreference');
+  }
+
+  /**
+   * Tests that (only 1) node reference exists.
+   */
+  function assertNodeReference($field_name, $field_table, $vid, $expected_nid, $message) {
+    $match_count = db_result(db_query("SELECT COUNT(*) FROM {". $field_table ."} WHERE vid = %d AND $field_name = %d", $vid, $expected_nid));
+    $message .= " (found: $match_count)";
+    return $this->assertEqual(1, $match_count, $message);
+  }
+
+  /**
+   * Tests that node reference does not exist.
+   */
+  function assertNotNodeReference($field_name, $field_table, $vid, $expected_nid, $message) {
+    $match_count = db_result(db_query("SELECT COUNT(*) FROM {". $field_table ."} WHERE vid = %d AND $field_name = %d", $vid, $expected_nid));
+    $message .= " (found: $match_count)";
+    return $this->assertEqual(0, $match_count, $message);
+  }
+
+  /**
+   * Various tests for each combination of field configurations.
+   */
+  function commonTests($field_1_multiple, $field_2_multiple, $self_referencing) {
+
+    // Create user and login
+    $this->loginWithPermissions($this->permissions);
+
+    // Create two content types
+    $this->acquireContentTypes(2);
+
+    // Create Field 1
+    $field_1 = $this->createField(array(
+      'type' => 'nodereference',
+      'widget_type' => 'nodereference_autocomplete',
+      'multiple' => $field_1_multiple,
+    ), 0);
+    $field_1_db_info = content_database_info($field_1);
+
+    // Create Field 2
+    if ($self_referencing) {
+      $field_2 = $field_1;
+      $field_2_db_info = $field_1_db_info;
+    }
+    else {
+      $field_2 = $this->createField(array(
+        'type' => 'nodereference',
+        'widget_type' => 'nodereference_autocomplete',
+        'multiple' => $field_2_multiple,
+      ), 1);
+      $field_2_db_info = content_database_info($field_2);
+    }
+
+    // Create symmetry between the two fields
+    _backreference_link_field($field_1['field_name'], $field_2['field_name']);
+    if (!$self_referencing) {
+      _backreference_link_field($field_2['field_name'], $field_1['field_name']);
+    }
+
+    // Create three nodes for each content type
+    // nodes 0, 1, 2 - Content type 1
+    // nodes 3, 4, 5 - Content type 2 (unless self-referencing)
+    $this->acquireNodes(3);
+    if ($self_referencing) {
+      $this->nodes[3] = $this->nodes[0];
+      $this->nodes[4] = $this->nodes[1];
+      $this->nodes[5] = $this->nodes[2];
+    }
+
+    // 
+    // Simply save a node reference field.
+    // 
+
+    // Point Node 0.0 to Node 3
+    $this->nodes[0] = node_load($this->nodes[0]->nid, NULL, TRUE);
+    $this->nodes[0]->{$field_1['field_name']}[0]['nid'] = $this->nodes[3]->nid;
+    node_save($this->nodes[0]);
+
+    // Test that Node 0 and Node 3 point to each other
+    $this->assertNodeReference($field_1_db_info['columns']['nid']['column'], $field_1_db_info['table'], $this->nodes[0]->vid, $this->nodes[3]->nid, 'Node 0 should point to Node 3');
+    $this->assertNodeReference($field_2_db_info['columns']['nid']['column'], $field_2_db_info['table'], $this->nodes[3]->vid, $this->nodes[0]->nid, 'Node 3 should point to Node 0');
+
+    // 
+    // Save again and make sure no duplicates are stored.
+    // 
+
+    // Field 1 is "multiple"; save the referenced node, and test that Node 0 points to Node 3 only one time
+    if ($field_1_multiple) {
+      $this->nodes[3] = node_load($this->nodes[3]->nid, NULL, TRUE);
+      node_save($this->nodes[3]);
+      $this->assertNodeReference($field_1_db_info['columns']['nid']['column'], $field_1_db_info['table'], $this->nodes[0]->vid, $this->nodes[3]->nid, 'Node 0 should point to Node 3 only once');
+    }
+
+    // Field 2 is "multiple"; save the first node again, and test that Node 3 points to Node 0 only one time
+    if ($field_2_multiple) {
+      $this->nodes[0] = node_load($this->nodes[0]->nid, NULL, TRUE);
+      node_save($this->nodes[0]);
+      $this->assertNodeReference($field_2_db_info['columns']['nid']['column'], $field_2_db_info['table'], $this->nodes[3]->vid, $this->nodes[0]->nid, 'Node 3 should point to Node 0 only once');
+    }
+
+    //
+    // Change the node reference value(s) of the first node.
+    //
+
+    // Field 1 is "multiple"; add another node reference
+    if ($field_1_multiple) {
+      
+      // Point Node 0.1 to Node 4
+      $this->nodes[0] = node_load($this->nodes[0]->nid, NULL, TRUE);
+      $this->nodes[0]->{$field_1['field_name']}[1]['nid'] = $this->nodes[4]->nid;
+      node_save($this->nodes[0]);
+
+      // Test that Node 0 and Node 4 point to each other
+      $this->assertNodeReference($field_1_db_info['columns']['nid']['column'], $field_1_db_info['table'], $this->nodes[0]->vid, $this->nodes[4]->nid, 'Node 0 should point to Node 4');
+      $this->assertNodeReference($field_2_db_info['columns']['nid']['column'], $field_2_db_info['table'], $this->nodes[4]->vid, $this->nodes[0]->nid, 'Node 4 should point to Node 0');
+
+      // Test that Node 0 and Node 3 still point to each other
+      $this->assertNodeReference($field_1_db_info['columns']['nid']['column'], $field_1_db_info['table'], $this->nodes[0]->vid, $this->nodes[3]->nid, 'Node 0 should point to Node 3');
+      $this->assertNodeReference($field_2_db_info['columns']['nid']['column'], $field_2_db_info['table'], $this->nodes[3]->vid, $this->nodes[0]->nid, 'Node 3 should point to Node 0');
+
+    }
+
+    // Point Node 0.0 to Node 5
+    $this->nodes[0] = node_load($this->nodes[0]->nid, NULL, TRUE);
+    $this->nodes[0]->{$field_1['field_name']}[0]['nid'] = $this->nodes[5]->nid;
+    node_save($this->nodes[0]);
+
+    // Test that Node 0 and Node 5 point to each other
+    $this->assertNodeReference($field_1_db_info['columns']['nid']['column'], $field_1_db_info['table'], $this->nodes[0]->vid, $this->nodes[5]->nid, 'Node 0 should point to Node 5');
+    $this->assertNodeReference($field_2_db_info['columns']['nid']['column'], $field_2_db_info['table'], $this->nodes[5]->vid, $this->nodes[0]->nid, 'Node 5 should point to Node 0');
+
+    // Test that Node 0 and Node 3 no longer point to each other
+    $this->assertNotNodeReference($field_1_db_info['columns']['nid']['column'], $field_1_db_info['table'], $this->nodes[0]->vid, $this->nodes[3]->nid, 'Node 0 should not point to Node 3');
+    $this->assertNotNodeReference($field_2_db_info['columns']['nid']['column'], $field_2_db_info['table'], $this->nodes[3]->vid, $this->nodes[0]->nid, 'Node 3 should not point to Node 0');
+
+    // 
+    // Add a node reference from a new node to the newly referenced node.
+    // 
+
+    // Point Node 1.0 to Node 5
+    $this->nodes[1] = node_load($this->nodes[1]->nid, NULL, TRUE);
+    $this->nodes[1]->{$field_1['field_name']}[0]['nid'] = $this->nodes[5]->nid;
+    node_save($this->nodes[1]);
+
+    // Test that Node 1 and Node 5 point to each other
+    $this->assertNodeReference($field_1_db_info['columns']['nid']['column'], $field_1_db_info['table'], $this->nodes[1]->vid, $this->nodes[5]->nid, 'Node 1 should point to Node 5');
+    $this->assertNodeReference($field_2_db_info['columns']['nid']['column'], $field_2_db_info['table'], $this->nodes[5]->vid, $this->nodes[1]->nid, 'Node 5 should point to Node 1');
+
+    // Field 2 is "multiple"; test that Node 0 and Node 5 still point to each other
+    if ($field_2_multiple) {
+      $this->assertNodeReference($field_1_db_info['columns']['nid']['column'], $field_1_db_info['table'], $this->nodes[0]->vid, $this->nodes[5]->nid, 'Node 0 should point to Node 5');
+      $this->assertNodeReference($field_2_db_info['columns']['nid']['column'], $field_2_db_info['table'], $this->nodes[5]->vid, $this->nodes[0]->nid, 'Node 5 should point to Node 0');
+    }
+    // Field 2 is "single"; test that Node 0 and Node 5 no longer point to each other
+    else {
+      $this->assertNotNodeReference($field_1_db_info['columns']['nid']['column'], $field_1_db_info['table'], $this->nodes[0]->vid, $this->nodes[5]->nid, 'Node 0 should not point to Node 5');
+      $this->assertNotNodeReference($field_2_db_info['columns']['nid']['column'], $field_2_db_info['table'], $this->nodes[5]->vid, $this->nodes[0]->nid, 'Node 5 should not point to Node 0');
+    }
+
+    /**
+     * Delete a referenced node; no leftover node references should exist.
+     */
+
+    // Delete Node 1
+    node_delete($this->nodes[1]->nid);
+
+    // Test that Node 5 longer points to Node 1
+    $this->assertNotNodeReference($field_2_db_info['columns']['nid']['column'], $field_2_db_info['table'], $this->nodes[5]->vid, $this->nodes[1]->nid, 'Node 5 should not point to the deleted Node 1');
+
+  }
+
+}
+
+/**
+ * Two single-value fields.
+ */
+class BackReferenceTwoSinglesTest extends BackReferenceTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => '1. Two Singles',
+      'description' => 'Two single-value fields.',
+      'group' => 'BackReference',
+    );
+  }
+
+  function testTwoSingles() {
+    $this->commonTests(FALSE, FALSE, FALSE);
+  }
+
+}
+
+/**
+ * One single-value field, self-referencing.
+ */
+class BackReferenceOneSingleSelfTest extends BackReferenceTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => '2. Single Self',
+      'description' => 'One self-referencing, single-value field.',
+      'group' => 'BackReference',
+    );
+  }
+
+  function testOneSingleSelf() {
+    $this->commonTests(FALSE, FALSE, TRUE);
+  }
+
+}
+
+/**
+ * One single-value field, one multiple-value field.
+ */
+class BackReferenceOneSingleOneMultipleTest extends BackReferenceTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => '3. Single + Multiple',
+      'description' => 'One single-value field, one multiple-value field.',
+      'group' => 'BackReference',
+    );
+  }
+
+  function testOneSingleOneMultiple() {
+    $this->commonTests(FALSE, TRUE, FALSE);
+  }
+
+}
+
+/**
+ * Two multiple-value fields.
+ */
+class BackReferenceTwoMultiplesTest extends BackReferenceTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => '4. Two Multiples',
+      'description' => 'Two multiple-value fields.',
+      'group' => 'BackReference',
+    );
+  }
+
+  function testTwoMultiples() {
+    $this->commonTests(TRUE, TRUE, FALSE);
+  }
+
+}
+
+/**
+ * One multiple-value fields, self-referencing.
+ */
+class BackReferenceOneMultipleSelfTest extends BackReferenceTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => '5. Multiple Self',
+      'description' => 'One self-referencing, multiple-value field.',
+      'group' => 'BackReference',
+    );
+  }
+
+  function testOneMultipleSelf() {
+    $this->commonTests(TRUE, TRUE, TRUE);
+  }
+
+}

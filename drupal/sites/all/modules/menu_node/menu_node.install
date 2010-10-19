@@ -1,0 +1,77 @@
+<?php
+
+// $Id: menu_node.install,v 1.2 2009/08/21 14:20:55 agentken Exp $
+
+/**
+ * @file
+ *   Install file for Menu Node API.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function menu_node_schema() {
+  $schema['menu_node'] = array(
+    'fields' => array(
+      'nid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'mlid' => array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0)),
+    'primary key' => array('nid', 'mlid'),
+  );
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function menu_node_install() {
+  drupal_install_schema('menu_node');
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function menu_node_uninstall() {
+  drupal_uninstall_schema('menu_node');
+}
+
+/**
+ * Implements hook_enable().
+ *
+ * On module enable, populate the {menu_node} table
+ * based on existing menu items.
+ */
+function menu_node_enable() {
+  $items = array();
+  $result = db_query("SELECT ml.mlid, ml.link_path FROM {menu_links} ml INNER JOIN {menu_custom} mc ON ml.menu_name = mc.menu_name WHERE ml.link_path LIKE 'node/%' AND ml.router_path = 'node/%%'");
+  while ($data = db_fetch_object($result)) {
+    $nid = str_replace('node/', '', $data->link_path);
+    // Ensure that we did not grab any bad links accidentally.
+    $check = (bool) db_result(db_query("SELECT COUNT(*) FROM {node} WHERE nid = %d", $nid));
+    if ($check) {
+      db_query("INSERT INTO {menu_node} (nid, mlid) VALUES (%d, %d)", $nid, $data->mlid);
+    }
+  }
+}
+
+/**
+ * Implements hook_disable().
+ *
+ * On module disable, erase the {menu_node} table.
+ */
+function menu_node_disable() {
+  db_query("DELETE FROM {menu_node}");
+}
+
+/**
+ * Update function to remove book module entries.
+ */
+function menu_node_update_6000() {
+  $ret = array();
+  if (module_exists('book')) {
+    $result = db_query("SELECT mlid, nid FROM {book}");
+    while ($data = db_fetch_object($result)) {
+      menu_node_delete($data->nid, $data->mlid);
+    }
+  }
+  return $ret;
+}

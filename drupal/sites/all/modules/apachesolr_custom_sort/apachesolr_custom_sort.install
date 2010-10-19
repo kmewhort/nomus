@@ -1,0 +1,32 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ *   Integration with the apache solr custom sort
+ *   Implements hook_install() and hook_uninstall().
+ */
+
+/**
+ * Implementation of hook install()
+ */
+function apachesolr_custom_sort_enable() {
+
+  // Override standard class.
+  variable_set('apachesolr_query_class', array('apachesolr_custom_sort', 'ApacheSolr_Custom_Query'));
+
+  return TRUE;
+}
+
+/**
+ * Implementation of hook uninstall
+ */
+function apachesolr_custom_sort_disable() {
+  // Delete overriding of class.
+  variable_del('apachesolr_query_class');
+
+  // Delete sort types.
+  variable_del('sort_field_settings');
+
+  return TRUE;
+}

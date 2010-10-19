@@ -1,0 +1,29 @@
+-classpath
+'C:/svn/LANG_2_5_RC3/target/classes'
+-encoding
+'iso-8859-1'
+-protected
+-source
+'1.3'
+-sourcepath
+'C:/svn/LANG_2_5_RC3/src/main/java'
+-author
+-bottom
+'Copyright &#169; 2001-2010 <a href="http://www.apache.org/">The Apache Software Foundation</a>. All Rights Reserved.'
+-charset
+'UTF-8'
+-d
+'C:/svn/LANG_2_5_RC3/target/site/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Commons Lang 2.5 API'
+-link
+'http://java.sun.com/javase/6/docs/api'
+-link
+'http://java.sun.com/j2se/1.3/docs/api'
+-linksource
+-use
+-version
+-windowtitle
+'Commons Lang 2.5 API'

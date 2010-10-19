@@ -1,0 +1,952 @@
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.BufferedOutputStream;
+import java.io.OutputStreamWriter;
+import java.lang.Thread;
+import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.net.URL;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.jdom.Document;
+import org.jdom.Element;
+import org.jdom.input.SAXBuilder;
+import org.jdom.output.XMLOutputter;
+import org.jdom.JDOMException;
+
+import com.google.gson.Gson;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+
+
+/**
+ * Servlet implementation class SiteSpider
+ */
+public class SiteSpider extends HttpServlet
+{	
+	// firefox process
+	private Process firefoxPs = null;
+	
+	// javascript command
+	private String nextJsCommand = null;
+	
+	// command response
+	private String commandResponse = null;
+	
+	// retrieved files
+	private File fileResponse = null;
+	
+	// debugging on/off
+	private boolean debug = false;
+	
+	// representation of retrieved links
+	static class RetrievedLink
+	{
+		public String text;
+		public String location;
+		public int fileIndex = -1;
+	}
+	static class GrabLinkResult
+	{
+  		public String location;
+  		public RetrievedLink links[];
+  	}
+    /**
+     * Default constructor. 
+     */
+    public SiteSpider() {
+    }
+
+	/**
+	 * @see Servlet#init(ServletConfig)
+	 */
+	public void init(ServletConfig config) throws ServletException
+	{
+		super.init(config);
+	}
+
+	// handle access control
+	protected void doOptions(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	{
+		if(debug)
+			System.out.print("OPTIONS request received. Allowing all cross-origin requests.\r\n");
+
+		// just allow all cross-origin requests
+		response.setHeader("Access-Control-Allow-Origin", "*");
+		response.setHeader("Access-Control-Allow-Methods", "GET,POST");
+		response.setHeader("Access-Control-Allow-Headers", "");
+		return;
+	}
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	{
+		doPost(request, response);
+	}
+
+	/**
+	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
+	{
+		// For all responses, prevent cached respone from being used
+		response.setHeader("Cache-Control","no-cache"); //HTTP 1.1
+		response.setHeader("Pragma","no-cache"); //HTTP 1.0
+		response.setDateHeader ("Expires", 0); //prevent caching at the proxy server
+			
+		//
+		// Get the input data and parameters
+		//
+		
+		// read in any posted data
+		byte[] postBuf = IOUtils.toByteArray(request.getReader());
+		
+		if(debug &&
+		   request.getQueryString() != null &&
+		   request.getQueryString().indexOf("getJS") < 0)
+		{
+			System.out.print("POST/GET request received; Query string=\""
+				+ request.getQueryString());
+			if(postBuf != null)
+				System.out.print("\"; Posted data = " + postBuf.length + "bytes\r\n");
+			else
+				System.out.print(".\r\n");
+		}
+		
+		// Parse the query string directly (as Jetty does not
+		// allow combined reading post data and parameters)
+		String query = "?" + request.getQueryString();
+		if(query == null)
+		{
+			query = new String("");
+		}
+		
+		String requestType = null;
+		Matcher requestTypeMatcher =
+			Pattern.compile("[^\\&]req=([^\\&]+)").matcher(query);
+		if(requestTypeMatcher.find())
+		{
+			requestType = requestTypeMatcher.group(1);
+		}
+		
+		String externalBrowser = null;
+		Matcher externalBrowserMatcher =
+			Pattern.compile("[\\?\\&]externalBrowser=([^\\&]+)").matcher(query);
+		if(externalBrowserMatcher.find())
+		{
+			externalBrowser = externalBrowserMatcher.group(1);
+		}
+		
+		String yearParam = null;
+		Matcher yearMatcher =
+			Pattern.compile("[\\?\\&]year=([^\\&]+)").matcher(query);
+		if(yearMatcher.find())
+		{
+			yearParam = yearMatcher.group(1);
+		}
+		
+		String overwriteFiles = null;
+		Matcher overwriteMatcher =
+			Pattern.compile("[\\?\\&]overwritefiles=([^\\&]+)").matcher(query);
+		if(overwriteMatcher.find())
+		{
+			overwriteFiles = overwriteMatcher.group(1);
+		}
+		
+		Matcher debugMatcher =
+			Pattern.compile("[\\?\\&]debug=([^\\&]+)").matcher(query);
+		if(debugMatcher.find())
+		{
+			// set debugging on or off
+			if(debugMatcher.group(1).equals("true"))
+				debug = true;
+			else
+				debug = false;
+		}
+		
+		//
+		// View screenshot of browser
+		//
+		
+		if(requestType != null && requestType.equals("snapshot"))
+		{	
+			if(debug)
+				System.out.print("Snapshot requested.\r\n");
+				
+			// run import command to capture screenshot
+			String[] commands = new String[]{
+				"/usr/bin/import", "-window", "root", "JPEG:-"};
+			Process importPs = Runtime.getRuntime().exec(commands);
+			
+			// set the output type as a png image
+			response.setContentType("image/jpeg");
+			
+			// Copy output of the import process to the servlet output
+			InputStream in = importPs.getInputStream();
+			OutputStream out = response.getOutputStream();
+			byte[] buf = new byte[1024];
+			int count = 0;
+			while ((count = in.read(buf)) >= 0)
+			{
+				out.write(buf, 0, count);
+			} 
+			in.close();
+			out.close();
+			
+			return;
+		}
+		
+		//
+		// Return JS command (to Firefox plugin)
+		//
+		
+		// prepare output for text
+		response.setContentType("text/plain; charset=UTF-8");
+		PrintWriter writer = response.getWriter();
+		
+		if(requestType != null && requestType.equals("getJS"))
+		{
+			//if(debug)	
+			//	System.out.print("JS requested from browser...");
+			
+			// get command (and reset it)
+			String command = getNextJsCommand();
+			
+			// if there is no command, return a null command
+			if(command == null)
+			{
+				//if(debug)	
+				//System.out.print("no commands read.\r\n");
+				
+				writer.write("var none = null;");
+				return;
+			}
+			
+			if(debug)	
+				System.out.print("command sent.\r\n");
+			
+			writer.write(command);
+			return;
+		}
+		
+		//
+		// Collect response from Firefox plugin
+		//
+		
+		// if the request is a response, get the data and acknowledge
+		if(requestType != null && requestType.equals("response"))
+		{	
+			if(debug)	
+				System.out.print("Command response received from browser with character encoding of "
+				+ request.getCharacterEncoding() + "\r\n");
+				
+			//  the posted response
+			setResponse(new String(postBuf, request.getCharacterEncoding()));
+			
+			String ack = "{\"response\": \"AckReceived\"}";
+			writer.write(ack);
+			return;
+		}
+		
+		// if the request is a response, get the data and acknowledge
+		if(requestType != null && requestType.equals("fileresponse"))
+		{	
+			if(debug)	
+				System.out.print("File response received from browser.\r\n");
+				
+			setFileResponse(postBuf);
+			
+			String ack = "{\"response\": \"FileReceived\"}";
+			writer.write(ack);
+			return;
+		}
+		
+		//
+		// Run sequence of commands
+		//
+		
+		if(requestType != null && requestType.equals("run"))
+		{
+			if(externalBrowser == null || !externalBrowser.equals("true"))
+			{
+				if(!startFirefox(request.getRequestURL().toString()))
+				{
+					writer.write("<Error>Unable to start firefox.</Error>\n\n");
+					return;
+				}
+			}
+			
+			// Check that instructions were posted
+			String postBufStr = new String(postBuf);
+			if(postBufStr.length() < 1)
+			{
+				if(debug)	
+					System.out.print("Input Error: No instructions posted\r\n");
+					
+				writer.write("<Error>No instructions posted.</Error>\n");
+				stopFirefox();
+				return;
+			}
+			
+			// Check that a year was specified
+			if(yearParam == null)
+			{
+				if(debug)	
+					System.out.print("Input Error: No year specified\r\n");
+				writer.write("<Error>'year' parameter must be specified.</Error>\n");
+				stopFirefox();
+				return;
+			}
+			int year = Integer.parseInt(yearParam);
+			
+			// response url
+			String responseUrl = request.getRequestURL().toString();
+			try
+			{
+				if(debug)	
+					System.out.print("Parsing XML input\r\n");
+				// create JDOM document from the instructions
+				Document doc = (new SAXBuilder()).build(new StringReader(postBufStr.trim()));
+				Element root = doc.getRootElement();
+			
+				// find the instructions for this year
+				Element instructionsForThisYear = null;
+				List instructionSets = root.getChildren("SiteSpider");
+				for(Iterator<Element> i = instructionSets.iterator();
+					i.hasNext() && instructionsForThisYear == null;)
+				{
+					Element next = i.next();
+					String fromYearStr = next.getAttribute("fromYear").getValue();
+					String toYearStr = next.getAttribute("toYear").getValue();
+				
+					// if each bound is not specified or matches, use this
+					// this instruction set				
+					if((fromYearStr == null || Integer.parseInt(fromYearStr) <= year) &&
+						(toYearStr == null || Integer.parseInt(toYearStr) >= year))
+					{
+						instructionsForThisYear = next;
+					}
+				}
+			
+				if(instructionsForThisYear == null)
+				{
+					if(debug)	
+						System.out.print("Input Error: No instructions found for specified year\r\n");
+					writer.write("<Error>No instruction sets match the specified year.</Error>\n");
+					firefoxPs.destroy();
+					firefoxPs = null;
+					return;
+				}
+				
+				if(debug)	
+					System.out.print("Executing instruction set.\r\n");
+			
+				RetrievedLink[] links = executeInstructionSet(instructionsForThisYear,
+					responseUrl, (new Integer(year)).toString(), null);
+					
+				if(debug)
+					System.out.print("All instructions executed.\r\nGenerating XML output.\r\n");
+					
+				// convert links to XML
+				Element outputRoot = new Element("LinkSet");
+				for(RetrievedLink link : links)
+				{
+					Element linkElem = new Element("link");
+					
+					Element linkLocationElem = new Element("location");
+					linkLocationElem.setText(link.location);
+					
+					Element linkTextElem = new Element("text");
+					linkTextElem.setText(link.text);
+					
+					linkElem.addContent(linkLocationElem);
+					linkElem.addContent(linkTextElem);
+					outputRoot.addContent(linkElem);
+				}
+				
+				// output XML
+				Document outputDoc = new Document(outputRoot);
+      		XMLOutputter serializer = new XMLOutputter();
+      		serializer.setFormat(
+      			serializer.getFormat().setEncoding("UTF-8"));
+      		serializer.output(outputDoc, writer);
+			}
+			catch(JDOMException e)
+			{
+				writer.write("<Error>Unable to parse XML input: " + e.toString() + "</Error>\n");
+				return;
+			}
+			catch(IOException e)
+			{
+				writer.write("<Error>IO Exception sending commands: " + e.toString() + "</Error>\n");
+				return;
+			}
+			catch(Exception e)
+			{
+				writer.write("<Error>Exception: " + e.toString() + "</Error>\n");
+				return;
+			}
+			
+			if(debug)
+				System.out.print("Closing firefox.\r\n");
+			// close firefox
+			stopFirefox();
+			return;	
+		}
+
+		if(requestType != null && requestType.equals("download"))
+		{
+			if(externalBrowser == null || !externalBrowser.equals("true"))
+			{
+				if(!startFirefox(request.getRequestURL().toString()))
+				{
+					writer.write("<Error>Unable to start firefox.</Error>\n\n");
+					return;
+				}
+			}
+			
+			// Check that a file download list was posted
+			String postBufStr = new String(postBuf);
+			if(postBufStr.length() < 1)
+			{
+				if(debug)	
+					System.out.print("Input Error: No file list posted\r\n");
+					
+				writer.write("<Error>No file list posted.</Error>\n");
+				stopFirefox();
+				return;
+			}
+			
+			// download files
+			String responseUrl = request.getRequestURL().toString();
+			try
+			{
+				if(debug)	
+					System.out.print("Parsing XML input\r\n");
+					
+				// create JDOM document from the instructions
+				Document doc = (new SAXBuilder()).build(new StringReader(postBufStr.trim()));
+				Element root = doc.getRootElement();
+				
+				// save directory
+				String saveDirectory = root.getChild("saveDirectory").getTextTrim();
+				if(debug)
+					System.out.print("Files will be saved to directory " + saveDirectory + ".\r\n");			
+			
+				// for each file
+				String currentPage = null;
+				List fileElements = root.getChildren("file");
+				for(Iterator<Element> i = fileElements.iterator();
+					i.hasNext();)
+				{
+					Element next = i.next();
+					String dlLocation = next.getChild("dlLocation").getTextTrim();
+					String fileId = next.getChild("fileId").getTextTrim();
+					String fileExtension = null;
+					if(next.getChild("forcedExtension") != null)
+						fileExtension = next.getChild("forcedExtension").getTextTrim();
+					
+					// if we're not on the correct root page, go to this page
+					// to avoid cross-origin requests
+					URL dlUrl = new URL(dlLocation);
+					String rootPage = dlUrl.getProtocol() + "://" + dlUrl.getHost();
+					if(currentPage == null || !root.equals(currentPage))
+					{
+						if(debug)
+							System.out.print("Opening root page at " + rootPage + "\r\n");
+							
+						sendCommand("*",
+							"location.href = '" + rootPage + "';",
+							true, responseUrl);
+						currentPage = rootPage;
+					}
+				
+					if(debug)
+						System.out.print("Downloading " + dlLocation + ".\r\n");
+							
+					// download the file using the browser
+					File tempFile = downloadFile(dlLocation, responseUrl);
+					
+					if(debug)
+						System.out.print("File downloaded.\r\n");
+					
+					// save the file to the save Directory
+					if(fileExtension == null)
+						fileExtension = FilenameUtils.getExtension(dlLocation);
+					String fileName = saveDirectory + "/" + fileId + "." + fileExtension;
+					File destFile = new File(fileName);
+					
+					// delete any existing file at the destination
+					if(overwriteFiles != null && overwriteFiles.equals("true"))
+					{
+						destFile.delete();
+					}
+					
+					// save file
+					FileUtils.moveFile(tempFile, destFile);
+					
+					if(debug)
+						System.out.print("Saved to " + fileName + "\r\n");
+				}
+			}
+			catch(JDOMException e)
+			{
+				writer.write("<Error>Unable to parse XML input: " + e.toString() + "</Error>\n");
+				return;
+			}
+			catch(IOException e)
+			{
+				writer.write("<Error>IO Exception downloading files: " + e.toString() + "</Error>\n");
+				return;
+			}
+			catch(Exception e)
+			{
+				writer.write("<Error>Exception: " + e.toString() + "</Error>\n");
+				return;
+			}
+			
+			if(debug)
+				System.out.print("Closing firefox.\r\n");
+			// close firefox
+			stopFirefox();
+			
+			writer.write("<Success / >");
+			return;
+		}		
+		
+		writer.write("<Error>No request type (req) parameter specified or unknown request type.</Error>\n");
+	}
+	
+	// execute an instruction set
+	private RetrievedLink[] executeInstructionSet(
+		Element root, String responseUrl, String year, String month)
+		throws IOException
+	{
+		RetrievedLink[] resultLinks = new RetrievedLink[0];
+		
+		List<Element> instructions = root.getChildren();
+		
+		for(Element instruction : instructions )
+		{
+			String instructAction = parseDateVariables(
+				instruction.getName(), year, month);
+			String instructTarget = parseDateVariables(
+				instruction.getTextTrim(), year, month);
+				
+			if(debug)
+				System.out.print("Executing instruction: " + instructAction + "\r\n");
+				
+			if(instructAction.equals("open-url"))
+			{
+				sendCommand("*",
+					"location.href = '" + instructTarget + "';",
+					true, responseUrl);
+			}
+			else if(instructAction.equals("select-option"))
+			{
+				sendCommand(instructTarget,
+					"$('" + instructTarget +"').parent().get(0).selectedIndex = $('" + instructTarget + "').get(0).index;",
+					false, responseUrl);
+			}
+			else if(instructAction.equals("click"))
+			{
+				sendCommand(instructTarget,
+					"$('" + instructTarget + "').trigger('click');",
+					true, responseUrl);
+			}
+			else if(instructAction.equals("follow-link"))
+			{
+				sendCommand(instructTarget,
+					"location.href = $('" + instructTarget +"').attr('href');",
+					true, responseUrl);
+			}
+			else if(instructAction.equals("custom-js"))
+			{
+				sendCommand("*",
+					instructTarget,
+					true, responseUrl);
+			}
+			else if(instructAction.equals("grab-files"))
+			{
+				// get the links
+				String parentTextNode = parseDateVariables(
+					instruction.getAttribute("linktext").getValue(), year, month);
+				
+				RetrievedLink[] links = execGetLinks(
+					instructTarget, parentTextNode, responseUrl, true);
+				
+				// append the links to our list of links to return
+				RetrievedLink[] newResult = Arrays.copyOf(
+					resultLinks, resultLinks.length + links.length);
+  				System.arraycopy(links, 0,
+  					newResult, resultLinks.length,
+  					links.length);
+  				resultLinks = newResult;
+  				if(debug)
+  					System.out.print("New total of links = " + resultLinks.length + ".\r\n");
+			}
+			else if(instructAction.equals("foreach-link"))
+			{
+				// get matching links
+				RetrievedLink[] matchingLinks =
+					execGetLinks(instructTarget, "closest('*')", responseUrl, false);
+					
+				// for each link
+				for(RetrievedLink link : matchingLinks)
+				{
+					// open the link
+					sendCommand("*",
+						"location.href = '" + link.location + "';",
+						true, responseUrl);
+						
+					// recurse on the subnodes
+					RetrievedLink[] links = executeInstructionSet(
+						instruction, responseUrl, year, month);
+						
+					// append any links to our list of links to return
+					if(links != null)
+					{
+						RetrievedLink[] newResult = Arrays.copyOf(
+							resultLinks, resultLinks.length + links.length);
+  						System.arraycopy(links, 0,
+  							newResult, resultLinks.length,
+  							links.length);
+  						resultLinks = newResult;
+					}
+				}
+			}
+			else if(instructAction.equals("foreach-month"))
+			{
+				// for each month
+				for(int i = 1; i <= 12; i++)
+				{
+					// recurse on the subnodes
+					RetrievedLink[] links = executeInstructionSet(
+						instruction, responseUrl, year, (new Integer(i)).toString());
+						
+					// append any links to our list of links to return
+					if(links != null)
+					{
+						RetrievedLink[] newResult = Arrays.copyOf(
+							resultLinks, resultLinks.length + links.length);
+  						System.arraycopy(links, 0,
+  							newResult, resultLinks.length,
+  							links.length);
+  						resultLinks = newResult;
+					}
+				} 
+			}
+				
+		}// end for each instruction
+		
+		return resultLinks;
+	}
+	
+	private RetrievedLink[] execGetLinks(
+		String instructTarget, String parentTextNode, String responseUrl,
+		boolean downloadFiles)
+		throws IOException
+	{
+				
+		String jsCommand = "response.location = location.href; ";
+		jsCommand += "response.links = new Array(); ";
+		jsCommand += "var linkNodes = $('" + instructTarget +"'); ";
+		jsCommand += "for(var i = 0; i < linkNodes.length; i++){ ";
+		jsCommand += "response.links.push({'text': linkNodes.eq(i)." + parentTextNode + ".html(), 'location': linkNodes.eq(i).closest('a').attr('href')}); ";	
+		jsCommand += "}";
+		String result =
+			sendCommand(instructTarget,
+			jsCommand,
+			false, responseUrl);
+					
+		//if(debug)
+		//	System.out.print("JsonResponse:" + result + "\r\r");
+			
+		// parse result
+  		Gson gson = new Gson();
+  		GrabLinkResult resultObj =
+  			gson.fromJson(result, GrabLinkResult.class);
+  			
+  		if(debug)
+			System.out.print((new Integer(resultObj.links.length)).toString()
+			+ " links received\r\n");
+			 						
+		// if we know the base url, prepend it as necessary
+		if(resultObj.location.matches("http\\:\\/\\/"))
+		{
+			String base = resultObj.location.substring(
+				0, resultObj.location.lastIndexOf("/")+1);
+						
+			for(RetrievedLink link : resultObj.links )
+			{
+				// if we need to add on the base
+				if(!link.location.matches("http\\:\\/\\/"))
+				{
+					// if the link starts with a slash, only add the root
+					// of the base
+					if(link.location.startsWith("/"))
+					{
+						// if base url has more than the server
+						Matcher baseUrlMatcher =
+							Pattern.compile("(http\\:\\/\\/.+?)\\/")
+							.matcher(base);
+						if(baseUrlMatcher.find())
+						{
+							link.location =
+								baseUrlMatcher.group(1) + link.location;
+						}
+						// else, just prepend the whole server-only url
+						else
+						{
+							link.location = base + link.location;
+						}
+					}
+					// else, if the link starts with neither a http nor
+					// a slash, add whole current location
+					else
+					{
+						link.location = base + link.location;
+					}
+				}
+			}// end for each link
+		}// end if base url known
+		
+		return resultObj.links;
+	}
+	
+	private File downloadFile(String link, String responseUrl)
+		throws IOException
+	{
+		// generate a unique id for this file
+		String jsCommand = "var fileData = null; ";
+		jsCommand += "var fileType = null; ";
+      jsCommand += "$.ajax({ async: false, url: '" + link + "', dataFilter: function(data, type) { fileData = data; fileType = type; } }); ";
+		jsCommand += "$.ajax({ async: false, url: '" + responseUrl + "?req=fileresponse" + "', processData: false, data: fileData, contentType: fileType, type: 'POST' }); ";
+		sendCommand("*",
+					jsCommand,
+					false, responseUrl);
+					
+		return getFileResponse();
+	}
+	
+	private String parseDateVariables(String string, String year, String month)
+	{
+		if(month != null)
+		{
+			string = string.replaceAll("\\#MONTH1-12\\#", month);
+			string = string.replaceAll("\\#MONTH0-11\\#",
+				(new Integer(Integer.parseInt(month) - 1)).toString());
+		}
+		if(year != null)
+		{
+			string = string.replaceAll("\\#YEAR\\#", year);
+		}
+		return string;
+	}
+	
+	// send command
+	// - returns response upon success, or null upon error
+	private String sendCommand(String destSelector, String command, boolean ackFirst, String responseUrl)
+		throws java.io.IOException
+	{			
+		// try this instruction up to three times
+		String response = null;
+		for(int commandTry = 0; commandTry < 3 && response == null; commandTry++)
+		{	
+			if(debug)
+				System.out.print("Sending js command to browser, try "
+				+ (commandTry+1) + " of 3.\r\n");
+			
+			StringBuffer commandBuffer = new StringBuffer(1024);
+			
+			// load jquery into the command string
+			BufferedReader reader = new BufferedReader(
+				new FileReader(getServletContext().getRealPath("/WEB-INF/jquery-1.4.2.min.js")));
+			char[] buf = new char[1024];
+			int numRead=0;
+			while((numRead=reader.read(buf)) != -1)
+			{
+				commandBuffer.append(buf, 0, numRead);
+			}
+			reader.close();
+			
+			// load json into the command string
+			reader = new BufferedReader(
+				new FileReader(getServletContext().getRealPath("/WEB-INF/json2.js")));
+			numRead=0;
+			while((numRead=reader.read(buf)) != -1)
+			{
+				commandBuffer.append(buf, 0, numRead);
+			}
+			reader.close();
+			
+			
+			// load the js command template
+			reader = new BufferedReader(
+				new FileReader(getServletContext().getRealPath("/WEB-INF/commandTemplate.js")));
+			numRead=0;
+			while((numRead=reader.read(buf)) != -1)
+			{
+				commandBuffer.append(buf, 0, numRead);
+			}
+			reader.close();
+			String jsTemplate = commandBuffer.toString();
+			
+			// insert the destination selector 
+			jsTemplate = jsTemplate.replaceAll("\\#DESTSELECTOR\\#",
+				Matcher.quoteReplacement(destSelector));
+			
+			// whether to acknowledge before executing command
+			if(ackFirst)
+				jsTemplate = jsTemplate.replaceAll("\\#ACKFIRST\\#", "true");
+			else
+				jsTemplate = jsTemplate.replaceAll("\\#ACKFIRST\\#", "false");
+				
+			// set respones url
+			jsTemplate = jsTemplate.replaceAll("\\#RESPURL\\#", responseUrl + "?req=response");
+			
+			// set the command
+			jsTemplate = jsTemplate.replaceAll("\\#COMMAND\\#",
+				Matcher.quoteReplacement(command));
+				
+			// buffer the command for reading by the firefox plugin
+			setNextJsCommand(jsTemplate);
+			
+			// wait up to one minute for the response
+			for(int responseTry = 0; responseTry < 60 && response == null; responseTry++)
+			{
+				response = getResponse();
+				try
+				{
+					Thread.sleep(1000);
+				}
+				catch(java.lang.InterruptedException e)
+				{
+					return null;
+				}
+			}
+		}
+		setNextJsCommand(null);
+		return response;
+	}
+	
+	// start/stop firefox process
+	// if firefox is already open, kill it
+	private boolean startFirefox(String baseLocation)
+		throws IOException
+	{
+		if(firefoxPs != null)
+		{
+			if(debug)	
+				System.out.print("Open firefox killed.\r\n");
+				
+			firefoxPs.destroy();
+			firefoxPs = null;
+		}
+		
+		// open firefox, with the profile SiteSpider, to this HTTP location (which is where
+		// the Firefox plugin will check for javascript commands)
+		if(debug)	
+			System.out.print("Opening firefox to location " + baseLocation + "and waiting for it to load.\r\n");
+					
+		String[] commands = new String[]{
+			"firefox", "-no-remote", "-p", "SiteSpider", baseLocation};
+				
+		firefoxPs = Runtime.getRuntime().exec(commands);
+		if(firefoxPs == null)
+			return false;
+
+		// wait for firefox to load (otherwise the first command try is "missed"
+		// on firefox load-up)
+		try
+		{
+			Thread.sleep(5000);
+		}
+		catch(java.lang.InterruptedException e)
+		{
+		}
+		if(debug)	
+			System.out.print("Waiting complete.\r\n");
+			
+		return true;
+	}	
+	private void stopFirefox()
+	{
+		if(firefoxPs != null)
+			firefoxPs.destroy();
+		firefoxPs = null;
+	}
+	//
+	// Get/Set next javascript command
+	//
+	synchronized private String getNextJsCommand()
+	{
+		String command = nextJsCommand;
+		nextJsCommand = null;
+		return command;
+	}
+	synchronized private void setNextJsCommand(String command)
+	{
+		nextJsCommand = command;
+	}
+	
+	//
+	// Get/Set response and fileResponse
+	//
+	synchronized private String getResponse()
+	{
+		String response = commandResponse;
+		commandResponse = null;
+		return response;
+	}
+	synchronized private void setResponse(String response)
+	{
+		commandResponse = response;
+	}
+	
+	// note: caller responsible for the temp file returned
+	synchronized private File getFileResponse()
+	{
+		File tempFile = fileResponse;
+		fileResponse = null;
+		return tempFile;		
+	}
+	
+	synchronized private void setFileResponse(byte[] postBuf)
+		throws IOException
+	{
+		if(debug)	
+			System.out.print("Downloaded file received from browser.\r\n");
+				
+		// if there's still a file in fileResponse, delete it
+		if(fileResponse != null && fileResponse.exists())
+			fileResponse.delete();
+					
+		// create a temp file for the data
+		File tempDir = (File) getServletContext().
+      	getAttribute( "javax.servlet.context.tempdir" );
+	   fileResponse = File.createTempFile("NSS", "", tempDir);
+	   FileUtils.writeByteArrayToFile(fileResponse, postBuf);
+	}
+}
+ 

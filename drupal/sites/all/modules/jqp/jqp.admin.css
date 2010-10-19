@@ -1,0 +1,24 @@
+.libraries_table.multirow tr.even, 
+.libraries_table.multirow tr.odd {
+  border: none; 
+}
+
+.libraries_table tr.ok {
+  background-color:#DDFFDD;
+}
+
+.libraries_table tr.ok.last {
+  border-bottom: solid #BBEEBB 1px;
+}
+
+.libraries_table tr.warning {
+  background-color:#FFFFDD;
+}
+
+.libraries_table tr.warning.last {
+  border-bottom: solid #EEEEBB 1px;
+}
+
+.libraries_table .form-text {
+  width:90%;
+}

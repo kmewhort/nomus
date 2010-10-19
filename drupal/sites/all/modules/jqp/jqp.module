@@ -1,0 +1,350 @@
+<?php
+// $Id: jqp.module,v 1.8 2010/05/01 13:09:23 skilip Exp $
+
+/**
+ * @file
+ * Used to register and load javascript libraries and plugins from a cetral point
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function jqp_help($path, $arg) {
+
+  switch ($path) {
+    case 'admin/help#jqp':
+      $output[] = '<p>'. t('Javascript libraries can either be built up from an single javascript file, a javascript plugin or a set of javascript files, sometimes with stylesheets included. These libraries can be used to extend the look and feel of modules.') .'</p>';
+      $output[] = '<p>'. t('Libraries can be registered in several ways:') .'</p>';
+      $output[] = '<ul>';
+      $output[] = '  <li>';
+      $output[] = '<h4>'. t('.info files') .'</h4>';
+      $output[] = '<p>'. t('This is the preferred way of registering a library into javascript libraries\' cache. During installation, jQp module will check for the presence of a libraries folder in one of the following directories:') .'</p>';
+      $output[] = '<ul>';
+      $output[] = '  <li>libraries</li>';
+      $output[] = '  <li>sites/all/libraries</li>';
+      $output[] = '  <li>$profile/install_profile/libraries</li>';
+      $output[] = '  <li>$conf_path/libraries</li>';
+      $output[] = '  <li>$file_directory_path/libraries</li>';
+      $output[] = '</ul>';
+      $output[] = '<p>'. t('If this directory exists, this should be the place to place all libraries as separate folders, containing all required files for the library. If a library folder contains a .info file, this will be used to register the library. Here\'s an example of how a .info file should be written:', $replacements) .'</p>';
+      $output[] = '<pre>';
+      $output[] = '; $Id: jqp.module,v 1.8 2010/05/01 13:09:23 skilip Exp $';
+      $output[] = 'name = Library Name';
+      $output[] = 'description = Description of the library';
+      $output[] = 'project_url = http://www.library_project_page.org';
+      $output[] = 'stylesheets[][] = style.css';
+      $output[] = 'scripts[][] = jquery.test.min.js';
+      $output[] = 'scripts[1.4.4][] = jquery.test[1.4.4].min.js';
+      $output[] = 'scripts[1.4.4][] = drupal.js';
+      $output[] = '</pre>';
+      $output[] = '<p>'. t('This .info file will register two versions of this library (default and 1.4.4). style.css is added as a first element of the stylesheets array, and will therefore will have 0 as key. All elements of both the stylesheets and scripts array with a 0 key will be treated as the default version. Files with other keys, such as 1.4.4, will be handled as separate versions. If a specific version of a library is loaded, and there\'s no file type which overrides the default one, the default one is included automatically. Note that versions can include several files!') .'</p>';
+      $output[] = '</li>';
+      $output[] = '<li>';
+      $output[] = '<h4>'. t('hook_jqp()') .'</h4>';
+      $output[] = '<p>'. t('Modules can also register their own libraries using the provided hook function.') .'</p>';
+      $output[] = '<p><strong>'. t('Definition') .':</strong></p>';
+      $output[] = '<p><code>hook_jqp()</code></p>';
+      $output[] = '<p><strong>'. t('Description') .':</strong></p>';
+      $output[] = '<p>'. t('Provide other modules a hook to add custom libraries or alter already registered libraries.') .'</p>';
+      $output[] = '<p><strong>'. t('Code') .':</strong></p>';
+      $output[] = '<pre class="php">';
+      $output[] = '/**';
+      $output[] = ' * Implemantation of hook_jqp().';
+      $output[] = ' */';
+      $output[] = 'function hook_jqp() {';
+      $output[] = '  $libraries[\'plugin1\'] = array(';
+      $output[] = '    \'name\' => \'Plugin 1\',';
+      $output[] = '    \'description\' => \'This plugin is registered by a module.\',';
+      $output[] = '    \'project_url\' => \'http://www.library_project_page.org\',';
+      $output[] = '    \'scripts\' => array(';
+      $output[] = '      array(\'jquery.hoi.min.js\'), // This will have key 0, so it is the default version';
+      $output[] = '      \'1.4.3-BETA-3\' => array(\'jquery.hoi[2].min.js\'),';
+      $output[] = '    ),';
+      $output[] = '    \'stylesheets\' => array(';
+      $output[] = '      array(\'plugin1.css\'),';
+      $output[] = '      \'1.4.3-BETA-3\' => array(';
+      $output[] = '        \'plugin1[1.4.3-BETA-3].css\'';
+      $output[] = '      ),';
+      $output[] = '    ),';
+      $output[] = '  );';
+      $output[] = '  return $libraries;';      
+      $output[] = '}';
+      $output[] = '</pre>';
+      $output[] = '</li>';
+      $output[] = '<li>';
+      $output[] = '<h4>'. t('Loading a javascript library') .'</h4>';
+      $output[] = '<p>'. t('Loading a javascript library or plugin can be done using drupal_add_library().') .'</p>';
+      $output[] = '<p><strong>'. t('Definition') .':</strong></p>';
+      $output[] = '<p><code>drupal_add_library($name, $version = 0, $options = array())</code></p>';
+      $output[] = '<p><strong>'. t('Description') .':</strong></p>';
+      $output[] = '<p>'. t('Load a shared library from the javascript library directory.') .'</p>';
+      $output[] = '<p><strong>'. t('Parameters') .':</strong></p>';
+      $output[] = '<p><code>$name</code>: '. t('(required)') ."&nbsp;". t('the name of the library or plugin to load.') .'</p>';
+      $output[] = '<p><code>$version</code>: '. t('(optional)') ."&nbsp;". t('the version of the library to load. If omitted the default version is loaded.') .'</p>';
+      $output[] = '<p><code>$options</code>: '. t('(optional)') ."&nbsp;". t('Array containing additional options to pass to drupal_add_js or drupal_add_css.') .'</p>';
+      $output[] = '<pre class="php">';
+      $output[] = '     array(';
+      $output[] = '       \'css\' => array($type = \'module\', $media = \'all\', $preprocess = TRUE),';
+      $output[] = '       \'js\' => array($type = \'module\', $scope = \'header\', $defer = FALSE, $cache = TRUE, $preprocess = TRUE),';
+      $output[] = '     );';
+      $output[] = '</pre>';
+      $output[] = '<p><strong>'. t('Example') .':</strong></p>';
+      $output[] = '<p><code>drupal_add_library(\'beautytips\', \'0.9\', array(\'css\' => array(\'theme\', \'all\', FALSE)));</code></p>';
+      $output[] = '</li>';
+      $output[] = '<li>';
+      $output[] = '<h4>'. t('Administration pages') .'</h4>';
+      $output[] = '<p>'. t('After registering a library, the paths of the attached files can be changed at the !admin_pages. It is also possible to attach an detach files per version.', array('!admin_pages' => l('administration pages', 'admin/build/jqp'))) .'</p>';
+      $output[] = '</li>';
+      $output[] = '</ul>';
+      return join("\n", $output);
+    case 'admin/build/jqp':
+      $output[] = '<p>'. t('Javascript libraries can either be built up from an single javascript file, a javascript plugin or a set of javascript files, sometimes with stylesheets included. These libraries can be used to extend the look and feel of modules.') .'</p>';
+      $output[] = '<p>'. t('After registering a library, the paths of the attached files can be changed here. It is also possible to attach and detach files per version by clicking on the configure link.') .'</p>';
+      $output[] = '<p>'. t('You can completely rebuild the cache by clicking !rebuild link.', array('!rebuild' => l(t('this'), 'admin/build/jqp/rebuild_confirm'))) .'</p>';
+      return join("\n", $output);
+  }
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function jqp_perm() {
+  return array('administer javascript libraries');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function jqp_menu() {
+
+  $items['admin/build/jqp'] = array(
+    'title' => 'Javascript libraries',
+    'description' => "Administer javascript libraries.",
+    'page callback' => 'jqp_status_page',
+    'access arguments' => array('administer javascript libraries'),
+    'file' => 'jqp.admin.inc',
+  );
+
+  $items['admin/build/jqp/rebuild_confirm'] = array(
+    'title' => 'Reset all libraries',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('jqp_confirm_form'),
+    'access arguments' => array('administer javascript libraries'),
+    'type' => MENU_CALLBACK,
+    'file' => 'jqp.admin.inc',
+  );
+
+  $items['admin/build/jqp/%jqp_library/%'] = array(
+    'title callback' => 'jqp_overview_title',
+    'title arguments' => array(3, 4),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('jqp_library_edit', 3, 4),
+    'access arguments' => array('administer javascript libraries'),
+    'type' => MENU_CALLBACK,
+    'file' => 'jqp.admin.inc',
+  );
+  $items['admin/build/jqp/%jqp_library/%/list'] = array(
+    'title' => 'List files',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+    'file' => 'jqp.admin.inc',
+  );
+  $items['admin/build/jqp/%library/%/reset'] = array(
+    'title' => 'Reset library',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('jqp_confirm_form', 3, 4),
+    'access arguments' => array('administer javascript libraries'),
+    'type' => MENU_CALLBACK,
+    'file' => 'jqp.admin.inc',
+  );
+  $items['admin/build/jqp/%jqp_library/%/remove_file'] = array(
+    'title' => 'Reset library',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('jqp_confirm_form', 3, 4),
+    'access arguments' => array('administer javascript libraries'),
+    'type' => MENU_CALLBACK,
+    'file' => 'jqp.admin.inc',
+  );
+  $items['admin/build/jqp/%jqp_library/%/add'] = array(
+    'title' => 'Add file',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('jqp_library_edit', 3, 4, 5),
+    'access arguments' => array('administer javascript libraries'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'jqp.admin.inc',
+  );
+
+  $items['jqp_ajax_check_file'] = array(
+    'page callback' => '_jqp_ajax_check_file',
+    'access arguments' => array('administer javascript libraries'),
+    'type' => MENU_CALLBACK,
+    'file' => 'jqp.admin.inc',
+  );
+  $items['jqp_autocomplete'] = array(
+    'page callback' => '_jqp_autocomplete',
+    'access arguments' => array('administer javascript libraries'),
+    'type' => MENU_CALLBACK,
+    'file' => 'jqp.admin.inc',
+  );
+  $items['jqp_stop_message/%'] = array(
+    'page callback' => 'jqp_stop_message',
+    'page arguments' => array(1),
+    'access arguments' => array('administer javascript libraries'),
+    'type' => MENU_CALLBACK,
+    'file' => 'jqp.admin.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function jqp_theme() {
+  return array(
+    'jqp_library_edit' => array(
+      'arguments' => array('form' => array(), 'library' => array(), 'version' => 0),
+    )
+  );
+}
+
+/**
+ * Title callback.
+ */
+function jqp_overview_title($library, $version = NULL) {
+  return $library->info['name'] . ($version ? " v.$version" : "");
+}
+
+/**
+ * Add a shared library from the javascript library directory
+ *
+ * @param $name
+ *   the name of the library to add
+ *
+ * @param $version
+ *   the version of the library to add
+ *
+ * @param $options
+ *   Array containing additional options to pass to drupal_add_js or drupal_add_css.
+ *     array(
+ *       'css' => array($path = NULL, $type = 'module', $media = 'all', $preprocess = TRUE),
+ *       'js' => array($data = NULL, $type = 'module', $scope = 'header', $defer = FALSE, $cache = TRUE, $preprocess = TRUE),
+ *     );
+ *
+ * @see drupal_add_js()
+ * @see drupal_add_css()
+ */
+function drupal_add_library($name, $version = 0, $options = array()) {
+  // Get the library
+  $library = jqp_library_load($name);
+
+  // Check if the library exists and is properly configured.
+  if (user_access('administer javascript libraries') && (empty($library) || !$library->status)) {
+
+    // Notify the user unless a user has disabled this notification.
+    if (!in_array($name, variable_get('jqp_stop_message_libraries', array()))) {
+      $replacements = array(
+        '%name' => $name,
+        '!link1' => l(t('here'), "admin/build/jqp/$name/$version", array('query' => drupal_get_destination())),
+        '!link2' => l(t('here'), "jqp_stop_message/$name", array('query' => drupal_get_destination())),
+      );
+      drupal_set_message(t('The javascript library %name does not exist. Click !link1 to check the library\'s configuration or !link2 to stop this message from being displayed.', $replacements), 'warning');
+    }
+    return FALSE;
+  }
+
+  $types = array('js' => 'scripts', 'css' => 'stylesheets');
+  $files = array();
+
+  // Loop trough the file types
+  foreach ($types as $key => $type) {
+
+    // Add the files of the default version, if exist
+    if ($version !== 0 && is_array($library->info[$type][0])) {
+      $files[$key] = $library->info[$type][0];
+    }
+
+    if (is_array($library->info[$type][$version])) {
+      $files[$key] = $library->info[$type][$version];
+    }
+  }
+
+  // Load all files using drupal_add_js and drupal_add_css
+  foreach ($types as $key => $type) {
+
+    if (!$files[$key]) {
+      continue;
+    }
+
+    foreach ($files[$key] as $path) {
+      $args[0] = $path;
+      $args = array_merge($args, $options);
+      call_user_func_array("drupal_add_$key", $args);
+    }
+  }
+}
+
+/**
+ * Implementation of hook_requirements().
+ *
+ * Checks if a libraries directory is present at install
+ */
+function jqp_requirements($phase) {
+  // Ensure translations don't break at install time
+  $t = get_t();
+
+  // Report Drupal version
+  if ($phase == 'runtime') {
+    $library_exists = _check_library_directory('libraries');
+
+    $requirements['jqp'] = array(
+      'title' => $t('Javascript libraries directory'),
+      'value' => $library_exists ? $t('Exists') : $t('Not present'),
+      'severity' => $library_exists ? REQUIREMENT_OK : REQUIREMENT_WARNING,
+    );
+
+    if (!$library_exists) {
+      $requirements['jqp']['description'] = $t('There\'s no javascript libraries folder present yet! Please create a directory called "libraries" at sites/all/libraries or sites/[example.com]/libraries or similar.');
+    }
+  }
+
+  return $requirements;
+}
+
+/**
+ * Searches for a libraries directory
+ */
+function _check_library_directory($directory) {
+  global $profile;
+  $config = conf_path();
+
+  $searchdir = array(
+    "$directory",
+    "sites/all/$directory",
+    "profiles/$profile/$directory",
+    "$config/$directory",
+  );
+
+  foreach ($searchdir as $dir) {
+    if (file_exists($dir)) {
+      variable_set('jqp_directory', $dir);
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ * Loads a single library
+ *
+ * @param $name
+ *   the name of the library to add
+ */
+function jqp_library_load($name) {
+  static $libraries;
+
+  if (empty($libraries)) {
+    module_load_include('inc', 'jqp', 'jqp.admin');
+    $libraries = jqp_list();
+  }
+  return $libraries[$name];
+}

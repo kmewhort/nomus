@@ -1,0 +1,244 @@
+<?php
+// $Id: slider_textfield.module,v 1.4.2.4 2009/01/02 20:19:47 skilip Exp $
+
+/**
+ * @file
+ *
+ * This module provides a form element which replaces common textfields with a slider.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function slider_textfield_help($path) {
+  switch ($path) {
+    case 'admin/help#slider_textfield':
+      $replacements = array(
+        '!jqp' => 'jQuery Plugin Handler',
+        '!jqp_link' => l('jQuery Plugin Handler', 'http://drupal.org/project/jpq'),
+        '!ui.core' => l('ui core', 'http://ui.jquery.com/download_builder/'),
+        '!ui.slider' => l('ui slider', 'http://ui.jquery.com/download_builder/'),
+        '!download page' => l(t('download page'), 'http://ui.jquery.com/download_builder/'),
+        '!here' => l(t('here'), 'http://docs.jquery.com/UI/Slider/slider'),
+        '!content' => l('Content Construction Kit', 'http://drupal.org/project/cck'),
+        '!FAPI' => l('Forms API documentation', 'http://api.drupal.org/api/file/developer/topics/forms_api.html/6'),
+      );
+
+      $output[] = '<p>'. t('The textfield to slider module depends on the module !jqp_link alongside with the jquery plugins !ui.core and !ui.slider.', $replacements);
+      $output[] = t('Once installed correctly the module will provide you a form element that can be used to replace common textfields (with a numeric value) with a neat slider.') .'</p>';
+      $output[] = '<h4>'. t('Installation') .':</h4>';
+      $output[] = '<ul>';
+      $output[] = '<li>'. t('Download and install !jqp_link.', $replacements) .'</li>';
+      $output[] = '<li>'. t('Make sure you\'ve created a directory called "plugins" as described in !jqp\'s installation instructions.', $replacements) .'</li>';
+      $output[] = '<li>'. t('Go to the jQuery UI !download page and check the UI Core checkbox.', $replacements) .'</li>';
+      $output[] = '<li>'. t('Make sure you\'ve selected JSMin in the compression list and hit the download button.') .'</li>';
+      $output[] = '<li>'. t('Rename the downloaded file to <strong>jquery.ui.core.min.js</strong> and move it to the plugins folder.') .'</li>';
+      $output[] = '<li>'. t('Go to the jQuery UI !download page again and check the Slider checkbox. This time you also need to make sure the UI Core checkbox is unchecked!', $replacements) .'</li>';
+      $output[] = '<li>'. t('Again, make sure you\'ve selected JSMin in the compression list and hit the download button.') .'</li>';
+      $output[] = '<li>'. t('Rename the downloaded file to <strong>jquery.ui.slider.min.js</strong> and move it to the plugins folder.') .'</li>';
+      $output[] = '</ul>';
+      $output[] = '<h4>'. t('CCK Widget') .':</h4>';
+      $output[] = '<p>'. t('The CCK Slider widget only applies to number fields of the type \'Integer\'. This field type is part of CCK\'s number module, which is a sub module of !content (CCK).', $replacements) .'</p>';
+      $output[] = '<h4>'. t('FAPI basic usage') .':</h4>';
+      $output[] = '<p>'. t('Alongside with a CCK widget this module also provides a form element which can be used in other forms than node forms. For more information about creating forms, refer to the !FAPI.', $replacements);
+      $output[] = '<p>'. t('For basic usage you can just create a form element and set #type to <em>slider_textfield</em>. This will create a regular textfield which is replaced by a slider when Javascript is enabled. While no settings are given it resides on it\'s default settings. The minimum number will be 0, and the maximum 100. The changed value will be sent with the form like usual. Here\'s how to use it:') .'</p>';
+      $output[] = '<code>';
+      $output[] = '$form[\'age\'] = array(<br />';
+      $output[] = "&nbsp;&nbsp;'#type' => 'slider_textfield',<br />";
+      $output[] = "&nbsp;&nbsp;'#title' => t('Age'),<br />";
+      $output[] = "&nbsp;&nbsp;'#default_value' => 20,<br />";
+      $output[] = "&nbsp;&nbsp;'#description' => t('Use the slider to set your age.'),<br />";
+      $output[] = ");";
+      $output[] = '</code><br /><br />';
+      $output[] = '<h4>'. t('FAPI advanced usage') .':</h4>';
+      $output[] = '<p>'. t('When you want to use the UI Slider plugin more specifically, you can pass options using #slider_settings. Here\'s an example:') .'</p>';
+      $output[] = '<code>';
+      $output[] = '$form[\'age\'] = array(<br />';
+      $output[] = "&nbsp;&nbsp;'#type' => 'slider_textfield',<br />";
+      $output[] = "&nbsp;&nbsp;'#title' => t('Age'),<br />";
+      $output[] = "&nbsp;&nbsp;'#default_value' => 20,<br />";
+      $output[] = "&nbsp;&nbsp;'#description' => t('Use the slider to set your age.'),<br />";
+      $output[] = "&nbsp;&nbsp;'#slider_settings' => array(<br />";
+      $output[] = "&nbsp;&nbsp;&nbsp;&nbsp;'min' => 28, // ". t('The minimum value of the input field.') ."<br />";
+      $output[] = "&nbsp;&nbsp;&nbsp;&nbsp;'max' => 65, // ". t('The maximum value of the input field.') ."<br />";
+      $output[] = "&nbsp;&nbsp;&nbsp;&nbsp;'width' => 300, // ". t('The width of the slider in pixels.') ."<br />";
+      $output[] = "&nbsp;&nbsp;&nbsp;&nbsp;'start' => 'someCustomCallbackFunction' // ". t('A callback function that gets called when the user starts sliding.') ."<br />";
+      $output[] = "&nbsp;&nbsp;&nbsp;&nbsp;'stop' => 'someCustomCallbackFunction' // ". t('A callback function that gets called when the user stops sliding.') ."<br />";
+      $output[] = "&nbsp;&nbsp;&nbsp;&nbsp;'slide' => 'someCustomCallbackFunction' // ". t('A callback function that gets called on every mouse move during slide.') ."<br />";
+      $output[] = "&nbsp;&nbsp;),<br />";
+      $output[] = ");";
+      $output[] = '</code><br /><br />';
+      $output[] = '<p>'. t('For more information about the UI Slider plugin settings, please refer to the plugins documentation, which can be found !here.', $replacements) .'</p>';
+      return join("\n", $output);
+  }
+}
+
+/**
+ * Implementation of hook_elements().
+ */
+function slider_textfield_elements() {
+  return array(
+    'slider_textfield' => array(
+      '#input' => TRUE,
+      '#attributes' => array('class' => 'slider_textfield'),
+      '#field_prefix' => '<div class="small_label"></div>',
+      '#field_suffix' => '<div class="large_label"></div>',
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function slider_textfield_theme() {
+  return array(
+    'slider_textfield' => array(
+      'arguments' => array('element' => NULL)
+    )
+  );
+}
+
+/**
+ * Format our slider.
+ *
+ * @param $element
+ *   An associative array containing the properties of the element.
+ *   Properties used:  title, description, attributes, id
+ * @return
+ *   A themed HTML string that represents the input field for the slider.
+ */
+function theme_slider_textfield($element) {
+
+  // Check if we're dealing with a cck field.
+  // Modify both the id and the value, so it matches the CCK element.
+  $fieldkey = $element['#columns'] ? $element['#columns'][0] : NULL;
+  $id = $fieldkey ? $element['#id'] .'-'. $fieldkey : $element['#id'];
+  $value = (empty($element['value']) ? $element['#value'] : $element['value']['#value']);
+
+  // Check wheter a startValue is set for the slider. If not, we'll use the textfield's value.
+  if (!isset($element['#slider_settings']['startValue'])) {
+    $element['#slider_settings']['startValue'] = $value;
+  }
+
+  // Put all the callback function in a separate object so there's no conflict with the callbacks we define in slider_textfield.js.
+  foreach (array('start', 'stop', 'slide') as $event) {
+    if ($element['#slider_settings'][$event]) {
+      $element['#slider_settings']['callbacks'][$event] = $element['#slider_settings'][$event];
+      unset($element['#slider_settings'][$event]);
+    }
+  }
+
+  $output = $fieldkey ? $element['#children'] : theme('textfield', $element);
+
+  //  Add the ui scripts
+  //jqp_add_js('jquery.ui.core.min.js');
+  //jqp_add_js('jquery.ui.slider.min.js');
+  jquery_ui_add(array('ui.widget', 'ui.mouse', 'ui.draggable','ui.slider'));
+
+  // Add our custom js and css
+  $path = drupal_get_path('module', 'slider_textfield');
+  drupal_add_js("$path/slider_textfield.js");
+  //drupal_add_js("$('.form-text.slider_textfield').css({'display':'none'});", 'inline', 'footer');
+  drupal_add_css("$path/slider_textfield.css");
+
+  // Add the settings to the js settings object
+  $slider_settings[$id] = $element['#slider_settings'];
+  $slider_settings[$id]['value'] = $value;
+  drupal_add_js(array('slider_settings' => $slider_settings), 'setting');
+
+  return $output;
+}
+
+/**
+ * Implementation of hook_widget_info().
+ */
+function slider_textfield_widget_info() {
+  return array(
+    'slider_textfield' => array(
+      'label' => t('Slider'),
+      'field types' => array('number_integer'),
+      'multiple values' => CONTENT_HANDLE_CORE,
+      'callbacks' => array(
+        'default value' => CONTENT_CALLBACK_DEFAULT,
+      ),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_widget().
+ */
+function slider_textfield_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+  $element = array(
+    '#type' => $field['widget']['type'],
+    '#default_value' => isset($items[$delta]) ? $items[$delta] : $field['widget']['default_value'][0],
+    '#columns' => array('value'),
+    '#delta' => 0,
+    '#tree' => TRUE,
+    '#process' => array('number_process', 'slider_process'),
+    '#slider_settings' => array(
+      'min' => $field['min'] ? $field['min'] : 0,
+      'max' => $field['max'] ? $field['max'] : 100,
+      'width' => $field['widget']['slider_width'] ? $field['widget']['slider_width'] : 300,
+    ),
+  );
+  return $element;
+}
+
+/**
+ * Process an individual element.
+ *
+ * Build the form element. When creating a form using FAPI #process,
+ * note that $element['#value'] is already set.
+ *
+ * The $fields array is in $form['#field_info'][$element['#field_name']].
+ */
+function slider_process($element, $edit, $form_state, $form) {
+  $fieldkey  = $element['#columns'][0];
+  $element[$fieldkey]['#attributes']['class'] = 'slider_textfield';
+  $element[$fieldkey]['#type'] = 'textfield';
+
+  if (empty($element[$fieldkey]['#field_prefix'])) {
+    $element[$fieldkey]['#field_prefix'] = '<div class="small_label"></div>';
+  }
+
+  if (empty($element[$fieldkey]['#field_suffix'])) {
+    $element[$fieldkey]['#field_suffix'] = '<div class="large_label"></div>';
+  }
+  return $element;
+}
+
+/**
+ * Implementation of hook_widget_settings().
+ */
+function slider_textfield_widget_settings($op, $widget) {
+
+  switch ($op) {
+    case 'form':
+      $form['slider_width'] = array(
+        '#type' => 'slider_textfield',
+        '#title' => t('Slider width'),
+        '#default_value' => isset($widget['slider_width']) ? $widget['slider_width'] : 300,
+        '#description' => t('Set the width (in pixels) of the slider for this node type'),
+        '#element_validate' => array('_slider_widget_settings_width_validate'),
+        '#slider_settings' => array(
+          'min' => 0,
+          'max' => 600,
+          'width' => 300,
+        ),
+      );
+      return $form;
+    case 'save':
+      return array('slider_width');
+  }
+}
+
+/**
+ * Validation of the widgets width config element.
+ */
+function _slider_widget_settings_width_validate($element, &$form_state) {
+  $value = $form_state['values']['slider_width'];
+  if (!is_numeric($value) || intval($value) != $value || $value <= 0) {
+    form_error($element, t('"The silder width" must be a positive integer.'));
+  }
+}

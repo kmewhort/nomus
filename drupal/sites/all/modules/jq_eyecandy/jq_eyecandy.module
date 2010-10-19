@@ -1,0 +1,200 @@
+<?php
+// $Id: jq_eyecandy.module,v 1.1 2008/04/14 18:50:13 worldfallz Exp $
+
+/**
+ * @file
+ * Configurable javascript based visual enhancements using jquery plugins.
+ */
+
+/**
+ * check jquery_plugin directory for the jquery plugins
+ */
+function _jq_eyecandy_plugins() {
+
+  // to add support for additional plugins, add them as keys to the $plugins array
+  $plugins = array ('colorblend' => '', 'curvycorners' => '', 'dropshadow' => '', 'gradient' => '', 'reflect' => '');
+  
+  foreach ($plugins as $k => $v) {
+    $plugins[$k] = drupal_get_path('module', 'jquery_plugin') .'/jquery.' . $k . '.min.js'; 
+  }
+
+  return $plugins;
+}
+
+ /**
+ *  add the jquery eyecandy plugin code to all pages
+ */
+function jq_eyecandy_init() {
+  $plugins = _jq_eyecandy_plugins();
+
+  foreach ($plugins as $k => $v) {
+    if (is_file($plugins[$k]) && variable_get('jq_eyecandy_'. $k .'_enabled', '')) {
+      jquery_plugin_add($k);
+	  if ((($k == 'dropshadow') || ($k == 'gradient')) && is_file(drupal_get_path('module', 'jquery_plugin') .'/jquery.dimensions.min.js')){
+	    jquery_plugin_add('dimensions');
+	  }
+      drupal_add_js(variable_get('jq_eyecandy_' . $k . '_code', NULL), 'inline');
+    }
+  }
+  return '';
+}
+ 
+/**
+ * Implemention of hook_menu().
+ */
+function jq_eyecandy_menu() {
+  $items = array();
+  $items['admin/settings/jq_eyecandy'] = array(
+    'title' => 'JQuery EyeCandy',
+    'description' => 'Javascript visual effects using jquery plugins.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('jq_eyecandy_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+ return $items;
+}
+
+/**
+ *  jq_curvycorners admin/settings page; implements hook_form
+ */
+function jq_eyecandy_admin_settings() {
+
+  $plugins = _jq_eyecandy_plugins();
+  
+  //colorblend plugin
+  $form['jq_eyecandy_colorblend'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('ColorBlend Plugin'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => -10
+  );
+  
+  $form['jq_eyecandy_colorblend']['jq_eyecandy_colorblend_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable the jQuery ColorBlend Plugin'),
+    '#default_value' => variable_get(jq_eyecandy_colorblend_enabled, ''),
+    '#disabled' => !is_file($plugins['colorblend']),
+    '#description' => is_file($plugins['colorblend']) ? t('The jQuery ColorBlend plugin is available at: /') . $plugins['colorblend'] : '<em><span style="color: #A50000;">'. t('The jQuery ColorBlend plugin is unavailable or not located in the jquery_plugin module directory.') .'</span></em>'
+  );
+
+  $form['jq_eyecandy_colorblend']['jq_eyecandy_colorblend_code'] = array(
+    '#type' => 'textarea',
+    '#title' => t('jQuery Fade code to apply on all pages'),
+    '#default_value' => variable_get('jq_eyecandy_colorblend_code', ''),
+    '#rows' => 10,
+    '#disabled' => !is_file($plugins['colorblend']),
+    '#description' => t('Enter jQuery ColorBlend code to be applied to all pages in all themes. Documentation is available at <a href="http://plugins.jquery.com/project/colorBlend">http://plugins.jquery.com/project/colorBlend</a>. Enter everything that should appear within the &lt;script&gt; tags.')
+  );  
+
+  
+  //corners plugin
+  $form['jq_eyecandy_curvycorners'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('CurvyCorners Plugin'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => -9
+  );
+  
+  $form['jq_eyecandy_curvycorners']['jq_eyecandy_curvycorners_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable the jQuery Corners Plugin'),
+    '#default_value' => variable_get(jq_eyecandy_curvycorners_enabled, ''),
+    '#disabled' => !is_file($plugins['curvycorners']),
+    '#description' => is_file($plugins['curvycorners']) ? t('The jQuery CurvyCorners plugin is available at: /') . $plugins['curvycorners'] : '<em><span style="color: #A50000;">'. t('The jQuery CurvyCorners plugin is unavailable or not located in the jquery_plugin module directory.') .'</span></em>'
+  );
+
+  $form['jq_eyecandy_curvycorners']['jq_eyecandy_curvycorners_code'] = array(
+    '#type' => 'textarea',
+    '#title' => t('jQuery CurvyCorners code to apply on all pages'),
+    '#default_value' => variable_get('jq_eyecandy_curvycorners_code', ''),
+    '#rows' => 10,
+    '#disabled' => !is_file($plugins['curvycorners']),
+    '#description' => t('Enter jQuery Corners code to be applied to all pages in all themes. Documentation is available at <a href="http://blue-anvil.com/archives/anti-aliased-rounded-corners-with-jquery">http://blue-anvil.com/archives/anti-aliased-rounded-corners-with-jquery</a>. Enter everything that should appear within the &lt;script&gt; tags.')
+  );
+
+  //dropshadow plugin
+  $form['jq_eyecandy_dropshadow'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('DropShadow Plugin'),
+    '#description' => is_file(drupal_get_path('module', 'jquery_plugin') .'/jquery.dimensions.min.js') ? t('This plugin requires the dimensions plugin which is available at: /') . $plugins['dropshadow'] : '<em><span style="color: #A50000;">'. t('This plugin requires the dimensions plugin which is unavailable or not located in the jquery_plugin module directory.') .'</span></em>',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => -8
+  );
+
+  $form['jq_eyecandy_dropshadow']['jq_eyecandy_dropshadow_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable the jQuery DropShadow Plugin'),
+    '#default_value' => is_file(drupal_get_path('module', 'jquery_plugin') .'/jquery.dimensions.min.js') ? variable_get(jq_eyecandy_dropshadow_enabled, '') : 0,
+    '#disabled' => !is_file($plugins['dropshadow']) || !is_file(drupal_get_path('module', 'jquery_plugin') .'/jquery.dimensions.min.js'),
+    '#description' => is_file($plugins['dropshadow']) ? t('The jQuery DropShadow plugin is available at: /') . $plugins['dropshadow'] : '<em><span style="color: #A50000;">'. t('The jQuery DropShadow plugin is unavailable or not located in the jquery_plugin module directory.') .'</span></em>'
+  );
+
+  $form['jq_eyecandy_dropshadow']['jq_eyecandy_dropshadow_code'] = array(
+    '#type' => 'textarea',
+    '#title' => t('jQuery DropShadow code to apply on all pages'),
+    '#default_value' => variable_get('jq_eyecandy_dropshadow_code', ''),
+    '#rows' => 10,
+    '#disabled' => !is_file($plugins['dropshadow']) || !is_file(drupal_get_path('module', 'jquery_plugin') .'/jquery.dimensions.min.js'),
+    '#description' => t('Enter jQuery DropShadow code to be applied to all pages in all themes. Documentation is available at <a href="http://plugins.jquery.com/project/DropShadow">http://plugins.jquery.com/project/DropShadow</a>. Enter everything that should appear within the &lt;script&gt; tags.')
+  );
+
+  //gradient
+  $form['jq_eyecandy_gradient'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Gradient Plugin'),
+	'#description' => is_file(drupal_get_path('module', 'jquery_plugin') .'/jquery.dimensions.min.js') ? t('This plugin requires the dimensions plugin which is available at: /') . $plugins['dropshadow'] : '<em><span style="color: #A50000;">'. t('This plugin requires the dimensions plugin which is unavailable or not located in the jquery_plugin module directory.') .'</span></em>',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => -7
+  );
+  
+  $form['jq_eyecandy_gradient']['jq_eyecandy_gradient_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable the jQuery Gradient Plugin'),
+    '#default_value' => is_file(drupal_get_path('module', 'jquery_plugin') .'/jquery.dimensions.min.js') ? variable_get(jq_eyecandy_gradient_enabled, '') : 0,
+    '#disabled' => !is_file($plugins['gradient']) || !is_file(drupal_get_path('module', 'jquery_plugin') .'/jquery.dimensions.min.js'),
+    '#description' => is_file($plugins['gradient']) ? t('The jQuery Gradient plugin is available at: /') . $plugins['gradient'] : '<em><span style="color: #A50000;">'. t('The jQuery Gradient plugin is unavailable or not located in the jquery_plugin module directory.') .'</span></em>'
+  );
+
+  $form['jq_eyecandy_gradient']['jq_eyecandy_gradient_code'] = array(
+    '#type' => 'textarea',
+    '#title' => t('jQuery Gradient code to apply on all pages'),
+    '#default_value' => variable_get('jq_eyecandy_gradient_code', ''),
+    '#rows' => 10,
+    '#disabled' => !is_file($plugins['gradient']) || !is_file(drupal_get_path('module', 'jquery_plugin') .'/jquery.dimensions.min.js'),
+    '#description' => t('Enter jQuery Gradient code to be applied to all pages in all themes. Documentation is available at <a href="http://plugins.jquery.com/project/gradient">http://plugins.jquery.com/project/gradient</a>. Enter everything that should appear within the &lt;script&gt; tags.')
+  );  
+  
+  //reflect plugin
+  $form['jq_eyecandy_reflect'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Reflection Plugin'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#weight' => -6
+  );
+  
+  $form['jq_eyecandy_reflect']['jq_eyecandy_reflect_enabled'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable the jQuery Reflection Plugin'),
+    '#default_value' => variable_get(jq_eyecandy_reflect_enabled, ''),
+    '#disabled' => !is_file($plugins['reflect']),
+    '#description' => is_file($plugins['reflect']) ? t('The jQuery Relection plugin is available at: /') . $plugins['reflect'] : '<em><span style="color: #A50000;">'. t('The jQuery Reflection plugin is unavailable or not located in the jquery_plugin module directory.') .'</span></em>'
+  );
+
+  $form['jq_eyecandy_reflect']['jq_eyecandy_reflect_code'] = array(
+    '#type' => 'textarea',
+    '#title' => t('jQuery Reflection code to apply on all pages'),
+    '#default_value' => variable_get('jq_eyecandy_reflect_code', ''),
+    '#rows' => 10,
+    '#disabled' => !is_file($plugins['reflect']),
+    '#description' => t('Enter jQuery Reflection code to be applied to all pages in all themes. Documentation is available at <a href="http://plugins.jquery.com/project/reflect">http://plugins.jquery.com/project/reflect</a>. Enter everything that should appear within the &lt;script&gt; tags.')
+  );  
+  
+  return system_settings_form($form);
+}

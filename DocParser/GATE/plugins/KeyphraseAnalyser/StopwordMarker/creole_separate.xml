@@ -1,0 +1,50 @@
+<!-- creole.xml StopwordMarker -->
+<!--  alesch, 17/3/2008 -->
+
+<CREOLE-DIRECTORY>
+
+	<CREOLE>
+
+		<!-- resource for stopwordmarker -->
+		<RESOURCE>
+			<NAME>StopwordMarker</NAME>
+			<JAR>StopwordMarker.jar</JAR>
+			<CLASS>
+				ie.deri.sw.smile.nlp.gate.stopword.StopwordMarker
+			</CLASS>
+			<PARAMETER COMMENT="The document to be processed"
+				NAME="document" RUNTIME="true">
+				gate.Document
+			</PARAMETER>
+			<PARAMETER NAME="resourceDir"
+				COMMENT="the directory holding the stopword lists relative to this"
+				DEFAULT="resources" RUNTIME="false">
+				java.net.URL
+			</PARAMETER>
+			<PARAMETER NAME="annotationSetName"
+				COMMENT="The name used for the input annotation set" RUNTIME="true"
+				OPTIONAL="true">
+				java.lang.String
+			</PARAMETER>
+			<PARAMETER NAME="encoding"
+				COMMENT="The encoding used for reading the stopword list files"
+				DEFAULT="UTF-8">
+				java.lang.String
+			</PARAMETER>
+      <PARAMETER NAME="stopwordFeatureName"
+                 COMMENT="The token feature to contain the stopword information"
+                 RUNTIME="true"
+                 DEFAULT="stopword">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="languageFeatureName"
+                 COMMENT="The document feature containing the language information"
+                 RUNTIME="true"
+                 DEFAULT="language">
+        java.lang.String
+      </PARAMETER>
+		</RESOURCE>
+
+	</CREOLE>
+
+</CREOLE-DIRECTORY>

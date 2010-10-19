@@ -1,0 +1,10 @@
+This tool requires:
+-poppler-utils installed (pdftohtml executable on path)
+-open office >=3 installed
+
+Configuration:
+-Place the docconverter.xml configuration file into JETTY contexts dir
+-Start jetty server with the following java system parameters set ("-D" options):
+--NOMUS2HOME=/home/nomus2 [Nomus2 root, referenced in docconverter.xml for the war file location]
+--java.library.path=/usr/lib/ure/lib [location of open office libjpipe file]
+--DOPENOFFICEHOME=/usr/lib/openoffice [open office dir]

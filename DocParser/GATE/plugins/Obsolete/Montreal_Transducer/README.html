@@ -1,0 +1,481 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.78 [fr] (Windows NT 5.0; U) [Netscape]">
+   <title>README</title>
+</head>
+<body>
+
+<center>
+<h1>
+The Montreal Transducer module for GATE</h1></center>
+
+<center>
+<h2>
+User guide</h2></center>
+
+<center>Copyright Luc Plamondon, Universit&eacute; de Montr&eacute;al,
+2004.
+<br>plamondl@iro.umontreal.ca
+<br>$Id$</center>
+
+<p><br>
+<h2>
+Table of contents</h2>
+
+<ol>
+<li>
+<a href="#whatisgate">What is GATE</a></li>
+
+<li>
+<a href="#whatismtltransducer">What is the Montreal Transducer?</a></li>
+
+<li>
+<a href="#help">Getting help</a></li>
+
+<li>
+<a href="#installation">Installation procedure</a></li>
+
+<li>
+<a href="#gui">How to use it with the GATE GUI?</a></li>
+
+<li>
+<a href="#standalone">How to use it in a standalone GATE program?</a></li>
+
+<li>
+<a href="#language">Changes to the JAPE language</a></li>
+
+<li>
+<a href="#developers">For developers</a></li>
+
+<li>
+<a href="#licence">Licence</a></li>
+
+<li>
+<a href="#change">Change log</a></li>
+</ol>
+
+<h2>
+<a NAME="whatisgate"></a>1) What is GATE?</h2>
+GATE is a development environment for language engineering. It is open
+source and it can be downloaded from <a href="http://gate.ac.uk">http://gate.ac.uk</a>.
+The processing of a document is divided into small tasks that are performed
+by independent JavaBeans modules. The Montreal Transducer is one of those
+modules.
+<h2>
+<a NAME="whatismtltransducer"></a>2) What is the Montreal Transducer?</h2>
+A transducer has 2 inputs: a document and a human-readable grammar. Generally,
+the output is a document with annotations added according to the grammar,
+but it could be anything else because the grammar allows Java code to be
+executed upon the parsing of a rule. A transducer can be used to identify
+named entities in a document, for example.
+<p>The GATE framework comes with a basic "Jape Transducer"
+which is fully described in the <a href="http://www.gate.ac.uk/sale/tao/index.html">Gate
+user guide</a>. The JAPE grammar language understood by the transducer
+is also explained. There is also an "Ontology Aware Transducer" that is
+a wrapper around the Jape Transducer (in fact, the latter's core is already
+ontology aware). And there is a "ANNIE Transducer" that is nothing more
+than a Jape Transducer that loads with a named-entity recognition grammar.
+<p>The Montreal Transducer is an improved Jape Transducer. It is intended
+to make grammar authoring easier by providing a more flexible version of
+the JAPE language and it also fixes a few bugs.
+<p>If you write JAPE grammars, see section <a href="#language">Changes
+to the JAPE language</a> for all the details.&nbsp; Otherwise, here is
+a short description of the enhancements:
+<h3>
+a) The improvements</h3>
+
+<ul>
+<li>
+While only '<tt>==</tt>' constraints were allowed on annotation attributes,
+the grammar now accepts constraints such as <tt>{MyAnnot.attrib != value}</tt>,
+<tt>{MyAnnot.attrib
+> value}</tt>, <tt>{MyAnnot.attrib &lt; value}</tt>,
+<tt>{MyAnnot.attrib
+=~ value}</tt> and <tt>{MyAnnot.attrib !~ value}</tt></li>
+
+<li>
+The grammar now accepts negated constraints such as <tt>{!MyAnnot}</tt>
+(true if no annotation starting from current node has the MyAnnot type)
+and <tt>{!MyAnnot.attrib == value}</tt> (true if <tt>{MyAnnot.attrib ==
+value}</tt> fails), where the '<tt>==</tt>' constraint can be any other
+operator</li>
+
+<li>
+Because the transducer compiles rules at run-time, the classpath must include
+the transducer jar file (unless the transducer is bundled in the GATE jar
+file). The Montreal Transducer updates the classpath automatically when
+it is initialised.</li>
+</ul>
+
+<h3>
+b) The bugs fixed</h3>
+
+<ul>
+<li>
+Constraints on more than one annotation types for a same node now work.
+For example, <tt>{MyAnnot1, MyAnnot2}</tt> was allowed by the Jape Transducer
+but not implemented yet</li>
+
+<li>
+The "<tt>*</tt>" and "<tt>+</tt>" Kleene operators were not greedy when
+they occurred inside a rule. The document region parsed by a rule is correct
+but ambiguous labels inside the rule were not resolved the expected way.
+In the following rule for example, a node that would match both constraints
+should be part of the "<tt>:titles</tt>" label and not "<tt>:names</tt>"
+because the first "<tt>+</tt>" is expected to be greedy:</li>
+</ul>
+
+<center><tt>({Lookup.majorType == title})+:titles ({Token.orth == upperInitial})*:names</tt></center>
+
+<h2>
+<a NAME="help"></a>3) Getting help</h2>
+The reader should be familiar with the Jape language. See the <a href="http://gate.ac.uk/sale/tao/index.html">Gate
+user guide</a>, more specifically section
+<em>JAPE: Regular Expressions Over Annotations</em> and appendix
+<em>JAPE: Implementation</em>.
+<p>The Montreal Transducer sources are freely available, so user support
+will be very limited.&nbsp; You may find what you are looking for on the
+project <a href="http://www.iro.umontreal.ca/~plamondl/mtltransducer/index.html">homepage</a>.
+<p>Developers will find comments on classes and methods through the javadoc
+pages: <tt>doc/javadoc/index.html</tt>.
+<h2>
+<a NAME="installation"></a>4) Installation procedure</h2>
+Java 1.4 or higher is required. The Montreal Transducer has been tested
+on GATE 2.1, 2.2 and 3.0. If you are using GATE 2.x, put the <tt>MtlTransducer.jar</tt> and <tt>creole.xml</tt> files
+in any directory (as long as they are in the same directory). If you are using GATE 3.0, put the 2 files in your plugin directory (more about plugins
+in the <a href="http://gate.ac.uk/sale/tao/index.html">Gate
+user guide</a>, section <em>Use (CREOLE) Plug-ins</em>).
+<p>Note that the directory must be accessible by the embedding application via the
+"<tt>file:</tt>" protocol. Unlike for most GATE modules, the directory
+(also known as a repository in GATE 2.x) of a transducer cannot be a web URL ("<tt>http://www...</tt>").
+This is because the transducer compiles java code (the grammar rules) every
+time it is loaded and the resource jar file must be part of the classpath
+when compiling, but only regular file URLs are allowed in the classpath.
+The resource will try to add the jar file to the classpath automatically.
+<p>If problems arise when loading the transducer, add the jar file to the
+classpath manually prior to running the application.
+<p>If you plan to use the transducer with the
+GATE GUI, see section <a href="#gui">How to use it with the GATE GUI</a>. If you plan to use it
+in a standalone program, jump to section <a href="#standalone">How to use it in a standalone GATE program</a>.
+<h2>
+<a NAME="gui"></a>5) How to use it with the GATE GUI</h2>
+Gate 2.x: In the GUI menu, click on <b>File / Load a CREOLE Repository</b>, then
+enter the URL of the directory where <tt>MtlTransducer.jar</tt> and <tt>creole.xml</tt>
+files live. The path must begin with "<tt>file:</tt>". It cannot be a web
+URL (see <a href="#installation">Installation procedure</a>).
+<p>Gate 3.0: In the GUI menu, click on <b>File / Manage CREOLE plugins</b>, find the Montreal Transducer and
+tick the "Load now" or "Load always" box.
+<p>Then, for all versions of GATE: Click on <b>File / New processing resource</b> and choose <b>Montreal
+Transducer</b>. The only mandatory field is the <b>Grammar URL</b>: enter
+the path of a <tt>main.jape</tt> file in the same manner as for a regular
+Jape Transducer (this URL can point to a file on the web). Add the new
+module to a processing pipeline. It may be necessary to run a tokeniser
+and gazetteer before the transducer if the grammar uses <tt>Token</tt>
+and <tt>Lookup</tt> annotations.
+<h2>
+<a NAME="standalone"></a>6) How to use it in a standalone GATE program?</h2>
+Note: this section was written for GATE 2.x. If you are using GATE 3.0, repository management
+(setting the plugin directory) may work differently.
+
+<p>A good starting point is the example code <a href="http://www.gate.ac.uk/GateExamples/doc/java2html/sheffield/examples/StandAloneAnnie.java.html">here</a>.
+The following code registers a repository (the directory where the <tt>MtlTransducer.jar</tt>
+and <tt>creole.xml</tt> files live; the directory cannot be a web URL,
+see <a href="#installation">Installation procedure</a>), then creates a
+Montreal Transducer with specific parameters (the grammarURL parameter
+is mandatory and it should point to a <tt>main.jape</tt> file like for
+a regular Jape Transducer), and finally adds the resource to a pipeline.
+It may be necessary to run a tokeniser and gazetteer before the transducer
+if the grammar uses Token and Lookup annotations.
+<p><tt>// Create a pipeline</tt>
+<br><tt>SerialAnalyserController annieController = (SerialAnalyserController)
+Factory.createResource("gate.creole.SerialAnalyserController",</tt>
+<br><tt>&nbsp;&nbsp; Factory.newFeatureMap(), Factory.newFeatureMap(),
+"ANNIE_" + Gate.genSym());</tt>
+<p><tt>// Load a tokeniser, gazetteer, etc. here</tt>
+<p><tt>// Register the external repository where the Montreal Transducer
+jar file lives</tt>
+<br><tt>gate.Gate.getCreoleRegister().registerDirectories(new URL("file:MtlTransducer/build"));</tt>
+<p><tt>// Create an instance of the transducer after having set the grammar
+URL</tt>
+<br><tt>FeatureMap params;</tt>
+<br><tt>params = Factory.newFeatureMap();</tt>
+<br><tt>params.put("grammarURL", new URL("file:creole/NE/main.jape"));</tt>
+<br><tt>params.put("inputASName", "Original markups");</tt>
+<br><tt>ProcessingResource transducerPR = (ProcessingResource)</tt>
+<br><tt>Factory.createResource("ca.umontreal.iro.rali.gate.MtlTransducer",
+params);</tt>
+<br><tt>annieController.add(transducerPR);</tt>
+<h2>
+<a NAME="language"></a>7) Changes to the JAPE language</h2>
+The Montreal Transducer is based on the Transducer from the ANNIE suite
+but with the following added features:
+<ul>
+<li>
+It provides more <a href="#morecomparison">comparison</a> operators in
+left hand side constraints</li>
+
+<li>
+It allows <a href="#conjunctions">conjunctions</a> of constraints on different
+types of annotation</li>
+
+<li>
+It guarantees that the "*" and "+" Kleene operators are <a href="#greedy">greedy</a></li>
+</ul>
+
+<p><br><a NAME="morecomparison"></a><b>More comparison operators</b>
+<p>The Montreal Transducer offers more comparison operators to put in left
+hand side constraints of a JAPE grammar. The standard ANNIE transducer
+allows constraints only like these:
+<ul>
+<li>
+<tt>{MyAnnot}</tt> // true if the current annotation is a MyAnnot annotation</li>
+
+<li>
+<tt>{MyAnnot.attrib == "3"}</tt> // true if <tt>attrib</tt> attribute has
+a value that is equal to 3</li>
+</ul>
+The Montreal Transducer allows the following constraints:
+<ul>
+<li>
+<tt>{!MyAnnot}</tt> // true if NO annotation at current point is a MyAnnot</li>
+
+<li>
+<tt>{!MyAnnot.attrib == 3}</tt> // true if <tt>attrib</tt> is not equal
+to 3</li>
+
+<li>
+<tt>{MyAnnot.attrib != 3}</tt> // true if <tt>attrib</tt> is not equal
+to 3</li>
+
+<li>
+<tt>{MyAnnot.attrib > 3}</tt> // true if <tt>attrib</tt> > 3</li>
+
+<li>
+<tt>{MyAnnot.attrib >= 3}</tt> // true if <tt>attrib</tt> &amp;ge; 3</li>
+
+<li>
+<tt>{MyAnnot.attrib &lt; 3}</tt> // true if <tt>attrib</tt> &lt; 3</li>
+
+<li>
+<tt>{MyAnnot.attrib &lt;= 3}</tt> // true if <tt>attrib</tt> &amp;le; 3</li>
+
+<li>
+<tt>{MyAnnot.attrib =~ "[Dd]ogs?"}</tt> // true if regular expression matches
+<tt>attrib</tt>
+entirely</li>
+
+<li>
+<tt>{MyAnnot.attrib !~ "[Dd]ogs?"}</tt> // true if regular expression does
+not match <tt>attrib</tt></li>
+</ul>
+See the notes on the <a href="#equality">equality</a> operators, <a href="#comparison">comparison</a>
+operators, <a href="#pattern">pattern matching</a> operators and <a href="#negation">negation</a>
+operator.
+<p><a NAME="equality"></a><b>Notes on equality operators: "==" and "!="</b>
+<p>The "!=" operator is the negation of the "==" operator, that is to say:
+<tt>{Annot.attribute
+!= value}</tt> is equivalent to <tt>{!Annot.attribute == value}</tt>.
+<p>When a constraint on an attribute cannot be evaluated because an annotation
+does not have a value for the attribute, the equality operator returns
+false (and the difference operator returns true).
+<p>If the constraint's attribute is a string, then the String.equals method
+is called with the annotation's attribute as a parameter. If the constraint's
+attribute is an integer, then the Long.equals method is called. If the
+constraint's attribute is a float, then the Double.equals method is called.
+And if the constraint's attribute is a boolean, then the Boolean.equals
+method is called. The grammar parser does not allow other types of constraints.
+<p>Normally, when the types of the constraint's and the annotation's attribute
+differ, they cannot be equal. However, because some ANNIE processing resources
+(namely the tokeniser) set all attribute values as strings even when they
+are numbers (<tt>Token.length</tt> is set to a string value, for example),
+the Montreal Transducer can convert the string to a Long/Double/Boolean
+before testing for equality. In other words, for the token "dog":
+<ul>
+<li>
+<tt>{Token.attrib == "3"}</tt> is true using either the ANNIE transducer
+or the Montreal Transducer</li>
+
+<li></element><code>{Token.attrib == 3}</code> is false using the ANNIE transducer, but 
+true using the Montreal Transducer</li>
+</ul>
+<a NAME="comparison"></a><b>Notes on comparison operators: "&gt;", "&lt;",
+">=" and "&lt;="</b>
+<p>If the constraint's attribute is a string, then the String.compareTo
+method is called with the annotation's attribute as a parameter (strings
+can be compared alphabetically). If the constraint's attribute is an integer,
+then the Long.compareTo method is called. If the constraint's attribute
+is a float, then the Double.compareTo method is called. The transducer
+issues a warning if an attempt is made to compare two Boolean because this
+type does not extend the Comparable interface and thus has no compareTo
+method.
+<p>The transducer issues a warning when it encounters an annotation's attribute
+that cannot be compared to the constraint's attribute because the value
+types are different, or because one value is null. For example, given a
+constraint <tt>{MyAnnot.attrib > 2}</tt>, a warning is issued for any MyAnnot
+in the document for which <tt>attrib</tt> is not an integer, such as <tt>attrib
+= "dog"</tt> because we cannot evaluate <tt>"dog" > 2</tt>. Similarly,
+<tt>{MyAnnot.attrib
+> 2}</tt> cannot be compared to <tt>attrib = 2.5</tt> because 2.5 is a
+float. In this case, force 2 as a float with <tt>{MyAnnot.attrib > 2.0}</tt>.
+<p>The transducer does not issue a warning when the constraint's attribute
+is an integer/float and the annotation's attribute is a string but can
+be parsed as an integer/float. Some ANNIE processing resources (namely
+the tokeniser) set all attribute values as strings even when they are numbers
+(<tt>Token.length</tt> is set to a string value, for example), and because
+<tt>{Token.length
+&lt; "10"}</tt> would lead to an alphabetical comparison, a workaround
+was needed so we could write <tt>{Token.length &lt; 10}</tt>.
+<p><a NAME="pattern"></a><b>Notes on pattern matching operators: "=~" and
+"!~"</b>
+<p>The "!~" operator is the negation of the "=~" operator, that is to say:
+<tt>{Annot.attribute
+!~ "value"}</tt> is equivalent to <tt>{!Annot.attribute =~ "value"}</tt>.
+<p>When a constraint on an attribute cannot be evaluated because an annotation
+does not have a value for the attribute, the value defaults to an empty
+string ("").
+<p>The regular expression must be enclosed in double quotes, otherwise
+the transducer issues a warning:
+<ul>
+<li>
+<tt>{MyAnnot.attrib =~ "[Dd]ogs?"}</tt> is correct</li>
+
+<li>
+<tt>{MyAnnot.attrib =~ 2}</tt> is incorrect</li>
+</ul>
+The regular expression must be a valid java.util.regex.Pattern, otherwise
+a warning is issued.
+<p>To have a match, the regular expression must cover the entire attribute
+string, not only a part of it. For example:
+<ul>
+<li>
+<tt>{MyAnnot.attrib =~ "do"}</tt> does not match "does"</li>
+
+<li>
+<tt>{MyAnnot.attrib =~ "do.*"}</tt> matches "does"</li>
+</ul>
+<a NAME="negation"></a><b>Notes on the negation operator: "!"</b>
+<p>Bindings: when a constraint contains both negated and regular elements,
+the negated elements do not affect the bindings of the regular elements.
+Thus, <tt>{Person, !Organization}</tt> binds to the same annotations (amongst
+those that starts at current node in the annotation graph) as <tt>{Person}</tt>;
+the difference between the two is that the first will simply not match
+if one of the annotations starting at current node is an Organization.
+On the other hand, when a constraint contains only negated elements such
+as <tt>{!Organization}</tt>, it binds to all annotations starting at current
+node. It is important to keep that in mind especially when a rule ends
+with a constraint with negated elements only: the longest annotation at
+current node will be preferred.
+<p><a NAME="conjunctions"></a><b>Conjunctions of constraints on different
+types of annotation</b>
+<p>The Montreal Transducer allows constraints on different types of annotation.
+Though the JAPE implementation exposed in the GATE 2.1 User Guide details
+an algorithm that would allow such constraints, the ANNIE transducer does
+not implement it. This transducer does. Those examples do not work as expected
+with the ANNIE transducer but do with this transducer:
+<ul>
+<li>
+<tt>{Person, Organization}</tt></li>
+
+<li>
+<tt>{Person, Organization, Token.length == "10"}</tt></li>
+
+<li>
+<tt>{Person, !Organization}</tt></li>
+</ul>
+As described in the algorithm, the first example above matches points in
+the document (or nodes in the annotation graph) where both a Person and
+an Organization annotations begin, even if they do not end at the same
+point in the document and even if other annotations begin at the same point.
+When a negation is involved, such as in the third example above, no annotation
+of that kind must begin at a given point for a match to occur (see the
+note on the negation operator below).
+<p><a NAME="greedy"></a><b>Greedy Kleene operators: "*" and "+"</b>
+<p>The ANNIE transducer does not behave consistently regarding the "*"
+and "+" Kleene operators. Suppose we have the following rule with 2 bindings:
+<ul>
+<li>
+<tt>({Lookup.majorType == title})+:titles ({Token.orth == upperInitial})+:names</tt></li>
+</ul>
+Given the sentence "<tt>the Honourable Mr. John Atkinson</tt>", we expect
+the following bindings:
+<ul>
+<li>
+titles: "<tt>Honourable Mr.</tt>"</li>
+
+<li>
+names: "<tt>John Atkinson</tt>"</li>
+</ul>
+But the ANNIE transducer could give something like:
+<ul>
+<li>
+titles: "<tt>Honourable</tt>"</li>
+
+<li>
+names: "<tt>Mr. John Atkinson</tt>"</li>
+</ul>
+This is not incorrect, but according to convention, "*" and "+" operators
+match as many tokens as possible before moving on to the next constraint.
+The Montreal Transducer guarantees that "*" and "+" are greedy.
+<br>&nbsp;
+<h2>
+<a NAME="developers"></a>8) For developers</h2>
+Developers will find comments on classes and methods through the javadoc
+pages: <tt>doc/javadoc/index.html</tt>. Most of the source code comes from
+the Jape Transducer in GATE. It was necessary to copy entire packages instead
+of overriding a few methods because many class attributes and members were
+not accessible outside the gate.xxx package. The Montreal Transducer needs
+4 packages:
+<h3>
+a) ca.umontreal.iro.rali.gate.creole</h3>
+Contains only the MtlTransducer class, which is the module's interface
+with the outside world. The MtlTransducer class is almost exactly the same
+as gate.creole.Transducer (the basic Jape Transducer). The code of OntologyAwareTransducer
+is also included in MtlTransducer. It was impossible to simply extend any
+of those transducers because some members are private or package-protected.
+<h3>
+b) ca.umontreal.iro.rali.gate.fsm</h3>
+Same as the gate.fsm package. This package models the grammar as a finite
+state machine. Only the convertComplexPE private method of the FSM class
+has been substantially modified.
+<h3>
+c) ca.umontreal.iro.rali.gate.jape</h3>
+Almost the same as the gate.jape package. Significant modifications were
+made to the SinglePhaseTransducer, Constraint and JdmAttribute classes.
+<h3>
+d) ca.umontreal.iro.rali.gate.jape.parser</h3>
+Almost the same as gate.jape.parser package. Modifications were made to
+<tt>ParseCpsl.jj</tt>
+so that the JAPE language could be extended. This file is to be compiled
+with javacc. The other classes of the package are automatically generated
+by javacc.
+<h2>
+<a NAME="licence"></a>9) Licence</h2>
+This work is a modification of some GATE libraries and therefore the binaries
+and source code are distributed under the same licence as GATE itself.
+GATE is licenced under the <a href="http://www.gate.ac.uk/gate/licence.html">GNU
+Library General Public License</a>, version 2 of June 1991. That licence
+is distributed with this module in the file LICENCE.htm. GATE binaries
+and source code are available at <a href="http://gate.ac.uk">http://gate.ac.uk</a>.
+Modifications to the original source code are detailed in the header of
+each file.
+<p>Basically, the Montreal Transducer source code and binaries are free.
+A work that would be a modification of it should also be free. However,
+a work that would only USE the Montreal Transducer would be exempted from
+the terms of the licence, provided the GATE and the Montreal Transducer
+binaries, source code and licence are distributed with the embedding work
+and provided the use of those softwares is acknowledged. For additional
+help on the interpretation of the GATE licence, see <a href="http://www.gate.ac.uk/gate/doc/index.html#licence">http://www.gate.ac.uk/gate/doc/index.html</a>.
+<h2>
+<a NAME="change"></a>10) Change log</h2>
+1.2:
+<br>- Updated documentation to address GATE 3.0 plugin management.
+<p>1.1:
+<br>- Bug fixed: a constraint with multiple negated tests on the same attribute
+of a given annotation type would match when at least one test succeeds,
+but it should match only when ALL negated tests succeed.
+<p>1.0:
+<br>- Initial release.
+</body>
+</html>

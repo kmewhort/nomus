@@ -1,0 +1,16 @@
+<CREOLE-DIRECTORY>
+	<CREOLE>
+		<RESOURCE>
+			<JAR SCAN="true">languageID.jar</JAR>
+			<NAME>TextCat PR</NAME>
+			<CLASS>org.knallgrau.utils.textcat.LanguageIdentifier</CLASS>
+			<COMMENT>Recognizes the document language using TextCat. Possible languages: german, english, french, 
+				spanish, italian, swedish, polish, dutch, norwegian, finnish, albanian slovakian, 
+				slovenian, danish, hungarian. </COMMENT>
+			<PARAMETER NAME="document" RUNTIME="true" COMMENT="The document to be processed.">gate.Document</PARAMETER>
+			<PARAMETER NAME="languageFeatureName" RUNTIME="true"
+				COMMENT="The name of the document language feature."
+				OPTIONAL="true" DEFAULT="LANGUAGE">java.lang.String</PARAMETER>
+		</RESOURCE>
+	</CREOLE>
+</CREOLE-DIRECTORY>

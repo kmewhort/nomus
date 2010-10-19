@@ -1,0 +1,10 @@
+// $Id: CHANGELOG.txt,v 1.3 2009/08/04 13:59:57 agentken Exp $
+
+04-AUG-2009
+-- #527506 by mrfelton. Nice patch to add menu description to fields.
+
+16-JUL-2009
+-- #518818 by kle. Fixes sorting error.
+
+29-JUN-2009
+-- Adds stub code for converting nids into menu trees.

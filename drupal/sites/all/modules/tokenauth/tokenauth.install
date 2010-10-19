@@ -1,0 +1,48 @@
+<?php
+// $Id: tokenauth.install,v 1.3.4.4 2008/08/10 23:05:54 weitzman Exp $
+
+function tokenauth_schema() {
+  $schema['tokenauth_tokens'] = array(
+   'description'     => 'Stores information about each user\'s token',
+   'fields'          => array(
+     'uid'             => array(
+       'description'     => 'The user\'s {users}.uid',
+       'type'            => 'int',
+       'size'            => 'normal',
+       'not null'        => TRUE,
+     ),
+     'token'        => array(
+       'description'     => 'The user specific token',
+       'type'            => 'varchar',
+       'length'          => 50,
+       'not null'        => TRUE,
+     ),
+   ),
+   'primary key'       => array('token'),
+   'unique keys'         => array(
+     'uid_key'           => array('uid')
+   ),
+  );
+ return $schema;
+}
+
+
+function tokenauth_install() {
+  drupal_install_schema('tokenauth');
+}
+
+function tokenauth_enable() {
+  // This used to be a clever subquery but we need to insert a different password for each user.
+  $result = db_query("SELECT u.uid FROM {users} u LEFT JOIN {tokenauth_tokens} tt ON u.uid = tt.uid WHERE tt.token IS NULL");
+  while ($row = db_fetch_object($result)) {
+    $length = variable_get('tokenauth_length', 10);
+    db_query("INSERT INTO {tokenauth_tokens} (uid,token) VALUES (%d,'%s')", $row->uid, user_password($length));
+  }
+}
+
+function tokenauth_uninstall() {
+  drupal_uninstall_schema('tokenauth');
+  variable_del('tokenauth_length');
+  variable_del('tokenauth_pages');
+  variable_del('tokenauth_reset');
+}

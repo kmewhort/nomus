@@ -1,0 +1,12 @@
+;  $Id: menu_node.info,v 1.1 2009/05/08 14:00:16 agentken Exp $
+name = Menu Node API
+description = Manages relationships between node ids and menu items.
+dependencies[] = menu
+core = 6.x
+
+; Information added by drupal.org packaging script on 2009-09-14
+version = "6.x-1.3"
+core = "6.x"
+project = "menu_node"
+datestamp = "1252938686"
+

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!-- $Id: creole.xml 11821 2009-10-29 10:50:53Z ian_roberts $ -->
+<CREOLE-DIRECTORY>
+  <CREOLE>
+   <!-- WordNet  -->
+    <RESOURCE>
+      <NAME>WordNet 1.6</NAME>
+      <CLASS>gate.wordnet.IndexFileWordNetImpl</CLASS>
+      <INTERFACE>gate.wordnet.WordNet</INTERFACE>
+      <COMMENT>Princeton WordNet 1.6.</COMMENT>
+      <HELPURL>http://gate.ac.uk/userguide/sec:misc-creole:wn</HELPURL>
+      <PARAMETER   NAME="propertyUrl" SUFFIXES="xml" COMMENT="Property File">java.net.URL</PARAMETER>      
+      <ICON>controller.gif</ICON>
+    </RESOURCE>
+    
+    <!-- WordNet  -->
+    <RESOURCE>
+      <NAME>WordNet 1.6 Viewer</NAME>
+      <COMMENT>WordNet viewer</COMMENT>
+      <CLASS>gate.gui.wordnet.WordNetViewer</CLASS>
+      <GUI TYPE="large">
+        <MAIN_VIEWER/>
+        <RESOURCE_DISPLAYED>gate.wordnet.WordNet</RESOURCE_DISPLAYED>
+      </GUI>
+    </RESOURCE>
+    
+  </CREOLE>
+</CREOLE-DIRECTORY>
+

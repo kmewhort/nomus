@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!-- $Id: creole.xml 12417 2010-03-30 10:38:30Z adamfunk $ -->
+<CREOLE-DIRECTORY>
+  <CREOLE>   
+    <!-- creole.xml for SearchPR -->
+    <RESOURCE>
+      <JAR>crawl.jar</JAR>
+      <JAR>lib/websphinx.jar</JAR>
+      <NAME>CrawlerPR</NAME>
+      <CLASS>crawl.CrawlPR</CLASS>
+      <COMMENT>Provides interface to the webspinx API.</COMMENT>
+      <HELPURL>http://gate.ac.uk/userguide/sec:misc-creole:crawler</HELPURL>
+
+      <PARAMETER NAME="root"
+		 RUNTIME="true"
+		 COMMENT="The Starting root for the crawl"
+		 OPTIONAL="true">java.lang.String</PARAMETER>
+      <PARAMETER NAME="domain"
+		 RUNTIME="true"
+		 DEFAULT="SUBTREE"
+		 COMMENT="The domain for the crawl [SERVER/SUBTREE/WEB]"
+		 OPTIONAL="false">java.lang.String</PARAMETER>
+      <PARAMETER NAME="depth"
+		 RUNTIME="true"
+		 DEFAULT="3"
+		 COMMENT="The depth to which the crawl must proceed">java.lang.Integer</PARAMETER> 
+      <PARAMETER NAME="max"
+		 RUNTIME="true"
+		 DEFAULT="-1"
+		 COMMENT="The max number of pages for which the crawl must proceed"
+		 OPTIONAL="true">java.lang.Integer</PARAMETER> 
+      <PARAMETER NAME="dfs"
+		 RUNTIME="true"
+		 DEFAULT="false"
+		 COMMENT="dfs = true; bfs = false">java.lang.Boolean</PARAMETER>
+      <PARAMETER NAME="source"
+		 RUNTIME="true"
+		 COMMENT="The list of root urls."
+		 OPTIONAL="true">gate.Corpus</PARAMETER>
+      <PARAMETER NAME="outputCorpus"
+		 RUNTIME="true"
+		 OPTIONAL="false"
+		 COMMENT="The corpus to store crawled pages to">gate.Corpus</PARAMETER>
+
+      <ICON>binoculars.gif</ICON>
+    </RESOURCE>
+  </CREOLE>
+</CREOLE-DIRECTORY>

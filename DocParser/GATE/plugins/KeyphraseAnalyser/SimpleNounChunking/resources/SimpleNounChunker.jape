@@ -1,0 +1,215 @@
+/********************************************************************
+ *
+ * JAPE Grammar for a simple Noun Chunker.
+ * SimpleNounChunker.java, provides a noun chunker as a GATE plugin
+ * Copyright (C) 2008  Alexander Schutz
+ * National University of Ireland, Galway
+ * Digital Enterprise Research Institute
+ * 
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ *
+ * JAPE Grammar for a simple Noun Chunker.
+ * This approach is actually a 1-to-1 adapation of the chunking 
+ * strategy described in the LingPipe [1] part-of-speech tutorial, 
+ * where a chunking implementation is also covered briefly [2].
+ * 
+ * The Java-code described as mentioned above is simply translated 
+ * into a bunch of JAPE macros and 2 rules, one each for NounChunks 
+ * and VerbChunks. 
+ * Furthermore, the part-of-speech tags of the Brown-Corpus had 
+ * to be adjusted/mapped to the tagset used by the GATE part-of-speech 
+ * tagger resource. 
+ *
+ * [1] http://alias-i.com/lingpipe/index.html
+ * [2] http://alias-i.com/lingpipe/demos/tutorial/posTags/read-me.html
+ *
+ * author: Alexander Schutz (alex.schutz@deri.ie)
+ * last change: 2008-02-22
+ ********************************************************************/
+
+Phase: NounChunker	
+Input: Token Phrase
+Options: control=appelt
+
+
+// Nouns:
+// NN, NN$, NNS, NNS$, NP, NP$, NPS, NPS$ -> POS-Tags of Hepple Tag Set
+Macro: NOUN
+(
+ {Token.category == "NN"}
+ | {Token.category == "NNP"}
+ | {Token.category == "NNPS"}
+ | {Token.category == "NNS"}
+ | {Token.category == "NP"}
+ | {Token.category == "NPS"}
+)
+
+
+// Adverbs:
+// RB, RB$, RBR, RBT, RN (not RP, the particle adverb) -> POS-Tags of Hepple Tag Set
+Macro: ADVERB
+(
+ {Token.category == "RB"}
+ | {Token.category == "RBR"}
+ | {Token.category == "RBS"}
+)
+
+
+// Determiners & Numerals:
+// ABN, ABX, AP, AP$, AT, CD, CD$, DT, DT$, DTI, DTS, DTX, OD -> POS-Tags of Hepple Tag Set
+Macro: DETERMINER
+(
+ {Token.category == "CD"}
+ | {Token.category == "DT"}
+ | {Token.category == "PDT"}
+)
+
+
+// Conjunctions:
+// CC -> POS-Tags of Hepple Tag Set
+Macro: CONJ
+(
+ {Token.category == "CC"}
+)
+
+
+// Adjectives:
+// JJ, JJ$, JJR, JJS, JJT -> POS-Tags of Hepple Tag Set
+Macro: ADJECTIVE
+(
+ {Token.category == "JJ"}
+ | {Token.category == "JJR"}
+ | {Token.category == "JJS"}
+ | {Token.category == "JJSS"}
+)
+
+
+// Pronoun:
+// PN, PN$, PP$, PP$$, PPL, PPLS, PPO, PPS, PPSS -> POS-Tags of Hepple Tag Set
+Macro: PRONOUN
+(
+ {Token.category == "PP"}
+ | {Token.category == "PRP"}
+ | {Token.category == "PRP$"}
+ | {Token.category == "PRPR$"}
+)
+
+
+// Verbs:
+// VB, VBD, VBG, VBN, VBZ -> POS-Tags of Hepple Tag Set
+Macro: VERB
+(
+ {Token.category == "VB"}
+ | {Token.category == "VBD"}
+ | {Token.category == "VBG"}
+ | {Token.category == "VBN"}
+ | {Token.category == "VBP"}
+ | {Token.category == "VBZ"}
+)
+
+
+// Auxiliaries:
+// MD, BE, BED, BEDZ, BEG, BEM, BEN, BER, BEZ -> POS-Tags of Hepple Tag Set
+Macro: AUXVERB
+(
+ {Token.category == "MD"}
+)
+
+
+// Punctuation:
+// ', ``, '', ., (, ), *, --, :, , -> POS-Tags of Hepple Tag Set
+Macro: PUNCT
+(
+ {Token.category == ","}
+ | {Token.category == "."}
+ | {Token.category == "'"}
+ | {Token.category == "("}
+ | {Token.category == ")"}
+ | {Token.category == "::"}
+ | {Token.category == "-"}
+ | {Token.category == "#"}
+) 
+
+
+
+Macro: NOUNCHUNK_START
+(
+ DETERMINER | ADJECTIVE | NOUN | PRONOUN
+)
+
+Macro: NOUNCHUNK_CONT
+(
+ NOUNCHUNK_START | ADVERB 
+// | PUNCT
+)
+
+Macro: VERBCHUNK_START
+(
+ VERB | AUXVERB | ADVERB
+)
+
+Macro: VERBCHUNK_CONT
+(
+ VERBCHUNK_START 
+// | PUNCT
+)
+
+
+Rule: NounChunk1
+Priority: 2
+(
+ (NOUNCHUNK_START)
+ (
+  (NOUNCHUNK_CONT)
+ )*
+):nounchunkref
+-->
+{ 
+  gate.FeatureMap features = Factory.newFeatureMap();
+  
+  gate.AnnotationSet nounchunk = (gate.AnnotationSet)bindings.get("nounchunkref");
+  gate.Annotation nounChunkAnn = (gate.Annotation) nounchunk.iterator().next();
+  features.put("rule", "NounChunk1");
+  
+  annotations.add(nounchunk.firstNode(), nounchunk.lastNode(), "NounChunk", features);
+}
+
+
+/*###################################################################
+ * WE DONT NEED THAT FOR THE MOMENT AS THE ANNIE VP TRANSDUCER IS 
+ * VERY FAST AND MUCH BETTER
+ *###################################################################
+Rule: VerbChunk1
+Priority: 1
+(
+ ({Token.category == "TO"})?
+ (VERBCHUNK_START)
+ ( 
+  ({Token.category == "TO"})?
+  (VERBCHUNK_CONT)
+ )*
+):verbchunkref
+-->
+{
+  gate.FeatureMap features = Factory.newFeatureMap();
+  
+  gate.AnnotationSet verbchunk = (gate.AnnotationSet)bindings.get("verbchunkref");
+  gate.Annotation verbChunkAnn = (gate.Annotation) verbchunk.iterator().next();
+  features.put("rule", "VerbChunk1");
+  
+  annotations.add(verbchunk.firstNode(), verbchunk.lastNode(),"VG", features);
+}
+ *##################################################################*/

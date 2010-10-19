@@ -1,0 +1,13 @@
+; $Id: slider_textfield.info,v 1.4.2.2 2008/12/24 12:15:18 skilip Exp $
+name = Textfield to slider
+description = This module provides a form element which replaces common textfields with a slider.
+package = User interface
+version = VERSION
+dependencies[] = jqp
+core = 6.x
+; Information added by drupal.org packaging script on 2009-01-02
+version = "6.x-3.0-beta2"
+core = "6.x"
+project = "slider_textfield"
+datestamp = "1230928257"
+

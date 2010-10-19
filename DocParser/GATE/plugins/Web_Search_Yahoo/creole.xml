@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!-- $Id: creole.xml 2660 2006-06-21 10:19:27Z ian $  -->
+<CREOLE-DIRECTORY>
+  <CREOLE>   
+   <!-- creole.xml for YahooPR -->
+    <RESOURCE>
+      <JAR>yahoo.jar</JAR>
+      <JAR>lib/yahoo_search-1.1.0.jar</JAR>
+      <NAME>YahooPR</NAME>
+      <CLASS>gate.yahoo.YahooPR</CLASS>
+      <COMMENT>Provides an interface to Yahoo API.</COMMENT>
+      <HELPURL>http://gate.ac.uk/userguide/sec:misc-creole:yahoo</HELPURL>
+      <PARAMETER NAME="corpus" RUNTIME="true" COMMENT="Corpus where the results are stored">gate.Corpus</PARAMETER>
+      <PARAMETER NAME="query" RUNTIME="true" COMMENT="The Search Query">java.lang.String</PARAMETER>
+      <PARAMETER NAME="applicationID" RUNTIME="false" COMMENT="The applicationID for Yahoo API">java.lang.String</PARAMETER>
+      <PARAMETER NAME="fileFormat" RUNTIME="true" OPTIONAL="true" DEFAULT="all">java.lang.String</PARAMETER>
+      <PARAMETER NAME="corpusAppendMode" DEFAULT="false" RUNTIME="true" COMMENT="If corpus should reinit itself">java.lang.Boolean</PARAMETER>
+      <PARAMETER NAME="limit" RUNTIME="true" DEFAULT="10" COMMENT="The number of results returned">java.lang.Integer</PARAMETER> 
+      <PARAMETER NAME="pagesToExclude" OPTIONAL="true" RUNTIME="true" COMMENT="Pages will be excluded from the result">java.util.ArrayList</PARAMETER>
+      <ICON>/gate/yahoo/yahoo.gif</ICON>
+    </RESOURCE>
+   </CREOLE>
+</CREOLE-DIRECTORY>

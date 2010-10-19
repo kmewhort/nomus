@@ -1,0 +1,11 @@
+.sidebar, .tab-wrapper, .messages, #content-top,
+.breadcrumb, #footer {
+	display: none;
+
+}
+.saveprint-icons {
+	display: hidden;
+}
+.left #main {
+	width: 100%;
+}

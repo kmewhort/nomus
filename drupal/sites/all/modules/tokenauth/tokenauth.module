@@ -1,0 +1,267 @@
+<?php
+// $Id: tokenauth.module,v 1.11.4.10 2009/07/17 03:31:37 inadarei Exp $
+
+/**
+ * Implementation of hook_perm().
+ */
+function tokenauth_perm() {
+  return array('access tokenauth', 'administer tokenauth');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function tokenauth_menu() {
+  $items['admin/settings/tokenauth'] = array(
+    'title' => t('Token authentication'),
+    'description' => t('Configure length of tokens, specify which pages accept authentication via token, and reset all tokens, etc.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tokenauth_admin_settings'),
+    'access arguments' => array('administer tokenauth')
+  );
+  $items['admin/settings/tokenauth/reset'] = array(
+    'title' => t('Reset tokens'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tokenauth_reset_confirm'),
+    'access arguments' => array('administer tokenauth'),
+    'type' => MENU_CALLBACK
+  );
+  $items['user/%user/tokenauth'] = array(
+    'title' => t('Token authentication'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tokenauth_user_profile_form', 1),
+    'access callback' => 'tokenauth_profile_access',
+    'access arguments' => array(1),
+    'type' => MENU_LOCAL_TASK
+  );
+  $items['user/%user/tokenauth/reset'] = array(
+    'title' => t('Reset token'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tokenauth_user_reset_confirm'),
+    'access callback' => 'tokenauth_profile_access',
+    'access arguments' => array(1),
+    'type' => MENU_CALLBACK
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_settings().
+ */
+function tokenauth_admin_settings() {
+
+  $form['tokenauth_general'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Token settings'),
+  );
+  $form['tokenauth_general']['tokenauth_length'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Token length'),
+    '#size' => 4,
+    '#maxlength' => 4,
+    '#required' => TRUE,
+    '#default_value' => variable_get('tokenauth_length', 10),
+    '#description' => t('Does not affect existing tokens.'),
+  );
+  $form['tokenauth_general']['tokenauth_pages'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Activate tokens on specific pages'),
+    '#default_value' => variable_get('tokenauth_pages', "rss.xml\n*/feed\n*/opml"),
+    '#description' => t("Enter one page per line as Drupal paths. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page. Read <a href=\"http://api.drupal.org/api/function/drupal_match_path/6\">drupal_match_path()</a> for the details.", array('%blog' => 'blog', '%blog-wildcard' => 'blog/*', '%front' => '<front>')),
+  );
+
+  $form['tokenauth_advanced'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Token actions'),
+    '#description' => t('Reset the tokens for all users. If you have changed token length, be sure to save that change before resetting all tokens.'),
+  );
+  $form['tokenauth_advanced']['tokenauth_reset'] = array(
+    '#type' => 'submit',
+    '#value' => t('Reset tokens')
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Access callback for tokenauth view/edit.
+ */
+function tokenauth_profile_access($account) {
+  return (user_access('administer users') || ($GLOBALS['user']->uid == $account->uid)) && user_access('access tokenauth') && $account->uid > 0;
+}
+
+/**
+ * API function for retrieving the token for a given user.
+ *
+ * @param string $uid 
+ *  Assumes current user if no user is provided.
+ * @return string
+ *  A token, or NULL if user has no token.
+ */
+function tokenauth_get_token($uid = NULL) {
+  if (is_null($uid)) {
+    global $user;
+    $uid = $user->uid;
+  }
+  
+  return db_result(db_query("SELECT tt.token FROM {tokenauth_tokens} tt WHERE tt.uid = %d", $uid));
+}
+
+/**
+ * Validate callback.
+ */
+function tokenauth_admin_settings_validate($form, &$form_state) {
+  if ($form_state['values']['op'] == t('Reset tokens')) {
+    drupal_goto('admin/settings/tokenauth/reset');
+  }
+  if ($form_state['values']['tokenauth_length'] > 33) {
+    form_set_error('tokenauth_length', t('The maximum token length is 32.'));
+  }
+}
+
+/**
+ * Menu callback: confirm reset tokens.
+ */
+function tokenauth_reset_confirm() {
+  return confirm_form(array(), t('Are you sure you want to reset all tokens?'),
+           'admin/settings/tokenauth', t('After the tokens have been reset, all users who use tokenised URLs will have to update them. This action cannot be undone.'), t('Reset tokens'), t('Cancel'));
+}
+
+/**
+ * Handler for reset tokens confirmation
+ */
+function tokenauth_reset_confirm_submit(&$form_state) {
+  tokenauth_reset();
+  drupal_set_message(t('All tokens have been reset.'));
+  $form_state['#redirect']  = 'admin/settings/tokenauth';
+}
+
+/**
+ * Reset all tokens.
+ */
+function tokenauth_reset() {
+  $length = variable_get('tokenauth_length', 10);
+  $sql = 'SELECT uid FROM {users} WHERE uid > 0';
+  $result = db_query($sql);
+  while ($row = db_fetch_object($result)) {
+    $sql = "UPDATE {tokenauth_tokens} SET token = '%s' WHERE uid = %d";
+    db_query($sql, user_password($length), $row->uid);
+  }
+}
+
+/**
+ * Menu callback: confirm reset  users token.
+ */
+function tokenauth_user_reset_confirm() {
+  global $user;
+
+  return confirm_form(array(), t('Are you sure you want to reset this user token?'),
+           "user/$user->uid/tokenauth", t('After the token has been reset,  please update your feed readers or other aplications that depend on them. This action cannot be undone.'), t('Reset token'), t('Cancel'));
+}
+
+/**
+ * Handler for reset tokens confirmation
+ */
+function tokenauth_user_reset_confirm_submit(&$form_state) {
+  global $user;
+
+  tokenauth_user_reset();
+  drupal_set_message(t('The token has been reset.'));
+  $form_state['#redirect'] = "user/$user->uid/tokenauth";
+}
+
+/**
+ * Reset a users token.
+ */
+function tokenauth_user_reset() {
+  global $user;
+
+  $length = variable_get('tokenauth_length', 10);
+  $sql = "UPDATE {tokenauth_tokens} SET token = '%s' WHERE uid = %d";
+  db_query($sql, user_password($length), $user->uid);
+}
+
+/**
+ * Menu callback. Prints the token and instructions.
+ */
+function tokenauth_user_profile_form(&$form_state, $account) {
+  drupal_set_title(check_plain($account->name));
+  $token = tokenauth_get_token($account->uid);
+  $output = t('To enable aggregators, feed readers and other simple clients to see restricted content on this site you may use an authentication token. The token is unique and tied to your account so keep it private. ');
+  $output .= t('Simply append this querystring to any feed on this site. Some links may already have added this for you.');
+  $output .= '<p><code>'. check_plain("?token=$token") .'</code></p>';
+  $output .= t('Here are some example links to get you started:');
+  $items = array();
+  $items[] = l(t('Front page'), 'rss.xml', array('title' => url('rss.xml'), 'query' => "token=$token", 'html' =>  TRUE));
+  $items[] = l(t('Blog'), 'blog/feed', array('title' => url('blog/feed'), 'query' => "token=$token", 'html' =>  TRUE));
+  $output .= theme('item_list', $items);
+  $form['preamble'] = array('#value' => $output);
+  $form['uid'] = array('#type' => 'value', '#value' => $uid);
+  $form['#action'] =url('user/'. $account->uid .'/tokenauth/reset');
+  $form['#method'] = 'get';
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Reset token'));
+  return $form;
+}
+
+/**
+ * Implementation of hook_init().
+ */
+function tokenauth_init() {
+  global $user;
+  // Process any provided token and log in user
+  if (!$user->uid && isset($_REQUEST['token']) && tokenauth_allowed_pages($_GET['q'])) {
+    $sql = "SELECT tt.uid FROM {tokenauth_tokens} tt INNER JOIN {users} u ON tt.uid = u.uid WHERE token = '%s' AND u.status != 0";
+    if ($uid = db_result(db_query($sql, $_REQUEST['token']))) {
+      $user = user_load(array('uid' => $uid));
+      $_SESSION['tokenauth_auth'] = TRUE; // Just store the fact that this user authenticated via token
+    }
+    else {
+      // Supplied an invalid token
+      drupal_access_denied();
+      exit();
+    }
+  }
+}
+
+/**
+ * Deliberately insure that this session will not be saved by sess_write(). Safety.
+ */
+function tokenauth_exit() {
+  if (isset($_SESSION['tokenauth_auth'])) {
+    session_destroy();
+  }
+}
+
+/**
+ * Return TRUE if current page may be viewed using only a token
+ */
+function tokenauth_allowed_pages($path) {
+  $patterns = variable_get('tokenauth_pages', "rss.xml\n*/feed\n*/opml");
+  if (drupal_match_path($path, $patterns)) {
+    return TRUE;
+  }
+}
+
+/**
+ * Implementation of hook_user().
+ * Boring code to change tokens. No UI yet.
+ */
+function tokenauth_user($op, &$edit, &$account, $category = NULL) {
+  switch ($op) {
+    case 'update':
+      if (isset($account->tokenauth_token)) {
+        $sql = "UPDATE {tokenauth_tokens} SET token = '%s' WHERE uid = %d";
+        db_query($sql, $account->tokenauth_token, $account->uid);
+      }
+      break;
+    case 'insert':
+      $length = variable_get('tokenauth_length', 10);
+      $sql = "INSERT INTO {tokenauth_tokens} (uid, token) VALUES (%d, '%s')";
+      db_query($sql, $account->uid, user_password($length));
+      break;
+    case 'delete':
+      $sql = 'DELETE FROM {tokenauth_tokens} WHERE uid = %d';
+      db_query($sql, $account->uid);
+  }
+}

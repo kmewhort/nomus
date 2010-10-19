@@ -1,0 +1,33 @@
+<?php
+/**
+ * Implementation of hook_install().
+ */
+function campaign_install() {
+
+ // create the campaign node type
+ require_once './' . drupal_get_path('module', 'content') .  '/modules/content_copy/content_copy.module';
+ module_load_include('inc', 'campaign', 'campaign_contenttype');
+ $content = campaign_contenttype_cck_export(); 
+ $form_state['values']['type_name'] = '<create>';
+ $form_state['values']['macro'] = '$content = ' . var_export($content, TRUE) . ';';
+ drupal_execute('content_copy_import_form', $form_state);
+ content_clear_type_cache();
+ 
+ // create a db table to record the campaign participants
+ db_query('CREATE TABLE campaign_participants ' .
+ 	'(campaign_id INT, email VARCHAR(128) NOT NULL, name VARCHAR(128), type VARCHAR(32), timestamp TIMESTAMP(8), ' .
+ 	'PRIMARY KEY (campaign_id, email, type))'); 
+}
+
+function campaign_uninstall() {
+	node_type_delete('campaign');
+	menu_rebuild();
+	db_query('DROP TABLE campaign_participants');
+}
+
+function campaign_enable() {
+}
+
+function campaign_disable() {
+}
+

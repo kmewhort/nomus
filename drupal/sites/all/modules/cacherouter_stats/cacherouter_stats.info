@@ -1,0 +1,12 @@
+name = CacheRouter Stats
+core = 6.x
+package = Caching
+dependencies[] = cacherouter
+
+
+; Information added by drupal.org packaging script on 2010-07-29
+version = "6.x-1.2-beta3"
+core = "6.x"
+project = "cacherouter_stats"
+datestamp = "1280414104"
+

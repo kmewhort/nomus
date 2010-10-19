@@ -1,0 +1,10 @@
+; $Id.
+name = Automatic Nodetitles
+description = Allows hiding of the content title field and automatic title creation.
+core = 6.x
+; Information added by drupal.org packaging script on 2010-07-11
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "auto_nodetitle"
+datestamp = "1278833487"
+

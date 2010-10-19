@@ -1,0 +1,127 @@
+.vud {
+	display: inline;
+	border: 1px solid gray;
+	line-height: 1;
+	font-size; 76%;
+}
+
+.vud-term {
+	display: inline-block;
+	padding-top:4px;
+	vertical-align:top;
+	padding-left: 2px;
+}
+
+.vud-widget-updown {
+	display: inline-block;
+}
+
+.vud-widget-updown a:hover {
+  text-decoration: none;
+}
+
+.vud-widget-points {
+	display:inline-block;
+	font-size:80%;
+	font-weight:bold;
+	height:5px;
+	margin-top:2px;
+	padding-left:0px;
+	vertical-align:top;
+}
+
+.vud-widget-updown .updown-score {
+  border: 1px solid #ccc;
+  color: #000;
+  text-align: center;
+  padding-top: 5px;
+  margin-bottom: 6px;
+  display: inline;
+
+}
+
+.vud-widget-thumbcontainer {
+	display: inline;
+}
+
+
+.vud-widget-updown .up-inactive,
+.vud-widget-updown .down-inactive {
+  display: block;
+  color: #999999;
+  border: 1px solid #ccc;
+  width: 15px;
+  font-size: 15px;
+  height: 18px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.vud-widget-updown .up-inactive:hover,
+.vud-widget-updown .down-inactive:hover {
+  font-size: 20px;
+}
+
+.vud-widget-updown .vud-link-up div {
+  margin-right: 0px;
+  background-image:url("thumbsup2.png");
+  border:medium none;
+  width: 15px;
+  height: 18px;
+  display: inline-block;
+}
+
+.vud-widget-updown .vud-link-down div {
+  margin-left: 0px;
+  margin-right: 2px;
+  background-image:url("thumbsdown2.png");
+  border:medium none;
+  width: 15px;
+  height: 18px;
+  display: inline-block;
+}
+
+.vud-widget-updown .up-active,
+.vud-widget-updown .down-active {
+  display: block;
+  color: #000000;
+  border: 1px solid #ccc;
+/*  width: 20px;
+  font-size: 20px;
+  height: 22px;*/
+  font-weight: bold;
+  text-align: center;
+}
+
+.vud-widget-updown .up-active,
+.vud-widget-updown .down-active{
+  -moz-border-radius:4px 4px 4px 4px;
+  background-color:#315C74;
+}
+
+.vud-widget-updown .ctools-ajaxing div {
+}
+
+
+
+.vud-widget-updown .ctools-ajaxing {
+  border: 1px solid #ccc;
+  padding-right: 0 !important;
+  margin-left: 0px;
+  margin-right: 2px;
+  border:medium none;
+  width: 15px;
+  height: 18px;
+  display: inline-block;
+}
+
+.vud-widget-updown .ctools-ajaxing.updown-click-up {
+}
+
+.vud-widget-updown .ctools-ajaxing.updown-click-down {
+}
+
+.vud-widget-updown .ctools-ajaxing div {
+  display: none;
+}
+

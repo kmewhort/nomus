@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<CREOLE-DIRECTORY>
+
+<CREOLE>
+  <RESOURCE>
+    <NAME>RASP Parser</NAME>
+    <JAR>rasp.jar</JAR>
+    <CLASS>gate.rasp.rasp</CLASS>
+    <COMMENT>RASP (Robust Accurate Statistical Parsing) is a robust parsing system for English.</COMMENT>
+    <PARAMETER 
+        NAME="document" 
+        RUNTIME="true"
+        COMMENT="The document to be processed">
+        gate.Document
+    </PARAMETER>
+    
+    <PARAMETER 
+        NAME="annotationSetName"
+        RUNTIME="true"
+        DEFAULT=""
+        OPTIONAL="true"
+        COMMENT="The annotation set to be used for the generated annotations">
+        java.lang.String
+    </PARAMETER>    
+    
+    <PARAMETER 
+        NAME="raspscript" 
+        RUNTIME="true"
+        COMMENT="Name of the RASP command file">
+        java.net.URL
+    </PARAMETER>   
+    
+  </RESOURCE>
+</CREOLE>
+
+</CREOLE-DIRECTORY>

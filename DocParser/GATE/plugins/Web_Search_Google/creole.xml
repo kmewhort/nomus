@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!-- $Id: creole.xml 10304 2009-03-25 11:13:06Z ian_roberts $ -->
+<CREOLE-DIRECTORY>
+  <CREOLE>   
+   <!-- creole.xml for SearchPR -->
+    <RESOURCE>
+      <JAR>google.jar</JAR>
+      <JAR>lib/googleapi.jar</JAR>
+      <NAME>GooglePR</NAME>
+      <CLASS>google.GooglePR</CLASS>
+      <COMMENT>Provides an interface to Google API.</COMMENT>
+      <HELPURL>http://gate.ac.uk/userguide/sec:misc-creole:google</HELPURL>
+      <PARAMETER NAME="corpus" RUNTIME="true" COMMENT="Corpus where the results are stored">gate.Corpus</PARAMETER>
+      <PARAMETER NAME="query" RUNTIME="true" COMMENT="The Search Query">java.lang.String</PARAMETER>
+      <PARAMETER NAME="key" RUNTIME="false" COMMENT="The registration key for Google API">java.lang.String</PARAMETER>
+      <PARAMETER NAME="corpusAppendMode" DEFAULT="false" RUNTIME="true" COMMENT="If corpus should reinit itself">java.lang.Boolean</PARAMETER>
+      <PARAMETER NAME="limit" RUNTIME="true" DEFAULT="10" COMMENT="The number of results returned">java.lang.Integer</PARAMETER> 
+      <PARAMETER NAME="pagesToExclude" OPTIONAL="true" RUNTIME="true" COMMENT="Pages will be excluded from the result">java.util.ArrayList</PARAMETER>
+      <ICON>google.gif</ICON>
+    </RESOURCE>
+   </CREOLE>
+</CREOLE-DIRECTORY>

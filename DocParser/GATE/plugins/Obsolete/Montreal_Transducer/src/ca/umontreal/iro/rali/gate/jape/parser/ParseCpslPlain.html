@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<TITLE>BNF for ParseCpsl.jj</TITLE>
+</HEAD>
+<BODY>
+<H1 ALIGN=CENTER>BNF for ParseCpsl.jj</H1>
+<H2 ALIGN=CENTER>NON-TERMINALS</H2>
+<TABLE>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod1">MultiPhaseTransducer</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;multiphase&gt; &lt;ident&gt; )? ( ( <A HREF="#prod2">SinglePhaseTransducer</A> )+ | ( &lt;phases&gt; ( &lt;path&gt; )+ ) ) &lt;EOF&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod2">SinglePhaseTransducer</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;phase&gt; &lt;ident&gt; ( &lt;input&gt; ( &lt;ident&gt; )* )? ( &lt;option&gt; ( &lt;ident&gt; &lt;assign&gt; ( &lt;ident&gt; | &lt;bool&gt; ) )* )? ( ( <A HREF="#prod3">Rule</A> ) | <A HREF="#prod4">MacroDef</A> )*</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod3">Rule</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;rule&gt; &lt;ident&gt; ( &lt;priority&gt; &lt;integer&gt; )? <A HREF="#prod5">LeftHandSide</A> "--&gt;" <A HREF="#prod6">RightHandSide</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod4">MacroDef</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;macro&gt; &lt;ident&gt; ( <A HREF="#prod7">PatternElement</A> | <A HREF="#prod8">Action</A> )</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod5">LeftHandSide</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod9">ConstraintGroup</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod9">ConstraintGroup</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod7">PatternElement</A> )+ ( &lt;bar&gt; ( <A HREF="#prod7">PatternElement</A> )+ )*</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod7">PatternElement</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;ident&gt; | <A HREF="#prod10">BasicPatternElement</A> | <A HREF="#prod11">ComplexPatternElement</A> )</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod10">BasicPatternElement</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( ( &lt;leftBrace&gt; <A HREF="#prod12">Constraint</A> ( &lt;comma&gt; <A HREF="#prod12">Constraint</A> )* &lt;rightBrace&gt; ) | ( &lt;string&gt; ) )</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod11">ComplexPatternElement</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;leftBracket&gt; <A HREF="#prod9">ConstraintGroup</A> &lt;rightBracket&gt; ( &lt;kleeneOp&gt; )? ( &lt;colon&gt; ( &lt;ident&gt; | &lt;integer&gt; ) )?</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod12">Constraint</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;pling&gt; )? &lt;ident&gt; ( &lt;period&gt; &lt;ident&gt; &lt;equals&gt; <A HREF="#prod13">AttrVal</A> )?</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod13">AttrVal</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;string&gt; | &lt;ident&gt; | &lt;integer&gt; | &lt;floatingPoint&gt; | &lt;bool&gt; )</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod6">RightHandSide</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><A HREF="#prod8">Action</A> ( &lt;comma&gt; <A HREF="#prod8">Action</A> )*</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod8">Action</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( <A HREF="#prod14">NamedJavaBlock</A> | <A HREF="#prod15">AnonymousJavaBlock</A> | <A HREF="#prod16">AssignmentExpression</A> | &lt;ident&gt; )</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod14">NamedJavaBlock</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;colon&gt; &lt;ident&gt; &lt;leftBrace&gt; <A HREF="#prod17">ConsumeBlock</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod15">AnonymousJavaBlock</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>&lt;leftBrace&gt; <A HREF="#prod17">ConsumeBlock</A></TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod16">AssignmentExpression</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE>( &lt;colon&gt; | &lt;colonplus&gt; ) &lt;ident&gt; &lt;period&gt; &lt;ident&gt; &lt;assign&gt; &lt;leftBrace&gt; ( &lt;ident&gt; &lt;assign&gt; ( <A HREF="#prod13">AttrVal</A> | ( &lt;colon&gt; &lt;ident&gt; &lt;period&gt; &lt;ident&gt; &lt;period&gt; &lt;ident&gt; ) ) ( &lt;comma&gt; )? )* &lt;rightBrace&gt;</TD>
+</TR>
+<TR>
+<TD ALIGN=RIGHT VALIGN=BASELINE><A NAME="prod17">ConsumeBlock</A></TD>
+<TD ALIGN=CENTER VALIGN=BASELINE>::=</TD>
+<TD ALIGN=LEFT VALIGN=BASELINE><I>java code</I></TD></TR>
+</TABLE>
+</BODY>
+</HTML>

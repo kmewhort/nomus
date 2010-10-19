@@ -1,0 +1,19 @@
+#!/bin/bash
+
+#build FirefoxPlugin
+cd FirefoxPlugin
+ant
+cd ..
+
+#compile SiteSpider
+cd src
+javac -classpath ./WEB-INF/lib/servlet-api-2.5.jar:./WEB-INF/lib/commons-io-1.4.jar:./WEB-INF/lib/jdom.jar:./WEB-INF/lib/gson-1.4.jar:./WEB-INF/lib/commons-codec-1.4.jar:./WEB-INF/lib/commons-lang-2.5.jar ./WEB-INF/classes/*.java
+
+#create war
+jar -cvf ../bin/SiteSpider.war .
+cd ..
+
+#copy servlet config into Nomus2 servlet dir
+cp -f ./config/sitespider.xml ../config/servlet_contexts/
+
+

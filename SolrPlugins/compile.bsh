@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#compile plugins and copy to the jetty lib dir
+javac -classpath ./solr-1.5-dev/dist/apache-solr-core-1.5-dev.jar:./solr-1.5-dev/dist/apache-solr-dataimporthandler-1.5-dev.jar:./solr-1.5-dev/dist/apache-solr-solrj-1.5-dev.jar:./solr-1.5-dev/lib/lucene-fast-vector-highlighter-2.9.2-dev.jar:./solr-1.5-dev/lib/lucene-highlighter-2.9.2.jar:./solr-1.5-dev/lib/lucene-core-2.9.2.jar:./solr-1.5-dev/lib/lucene-analyzers-2.9.2.jar:./solr-1.5-dev/lib/commons-io-1.4.jar:./solr-1.5-dev/lib/lucene-queries-2.9.2.jar ./NomusSolrPlugins/*.java
+jar -cmf MANIFEST.MF NomusSolrPlugins.jar NomusSolrPlugins
+cp ./NomusSolrPlugins.jar ../config/solr_home/lib/
+
+
+#copy solr servlet config into Nomus2 servlet dir
+cp -f ./config/solr-webapp.xml ../config/servlet_contexts/
+

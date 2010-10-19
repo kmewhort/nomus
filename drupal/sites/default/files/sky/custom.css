@@ -1,0 +1,11 @@
+html, body { background: #fff; }
+
+
+
+
+
+html, body, .form-radio, .form-checkbox, .form-file, .form-select, select, .form-text, input, .form-textarea, textarea  { font-family: "Bitstream Vera Sans", Verdana, Arial, sans-serif; }
+h1, h2, h3, h4, h5, h6  { font-family: "Bitstream Vera Sans", Verdana, Arial, sans-serif; }
+#wrapper { font-size: 12px; }
+#header { height: 100px; }
+#wrapper, #footer { width: 100%; }

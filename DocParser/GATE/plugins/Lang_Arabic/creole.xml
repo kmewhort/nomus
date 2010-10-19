@@ -1,0 +1,151 @@
+<?xml version="1.0"?>
+<!-- $Id: creole.xml 12077 2009-12-09 14:47:54Z thomas_heitz $ -->
+<CREOLE-DIRECTORY>
+  <!-- Processing Resources -->
+  <CREOLE>
+   
+  <RESOURCE>
+      <NAME>Arabic Tokeniser</NAME>
+ <JAR>arabic.jar</JAR>
+      <CLASS>arabic.ArabicTokeniser</CLASS>
+      <COMMENT>A customisable Arabic tokeniser.</COMMENT>
+      <PARAMETER NAME="document" COMMENT="The document to be tokenised"
+        RUNTIME="true">gate.Document</PARAMETER>
+      <PARAMETER NAME="annotationSetName" RUNTIME="true"
+        COMMENT="The annotation set to be used for the generated annotations"
+        OPTIONAL="true">java.lang.String</PARAMETER>
+      <PARAMETER NAME="tokeniserRulesURL"
+        DEFAULT="resources/tokeniser/arabicTokeniser.rules"
+        COMMENT="The URL for the rules file" SUFFIXES="rules" >
+        java.net.URL</PARAMETER>     
+      <PARAMETER NAME="encoding"
+        COMMENT="The encoding used for reading the definitions" DEFAULT="UTF-8">
+        java.lang.String</PARAMETER>
+       <PARAMETER NAME="transducerGrammarURL"
+        DEFAULT="resources/tokeniser/postprocess.jape"
+        COMMENT="The URL for the postprocessing transducer" SUFFIXES="jape">
+        java.net.URL</PARAMETER>
+      <ICON>shefTokeniser.gif</ICON>
+    </RESOURCE>
+
+   <!-- creole.xml for Arabic gazetteer -->
+    <RESOURCE>
+      <NAME>Arabic Gazetteer</NAME>
+      <JAR>arabic.jar</JAR>
+      <CLASS>arabic.ArabicGazetteer</CLASS>
+      <COMMENT>A list lookup component.</COMMENT>
+      <PARAMETER NAME="document" RUNTIME="true"
+        COMMENT="The document to be processed">gate.corpora.DocumentImpl</PARAMETER>
+      <PARAMETER NAME="annotationSetName" RUNTIME="true"
+        COMMENT="The annotation set to be used for the generated annotations"
+        OPTIONAL="true">java.lang.String</PARAMETER>
+      <PARAMETER NAME="listsURL"
+        DEFAULT="resources/gazetteer/lists.def"
+        COMMENT="The URL to the file with list of lists" SUFFIXES="def">
+        java.net.URL</PARAMETER>
+      <PARAMETER DEFAULT="UTF-8"
+        COMMENT="The encoding used for reading the definitions" NAME="encoding">
+        java.lang.String</PARAMETER>
+      <PARAMETER DEFAULT="true"
+        COMMENT="Should this gazetteer diferentiate on case"
+        NAME="caseSensitive">java.lang.Boolean</PARAMETER>
+      <PARAMETER DEFAULT="true"
+        COMMENT="Should this gazetteer only match whole words"
+        NAME="wholeWordsOnly">java.lang.Boolean</PARAMETER>
+      <ICON>shefGazetteer.gif</ICON>
+    </RESOURCE>
+
+
+<!-- creole.xml for Arabic Infered gazetteer -->
+    <RESOURCE>
+      <NAME>Arabic Infered Gazetteer</NAME>
+      <JAR>arabic.jar</JAR>
+      <CLASS>arabic.ArabicInferedGazetteer</CLASS>
+      <COMMENT>A list lookup component.</COMMENT>
+      <PARAMETER NAME="document" RUNTIME="true"
+        COMMENT="The document to be processed">gate.corpora.DocumentImpl</PARAMETER>
+      <PARAMETER NAME="annotationSetName" RUNTIME="true"
+        COMMENT="The annotation set to be used for the generated annotations"
+        OPTIONAL="true">java.lang.String</PARAMETER>
+      <PARAMETER NAME="listsURL"
+        DEFAULT="resources/inferred-gazetteer/lists.def"
+        COMMENT="The URL to the file with list of lists" SUFFIXES="def">
+        java.net.URL</PARAMETER>
+      <PARAMETER DEFAULT="UTF-8"
+        COMMENT="The encoding used for reading the definitions" NAME="encoding">
+        java.lang.String</PARAMETER>
+      <PARAMETER DEFAULT="true"
+        COMMENT="Should this gazetteer diferentiate on case"
+        NAME="caseSensitive">java.lang.Boolean</PARAMETER>
+      <PARAMETER DEFAULT="true"
+        COMMENT="Should this gazetteer only match whole words"
+        NAME="wholeWordsOnly">java.lang.Boolean</PARAMETER>
+      <ICON>shefGazetteer.gif</ICON>
+    </RESOURCE>
+
+  <!-- creole.xml for main JapeTransducer -->
+    <RESOURCE>
+      <NAME>Arabic Main Grammar</NAME>
+      <JAR>arabic.jar</JAR>
+      <CLASS>arabic.ArabicTransducer</CLASS>
+      <COMMENT>A module for executing Jape grammars</COMMENT>
+      <PARAMETER NAME="document" RUNTIME="true"
+        COMMENT="The document to be processed">gate.Document</PARAMETER>
+      <PARAMETER NAME="inputASName" RUNTIME="true"
+        COMMENT="The annotation set to be used as input for the transducer"
+        OPTIONAL="true">java.lang.String</PARAMETER>
+      <PARAMETER NAME="outputASName" RUNTIME="true"
+        COMMENT="The annotation set to be used as output for the transducer"
+        OPTIONAL="true">java.lang.String</PARAMETER>
+      <PARAMETER NAME="grammarURL" COMMENT="The URL to the grammar file"
+         DEFAULT="resources/grammar/main.jape"
+        SUFFIXES="jape">java.net.URL</PARAMETER>
+      <PARAMETER NAME="encoding" DEFAULT="UTF-8"
+        COMMENT="The encoding used for reading the grammar">
+        java.lang.String</PARAMETER>
+    </RESOURCE>
+
+
+  <!-- creole.xml for namematch -->
+    <RESOURCE>
+      <NAME>Arabic OrthoMatcher</NAME>
+      <JAR>arabic.jar</JAR>
+      <CLASS>arabic.ArabicOrthoMatcher</CLASS>
+      <COMMENT>Arabic Orthomatcher</COMMENT>
+      <PARAMETER DEFAULT="resources/orthomatcher/listsNM.def"
+        COMMENT="The URL for the definition file" SUFFIXES="def"
+        NAME="definitionFileURL">java.net.URL</PARAMETER>
+      <PARAMETER DEFAULT="0.50"
+		COMMENT="Minimum likelihood of nickname" 
+		NAME="minimumNicknameLikelihood">
+		java.lang.Double
+	  </PARAMETER>
+	  <PARAMETER NAME="highPrecisionOrgs" DEFAULT="false"
+		COMMENT="True indicates that we only use very safe features for matching orgs, such as ACME = ACME, Inc."
+		OPTIONAL="true">
+		java.lang.Boolean
+	  </PARAMETER>
+      <PARAMETER DEFAULT="UTF-8"
+        COMMENT="The encoding used for reading the definitions" NAME="encoding">
+        java.lang.String</PARAMETER>
+      <PARAMETER NAME="document" RUNTIME="true">gate.Document</PARAMETER>
+      <PARAMETER NAME="annotationSetName" RUNTIME="true" OPTIONAL="true">
+        java.lang.String</PARAMETER>
+      <PARAMETER NAME="caseSensitive" DEFAULT="false" OPTIONAL="true">
+        java.lang.Boolean</PARAMETER>
+      <PARAMETER NAME="annotationTypes"
+        DEFAULT="Organization;Person;Location;Date" RUNTIME="true"
+        OPTIONAL="true">java.util.ArrayList</PARAMETER>
+      <PARAMETER NAME="processUnknown" DEFAULT="true" OPTIONAL="true">
+        java.lang.Boolean</PARAMETER>
+      <PARAMETER NAME="organizationType" DEFAULT="Organization" OPTIONAL="true">
+        java.lang.String</PARAMETER>
+      <PARAMETER NAME="personType" DEFAULT="Person" OPTIONAL="true">
+        java.lang.String</PARAMETER>
+      <PARAMETER NAME="extLists" DEFAULT="true" OPTIONAL="true">
+        java.lang.Boolean</PARAMETER>
+    </RESOURCE>
+
+ </CREOLE>
+
+</CREOLE-DIRECTORY>

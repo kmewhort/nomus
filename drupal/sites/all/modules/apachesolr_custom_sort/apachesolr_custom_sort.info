@@ -1,0 +1,7 @@
+; $Id: apachesolr_custom_sort
+name = Apache Solr custom sort
+description = Manage Apache Solr sort types
+dependencies[] = apachesolr
+package = Apache Solr
+core = "6.x"
+php = 5.1.4

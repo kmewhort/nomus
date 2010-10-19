@@ -1,0 +1,3 @@
+content	sitespiderplugin	jar:chrome/SiteSpiderPlugin.jar!/content/
+overlay	chrome://browser/content/browser.xul	chrome://sitespiderplugin/content/firefoxOverlay.xul
+

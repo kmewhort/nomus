@@ -1,0 +1,40 @@
+<?php
+
+/**
+ * Implementation of hook_install().
+ */
+function nomus_install() {
+ 
+ // add documentloader callback pages to list of pages with
+ // token authentication
+ $curTokenAuthPages = variable_get('tokenauth_pages', "");
+ $curTokenAuthPages .= "\nnomus/documentloader/nextcommand"
+ 	."\nnomus/documentloader/fileuniquecheck"
+ 	."\nnomus/documentloader/fileupload"
+ 	."\nnomus/documentparser/gatedoc";
+ variable_set('tokenauth_pages', $curTokenAuthPages);
+ variable_set('tokenauth_length', 32);
+ tokenauth_reset();
+ 
+ // add an index on node titles, as titles are used
+ // to cross-reference citations are often looked up
+ db_query("ALTER TABLE {node} ADD INDEX('title')");
+ 
+}
+
+function nomus_uninstall() {
+	menu_rebuild();
+	
+	// delete list of token authentication pages
+	$curTokenAuthPages = variable_get('tokenauth_pages', "");
+	$curTokenAuthPages = preg_replace('/\s*nomus.*gatedoc/is', '', $curTokenAuthPages);
+	variable_set('tokenauth_pages', $curTokenAuthPages);	
+	
+}
+
+function nomus_enable() {
+}
+
+function nomus_disable() {
+}
+

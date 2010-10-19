@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!-- $Id: creole.xml 8903 2007-07-10 14:32:33Z ian_roberts $ -->
+<CREOLE-DIRECTORY>
+  <CREOLE>
+    <!-- creole.xml for the APF exporter -->
+    <RESOURCE>
+      <NAME>GATE APF exporter</NAME>
+      <CLASS>gate.creole.APFormatExporter</CLASS>
+      <COMMENT>An APF exporter .</COMMENT>
+      <PARAMETER NAME="document" COMMENT="The document to be exported"
+        RUNTIME="true">gate.corpora.DocumentImpl</PARAMETER>
+      <PARAMETER NAME="source"
+        COMMENT="The source attribute attached to a source file" RUNTIME="true">
+        java.lang.String</PARAMETER>
+      <PARAMETER NAME="dtdFileName"
+        COMMENT="The path to the DTD for the APF file"
+        DEFAULT="ace-rdc.v2.0.1.dtd.dtd">java.lang.String</PARAMETER>
+      <PARAMETER NAME="exportFilePath" COMMENT="Source URL where to export"
+        RUNTIME="true" SUFFIXES="xml">java.net.URL</PARAMETER>
+      <PARAMETER DEFAULT="Organization;Person;Location;Facility;GPE"
+        NAME="exportedTypes">java.util.ArrayList</PARAMETER>
+      <PARAMETER DEFAULT="true"
+        COMMENT="Should the SOURCE be written to the APF file"
+        NAME="isSourceWritten">java.lang.Boolean</PARAMETER>
+    </RESOURCE>
+  </CREOLE>
+</CREOLE-DIRECTORY>

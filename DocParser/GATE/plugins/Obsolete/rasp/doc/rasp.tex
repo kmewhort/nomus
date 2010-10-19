@@ -1,0 +1,76 @@
+\documentclass[reqno]{article}
+\usepackage{ae} % or {zefonts}
+\usepackage[T1]{fontenc}
+\usepackage[ansinew]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage[colorlinks]{hyperref}
+\setlength{\topmargin}{-1.4cm} \setlength{\oddsidemargin}{1cm} \setlength{\evensidemargin}{0.4cm}
+\setlength{\textwidth}{15.6cm} \setlength{\textheight}{24.0cm}
+
+\begin{document}
+
+\begin{center}
+  \begin{Large}
+     RASP parser
+   \end{Large}
+\end{center}
+
+
+RASP (Robust Accurate Statistical Parsing) is a robust parsing system for English. The GATE wrapper calls RASP as an 
+external program, passing plain texts and shell script runall.sh as input. The Shell scripts runall.sh then invokes  
+the tokeniser/tagger/morph/parser on raw texts. Output of the RASP are saved as "RASPToken" annotations and 
+grammatical relation annotations. 
+\\
+
+
+\begin{itemize}
+\item Features of the RASPToken:
+        \begin{itemize}
+           \item[i)] id: id of the token;
+           \item[ii)] POS: the part-of-speech tag of the token;
+           \item[iii)]Morph: the base word of the token;
+           \item[iv)] content: the string image of the token;
+           \item[v)]  length: the length of the token string.
+           \\
+        \end{itemize}
+
+
+\item Grammatical relation annotations:
+          \begin{itemize}
+            \item[i)] type: grammatical relation type;
+            \item[ii)] head: head token of the relationship;
+            \item[iii)] dependant: dependant token of the relationship;
+            \item[iv)] other parameter: other parameters of the relationship.
+            \\
+          \end{itemize}
+
+\item Runtime parameters:
+         \begin{itemize}
+            \item[i)]document: the document to be processed
+            \item[ii)]annotationSetName: the annotation set to be used for generated annotations
+            \item[iii)]raspscript: a URL indicating the location of the RASP shell script
+ runall.sh
+            \\
+          \end{itemize}
+
+
+      
+\item Platform dependability:
+      RASP is only supported for Linux operating systems. Trying to run it on any other operating systems will generate an
+      exception with the message: The RASP cannot be run on any other operating systems except Linux.            
+      \\
+      
+\item Requirements:
+      RASP is availabel from www.informatics.susx.ac.uk/research/nlp/carroll/rasp2-binary.tgz. It must be correctly 
+      installed on the same machine as GATE. Before trying to run scripts for the first time, edit them to insert the 
+      appropriate value for the shell variable RASP, which should be the file system pathname where you have installed 
+      the RASP tools.     
+      \\
+      
+\end{itemize}
+      
+
+
+\end{document}

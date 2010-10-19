@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!-- $Id: creole.xml 10304 2009-03-25 11:13:06Z ian_roberts $ -->
+<!-- creole.xml directory file for GATE builtins -->
+<CREOLE-DIRECTORY> 
+  <CREOLE>
+  <!-- Ontology -->	  
+
+  <RESOURCE>
+      <NAME>OWLIM2 Ontology LR</NAME>
+      <CLASS>gate.creole.ontology.owlim.OWLIMOntologyLR</CLASS>
+      <INTERFACE>gate.creole.ontology.Ontology</INTERFACE>
+      <COMMENT>Ontology based on Sesame1/OWLIM2. Deprecated but kept for backwards compatibility with the pre-GATE 5.1 ontology implementation.</COMMENT>
+      <HELPURL>http://gate.ac.uk/userguide/sec:ontologies:lr</HELPURL>
+      <JAR>lib/sesame.jar</JAR> 
+      <JAR>lib/commons-io-1.4.jar</JAR>
+      <JAR>lib/openrdf-model.jar</JAR>
+      <JAR>lib/openrdf-util.jar</JAR>
+      <JAR>lib/trree-2.8.4.jar</JAR>
+      <JAR>lib/owlim-2.8.4.jar</JAR>
+      <JAR>lib/rio.jar</JAR>
+      <JAR>OWLIM2Ontology.jar</JAR>
+	 <OR>
+      <PARAMETER NAME="rdfXmlURL"
+          COMMENT="Ontology URL" RUNTIME="FALSE" OPTIONAL="TRUE">java.net.URL</PARAMETER>
+      <PARAMETER NAME="ntriplesURL"
+          COMMENT="Ontology URL" RUNTIME="FALSE" OPTIONAL="TRUE">java.net.URL</PARAMETER>
+      <PARAMETER NAME="turtleURL"
+          COMMENT="Ontology URL" RUNTIME="FALSE" OPTIONAL="TRUE">java.net.URL</PARAMETER>
+	  </OR>
+      <PARAMETER NAME="defaultNameSpace" OPTIONAL="true" COMMENT="defaultNameSpace" RUNTIME="FALSE">
+        java.lang.String</PARAMETER>
+      <ICON>ontology</ICON>
+    </RESOURCE>
+  </CREOLE>  
+  
+</CREOLE-DIRECTORY>

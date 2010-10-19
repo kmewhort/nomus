@@ -1,0 +1,16 @@
+; $Id: apachesolr_og.info,v 1.1.2.2.2.1 2010/03/22 16:55:07 robertDouglass Exp $
+name = Apache Solr Organic Groups
+description = Integrates Organic Groups and Apache Solr Search
+dependencies[] = apachesolr
+dependencies[] = og
+package = Apache Solr
+core = "6.x"
+
+
+
+; Information added by drupal.org packaging script on 2010-04-08
+version = "6.x-2.0-beta2"
+core = "6.x"
+project = "apachesolr"
+datestamp = "1270752624"
+

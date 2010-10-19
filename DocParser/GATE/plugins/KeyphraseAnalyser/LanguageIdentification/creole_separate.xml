@@ -1,0 +1,40 @@
+<!-- creole.xml LanguageIdentification -->
+<!--  alesch, 14/3/2008 -->
+
+<CREOLE-DIRECTORY>
+
+<CREOLE>
+  <RESOURCE>
+    <NAME>LanguageIdentification</NAME>
+    <COMMENT>identifies the language of a document</COMMENT>
+    <JAR>LanguageIdentification.jar</JAR>
+    <JAR>lib/cngram.jar</JAR>
+    <CLASS>ie.deri.sw.smile.nlp.gate.language.LanguageIdentifier</CLASS>
+    
+    <PARAMETER NAME="document"
+               COMMENT="The document to be processed" 
+               RUNTIME="true">
+      gate.Document
+    </PARAMETER>
+    <PARAMETER NAME="languageFeatureName"
+               COMMENT="The document feature to contain the language information" 
+               RUNTIME="true"
+               DEFAULT="language">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="encoding"
+               COMMENT="Encoding to use to read rules and lexicons"
+               OPTIONAL="true">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="maxPartitionChars"
+               COMMENT="Maximum number of characters used in partition to determine language"
+               RUNTIME="true"
+               DEFAULT="1000"
+               OPTIONAL="true">
+      java.lang.Integer
+    </PARAMETER>
+  </RESOURCE>
+</CREOLE>
+
+</CREOLE-DIRECTORY>

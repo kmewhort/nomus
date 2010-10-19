@@ -1,0 +1,369 @@
+<?php
+// $Id: backreference.module,v 1.2 2010/05/05 21:09:24 joelstein Exp $
+
+/**
+ * @file
+ * Backreference Module provides a nodeapi interface to maintain 1-1 relationships
+ * between all shared instances of a nodereference field. This means that given a field instance
+ * of field_reference1, if you add a reference to NodeBeta to NodeAlpha's field_reference1 and
+ * NodeBeta has an instance of field_reference1, then NodeAlpha will be added to NodeBeta's instance
+ * of field_reference1.
+ *
+ * Note that this code grew out of the backreference module that user dopry stowed
+ *   in his sandbox on cvs two years ago.  Although we've made changes since then, we're grateful for
+ *   the foundation he provided.
+ *
+ * A note on terminology - when we're talking about a reference, we sometimes make reference to left and right fields.
+ * A left field is a field on the node being edited - ie, the node provided in hook_nodeapi.
+ * A right field is the field that is backreferenced to this field, named in backreference_field_symmetry.
+ */
+
+function backreference_help($path, $arg) {
+
+}
+
+/**
+ * Implementation of nook_nodeapi().
+ *
+ * @param obj $node
+ * @param str $op
+ */
+function backreference_nodeapi($node, $op) {
+  switch ($op) {
+    case 'insert':
+    case 'update':
+      // Populate referred fields of other nodes sharing the same field instance.
+      $content_type_info = content_types($node->type);
+      foreach ($content_type_info['fields'] as $left_field_name => $left_field) {
+        if ($left_field['type'] == 'nodereference') {
+          //drupal_set_message(print_r($left_field, TRUE));
+          $right_field_name = db_result(db_query("SELECT field_right FROM {backreference_field_symmetry} WHERE field_left = '%s'", $left_field_name));
+          //drupal_set_message("NR: Left is $left_field_name Right is $right_field_name.");
+          if (!empty($right_field_name)) {
+            $right_field = content_fields($right_field_name);
+            _backreference_insert_data($left_field, $right_field, $node);
+            //$related_type = db_result(db_query("SELECT type FROM {node} WHERE nid = %d", ))
+            /*foreach (array_filter($field['referenceable_types']) as $related_type) {
+              $related_type_info = content_types($related_type);
+              if (array_key_exists($symmetrical_field_name, $related_type_info['fields'])) {
+                _backreference_insert($field, $related_type_info['fields'][$symmetrical_field_name], $node);
+              }
+            }*/
+          }
+        }
+      }
+      break;
+    case 'delete':
+      $content_type_info = content_types($node->type);
+      foreach ($content_type_info['fields'] as $left_field_name => $left_field) {
+        if ($left_field['type'] == 'nodereference') {
+          if ($right_field_name = db_result(db_query("SELECT field_right FROM {backreference_field_symmetry} WHERE field_left = '%s'", $left_field_name))) {
+            $right_field_info = content_database_info(content_fields($right_field_name));
+            _backreference_old_values_remove($node, NULL, $right_field_info['columns']['nid']['column'], $right_field_info['table']);
+          }
+        }
+      }
+      break;
+  }
+}
+
+
+/**
+ * This is the function that makes sure that if $field_left is linked to $field_right for the $node, that
+ * the nodes pointing to $node with $field_right are only those nodes that $node points to with $field_left.
+ *
+ * @param array $field_left This is the field array representing the field on the node being updated
+ * @param array $field_right This is the field array on the node being pointed to
+ * @param array $node This is the node that is currently being updated.
+ */
+function _backreference_insert_data($field_left, $field_right, $node) {
+  // Final safety net
+  if ($field_right['type'] == 'nodereference') {
+    $right_field_info = content_database_info($field_right);
+    $right_table = $right_field_info['table'];
+    $right_field_column = $right_field_info['columns']['nid']['column'];
+
+    // Is the left field a multiple-value field?
+    if ($field_left['multiple']) {
+      // We want to figure out which nodes this $field_left is pointing to.  So we collect them in both
+      // $current_nids, which includes this node id, and $referenced_nids, which contains only nodes we point to.
+      $referenced_nids = _backreference_old_values_remove($node, $field_left['field_name'], $right_field_column, $right_table);
+
+      // Now we need to make sure that the nodes we are referencing in $referenced_nids point to $node->nid.
+      // To prevent a race on getting and setting the delta, we lock the tables.
+      //unset($current_nids[0]);
+      //drupal_set_message(print_r($referenced_nids, TRUE));
+
+      //db_query("LOCK TABLES {". $right_table ."} WRITE, {node} READ, {watchdog} WRITE, {cache_content} WRITE");
+      try {
+        $vid_array = array();
+        if (count($referenced_nids)) {
+          $sql = "SELECT nid, vid FROM {node} WHERE nid IN (". db_placeholders($referenced_nids, 'int') .")";
+          //drupal_set_message($sql);
+          $vid_search = db_query("SELECT nid, vid FROM {node} WHERE nid IN (". db_placeholders($referenced_nids, 'int') .")", $referenced_nids);
+          while ($row = db_fetch_array($vid_search)) {
+            $vid_array[$row['nid']] = $row['vid'];
+          }
+          //drupal_set_message(print_r($vid_array, TRUE));
+        }
+        foreach ($referenced_nids as $right_nid) {
+          //$vid = db_result(db_query('SELECT vid FROM {node} WHERE nid = %d', $nid));
+          $right_vid = $vid_array[$right_nid];
+          // Skip existing references.
+          $query_exists = 'SELECT 1 FROM {'. $right_table .'} WHERE '. $right_field_column .' = %d AND nid = %d AND vid = %d';
+          if (!db_result(db_query($query_exists, $node->nid, $right_nid, $right_vid))) {
+            if ($field_right['multiple']) {
+              _backreference_linkback_multiple_field($right_table, $right_field_column, $node->nid, $right_vid, $right_nid, $field_left['multiple']);
+            }
+            else {
+              // Field-right is a single, and we just need to update the row.
+              _backreference_linkback_single_field($right_table, $right_field_column, $node->nid, $right_vid, $right_nid);
+              // Also, here we need to handle the three-node problem.
+              $left_field_info = content_database_info($field_left);
+              $left_table = $left_field_info['table'];
+              $left_field_column = $left_field_info['columns']['nid']['column'];
+              $right_node = node_load($right_nid, NULL, TRUE);
+
+              _backreference_old_values_remove($right_node, $field_right['field_name'], $left_field_column, $left_table);
+            }
+            cache_clear_all('content:'. $right_nid .':'. $right_vid, 'cache_content');
+          }
+        }
+        //db_query("UNLOCK TABLES");
+      }
+      catch (Exception $e) {
+        // Just to be sure we don't leave these tables locked in case of an error!
+        //db_query("UNLOCK TABLES");
+        throw $e;
+      }
+    }
+    else {
+      // Is the left field a single-value field?
+
+      _backreference_old_values_remove($node, $field_left['field_name'], $right_field_column, $right_table);
+      // We want to figure out which nodes this $field_left is pointing to.  So we collect them in both
+      // $current_nids, which includes this node id, and $referenced_nids, which contains only nodes we point to.
+
+      // Fetch the active nid of the newly referenced node.
+      $right_nid = $node->{$field_left['field_name']}[0]['nid'];
+      if ($right_nid) {
+        $right_vid = db_result(db_query('SELECT vid FROM {node} WHERE nid = %d', $right_nid));
+        if ($field_right['multiple']) {
+          _backreference_linkback_multiple_field($right_table, $right_field_column, $node->nid, $right_vid, $right_nid, $field_left['multiple']);
+          /*// This is a new reference, so we need to insert it after other references.
+          // This was a race condition, but the LOCK TABLES should handle that.
+          $delta_row = db_fetch_array(db_query_range("SELECT delta, $right_field_column, nid FROM {$right_table} WHERE nid = %d ORDER BY delta DESC", $nid, 0, 1));
+          $delta = $delta_row['delta'];
+          //$delta = (empty($delta)) ? 0 : $delta;
+          if ($delta == 0 && empty($delta_row[$right_field_column]) && !empty($delta_row['nid'])) {
+            db_query("UPDATE {$right_table} SET $right_field_column = %d WHERE vid = %d AND delta = 0", $node->nid, $vid);
+          }
+          else {
+            $delta = (is_null($delta) || $delta === FALSE) ? 0 : $delta + 1;
+            db_query('INSERT INTO {'. $right_table .'} (vid, delta, nid, '. $right_field_column .') VALUES (%d, %d, %d, %d)', $vid, $delta, $nid, $node->nid);
+          }*/
+        }
+        else {
+          //dpm("Table: $right_table Column: $right_field_column Left Nid: {$node->nid} Right vid: $right_vid, Right nid $right_nid.");
+          _backreference_linkback_single_field($right_table, $right_field_column, $node->nid, $right_vid, $right_nid);
+          /*db_query('UPDATE {'. $right_table .'} SET '. $right_field_column .'=%d WHERE vid=%d and nid=%d', $node->nid, $vid, $nid);
+          if (!db_affected_rows()) {
+            db_query('INSERT INTO {'. $right_table .'} (nid, vid, '. $right_field_column. ') VALUES (%d, %d, %d)', $nid, $vid, $node->nid);
+          }*/
+          // Also, here we need to handle the three-node problem.
+          $left_field_info = content_database_info($field_left);
+          $left_table = $left_field_info['table'];
+          $left_field_column = $left_field_info['columns']['nid']['column'];
+          $right_node = node_load($right_nid, NULL, TRUE);
+
+          _backreference_old_values_remove($right_node, $field_right['field_name'], $left_field_column, $left_table);
+
+        }
+        cache_clear_all('content:'. $right_nid .':'. $right_vid, 'cache_content');
+      }
+    }
+  }
+}
+
+/**
+ * Given that this current field's values may have changed, we want to spend a little time finding the nodes that
+ * this node is no longer pointing to, and remove them from this node's list of nodes.
+ */
+function _backreference_old_values_remove($node, $left_field_name, $right_field_column, $right_table) {
+  // We want to figure out which nodes this $field_left is pointing to.  So we collect them in both
+  // $current_nids, which includes this node id, and $referenced_nids, which contains only nodes we point to.
+  $current_nids = array($node->nid);
+  $referenced_nids = array(); // Array of nids that this node is pointing to.
+  if (!empty($left_field_name) and !empty($node->{$left_field_name})) {
+    foreach ($node->{$left_field_name} as $field_left_item) {
+      if ($field_left_item['nid']) {
+        $current_nids[] = $field_left_item['nid'];
+        $referenced_nids[] = $field_left_item['nid'];
+      }
+    }
+  }
+
+  // Any rows in $right_table where the $right_field_column points to us, but the nid isn't in $current_nids,
+  // must be a node which this node used to point to but no longer does.
+  // As such we need to dump cache and delete those rows from $right_table.
+  if (count($referenced_nids)) {
+    $placeholders = db_placeholders($referenced_nids, 'int');
+    $sql_conditions = "WHERE $right_field_column = %d AND nid NOT IN ($placeholders)";
+  }
+  else {
+    // In this case this node's field isn't pointing to anything.
+    $sql_conditions = "WHERE $right_field_column = %d";
+  }
+
+  // Queries for nodes which point to this node, but which this node does not point to.
+  // First we clear any content caching of these other nodes, so that the next time the node is loaded
+  // the databases are read instead of the cache.
+  $result = db_query('SELECT nid, vid FROM {'. $right_table .'} '. $sql_conditions, $current_nids);
+  while ($existing_node = db_fetch_object($result)) {
+    cache_clear_all('content:'. $existing_node->nid .':'. $existing_node->vid, 'cache_content');
+  }
+  
+  // Now we remove the references that no longer point to us.
+  // If the right field is multiple, delete from the join table.
+  // If the right field is single-instance, set field to NULL in content type table.
+  $right_field = substr($right_field_column, 0, -4);
+  if (db_result(db_query("SELECT multiple FROM {content_node_field} WHERE field_name = '%s'", $right_field))) {
+    db_query('DELETE FROM {'. $right_table .'} '. $sql_conditions, $current_nids);
+  }
+  else {
+    db_query('UPDATE {'. $right_table ."} SET $right_field_column = NULL $sql_conditions", $current_nids);
+  }
+
+  return $referenced_nids;
+}
+
+/**
+ * This function attempts to update/insert the backlink, assuming the right field is multiple.
+ */
+function _backreference_linkback_multiple_field($right_table, $right_field_column, $left_nid, $right_vid, $right_nid, $left_multiple) {
+  // This is a new reference, so we need to insert it after other references.
+  // This was a race condition, but the LOCK TABLES should handle that.
+  $delta_row = db_fetch_array(db_query_range("SELECT delta, $right_field_column, nid FROM {". $right_table ."} WHERE nid = %d ORDER BY delta DESC", $right_nid, 0, 1));
+  $delta = $delta_row['delta'];
+
+  if ($delta == 0 && empty($delta_row[$right_field_column]) && !empty($delta_row['nid'])) {
+    // If there's a row with a delta of 0 but which has no data in the nid column, then we want to update this existing null row.
+    db_query('UPDATE {'. $right_table ."} SET $right_field_column = %d WHERE vid = %d AND delta = 0", $left_nid, $right_vid);
+  }
+  else {
+    // If left field is a single-instance column, and the association already exists, return so we don't add any duplicates.
+    if (!$left_multiple and db_result(db_query("SELECT COUNT(*) FROM {". $right_table ."} WHERE vid = %d AND nid = %d AND $right_field_column = %d", $right_vid, $right_nid, $left_nid))) {
+      return;
+    }
+    $delta = (is_null($delta) || $delta === FALSE) ? 0 : $delta + 1;
+    db_query('INSERT INTO {'. $right_table .'} (vid, delta, nid, '. $right_field_column .') VALUES (%d, %d, %d, %d)', $right_vid, $delta, $right_nid, $left_nid);
+  }
+}
+
+/**
+ * This function attempts to update/insert the backlink, assuming the right field is single.
+ */
+function _backreference_linkback_single_field($right_table, $right_field_column, $left_nid, $right_vid, $right_nid) {
+  //drupal_set_message("In backreference linkback single field.");
+  // Field-right is a single, and we just need to update the row.
+  db_query('UPDATE {'. $right_table .'} SET '. $right_field_column .'=%d WHERE vid=%d and nid=%d', $left_nid, $right_vid, $right_nid);
+  if (!db_affected_rows()) {
+    db_query('INSERT INTO {'. $right_table .'} (nid, vid, '. $right_field_column .') VALUES (%d, %d, %d)', $right_nid, $right_vid, $left_nid);
+  }
+  // NTS: We need to solve the three-corner problem here.  What about nodes that are pointing to the right-hand nid?
+
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * The field in question is the content_field_edit_form.
+ *
+ * Adds a form dropdown to nodereference field configuration to allow selection of
+ * the field that is the backreference to this one.  And yes, a field can backreference itself.
+ */
+function backreference_form_content_field_edit_form_alter(&$form, &$form_state) {
+
+  if ($form['#field']['type'] == 'nodereference') {
+    $field = $form['#field'];
+    //$type = $form['type_name']['#value'];
+
+    $query = "SELECT field_right FROM {backreference_field_symmetry} WHERE field_left = '%s'";
+    $field_right = db_result(db_query($query, $field['field_name']));
+    $field_right = empty($field_right) ? 'none' : $field_right;
+
+    $fields = content_fields();
+    $nodereference_fields = array();
+    $nodereference_fields['none'] = 'n/a';
+    foreach ($fields as $fieldname => $field) {
+      if ($field['type'] == 'nodereference') {
+        $nodereference_fields[$fieldname] = $fieldname;
+      }
+    }
+
+    $description = t('Backreference is a utility which maintains a 1-1
+      relationship between two node reference fields. Nodes referencing another
+      will automatically populate the associated node reference field on the
+      referenced node. Populating this field will automatically backreference
+      the selected field to this field.');
+    $backreference = array(
+      '#type' => 'fieldset',
+      '#title' => t('Backreference'),
+      '#weight' => 5,
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#description' => $description,
+    );
+    $backreference['backreference_field'] = array(
+      '#type' => 'select',
+      '#title' => t('Backreference field'),
+      '#description' => t('Choose the field in which to maintain a 1-1 reltionship with.'),
+      '#options' => $nodereference_fields,
+      '#default_value' => $field_right,
+    );
+    $form['field']['backreference'] = $backreference;
+    $form['#submit'][] = '_backreference_form_content_field_edit_submit';
+  }
+}
+
+/**
+ * Submit field added to the content_field_edit_form's submit handler.
+ *
+ * This is where the connections between fields gets saved to backreference_field_symmetry.
+ */
+function _backreference_form_content_field_edit_submit($form, &$form_state) {
+  if ($form['#field']['type'] == 'nodereference') {
+    $field_name = $form['#field']['field_name'];
+    //$type = $form['type_name']['#value'];
+    if ($form_state['values']['backreference_field'] != 'none') {
+      $new_field_right = $form_state['values']['backreference_field'];
+
+      _backreference_link_field($field_name, $new_field_right);
+
+      _backreference_link_field($new_field_right, $field_name);
+    }
+    else {
+      db_query("DELETE FROM {backreference_field_symmetry} WHERE field_left = '%s' OR field_right = '%s'", $field_name, $field_name);
+    }
+  }
+}
+
+/**
+ * Inserts the backreference link between two fields in one direction.
+ *
+ * Basically, we're linking from $field_left_name to $field_right_name.
+ *
+ * @param string $field_left_name The field that is referencing
+ * @param string $field_right_name The field that is referenced.
+ */
+function _backreference_link_field($field_left_name, $field_right_name) {
+  $current_field_right = db_result(db_query("SELECT field_right FROM {backreference_field_symmetry} WHERE field_left = '%s'", $field_left_name));
+
+  if (empty($current_field_right)) {
+    db_query("INSERT INTO {backreference_field_symmetry} (field_left, field_right) VALUES ('%s', '%s')", $field_left_name, $field_right_name);
+  }
+
+  if ($current_field_right != $field_right_name) {
+    db_query("UPDATE {backreference_field_symmetry} SET field_right = '%s' WHERE field_left = '%s'", $field_right_name, $field_left_name);
+  }
+}

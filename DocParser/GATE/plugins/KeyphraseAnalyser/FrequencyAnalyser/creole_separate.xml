@@ -1,0 +1,86 @@
+<!-- creole.xml FrequencyAnalyser -->
+<!--  alesch, 8/4/2008 -->
+<!-- $Id: creole.xml 7419 2006-04-25 18:51:58Z ian_roberts $ -->
+
+<CREOLE-DIRECTORY>
+
+<CREOLE>
+  <RESOURCE>
+    <NAME>FrequencyAnalyser</NAME>
+    <JAR>FrequencyAnalyser.jar</JAR>
+    <CLASS>ie.deri.sw.smile.nlp.gate.frequency.FrequencyAnalyser</CLASS>
+    
+    <PARAMETER COMMENT="The document to be processed"
+               NAME="document" RUNTIME="true">
+      gate.Document
+    </PARAMETER>
+    
+    <!-- THIS MUST CORRESPOND TO THE VALUE OF POSTAGMAPPER RUN PRIOR TO THIS -->
+    <PARAMETER NAME="coarseCategoryFeatureName"
+               COMMENT="The token feature to contain the coarse category information"
+               RUNTIME="true"
+               DEFAULT="coarse_category">
+      java.lang.String
+    </PARAMETER>
+    
+    <!-- THIS MUST CORRESPOND TO THE VALUE OF PROCESSING RESOURCES RUN PRIOR TO THIS -->
+    <PARAMETER NAME="lemmaFeatureName"
+               COMMENT="The token feature to contain the lemma/root information"
+               RUNTIME="true"
+               DEFAULT="lemma">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="tokenFrequencyFeatureName"
+               COMMENT="The document feature containing the overall token frequencies"
+               RUNTIME="true"
+               DEFAULT="overall-token_frequency">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="lemmaFrequencyFeatureName"
+               COMMENT="The document feature containing the overall lemma frequencies"
+               RUNTIME="true"
+               DEFAULT="overall-lemma_frequency">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="lemmaNounFrequencyFeatureName"
+               COMMENT="The document feature containing the lemma frequencies for nouns"
+               RUNTIME="true"
+               DEFAULT="noun-lemma_frequency">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="lemmaVerbFrequencyFeatureName"
+               COMMENT="The document feature containing the lemma frequencies for verbs"
+               RUNTIME="true"
+               DEFAULT="verb-lemma_frequency">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="lemmaAdjectiveFrequencyFeatureName"
+               COMMENT="The document feature containing the lemma frequencies for adjectives"
+               RUNTIME="true"
+               DEFAULT="adj-lemma_frequency">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="documentSizeFeatureName"
+               COMMENT="The document feature containing the size of the document (in tokens)"
+               RUNTIME="true"
+               DEFAULT="document_size">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="lexiconSizeFeatureName"
+               COMMENT="The document feature containing the size of the lexicon (number of different lemmas)"
+               RUNTIME="true"
+               DEFAULT="lexicon_size">
+      java.lang.String
+    </PARAMETER>
+    <PARAMETER NAME="unknownLemmaValue"
+               COMMENT="The lemma value assigned to unknown words"
+               RUNTIME="true"
+               DEFAULT="&lt;unknown&gt;">
+      java.lang.String
+    </PARAMETER>
+    
+
+  </RESOURCE>
+</CREOLE>
+
+</CREOLE-DIRECTORY>

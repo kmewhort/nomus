@@ -1,0 +1,214 @@
+<?xml version="1.0"?>
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:protege="http://protege.stanford.edu/plugins/owl/protege#"
+    xmlns:xsp="http://www.owl-ontologies.com/2005/08/07/xsp.owl#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:owl2xml="http://www.w3.org/2006/12/owl2-xml#"
+    xmlns:test1="http://dummyurl.com/20090825/test1.rdfxml.owl#"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+    xmlns:swrl="http://www.w3.org/2003/11/swrl#"
+    xmlns:swrlb="http://www.w3.org/2003/11/swrlb#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xml:base="http://dummyurl.com/20090825/test1.rdfxml.owl">
+  <owl:Ontology rdf:about=""/>
+  <owl:Class rdf:ID="MargarithaPizza">
+    <rdfs:subClassOf>
+      <owl:Restriction>
+        <owl:onProperty>
+          <owl:ObjectProperty rdf:ID="hasTopping"/>
+        </owl:onProperty>
+        <owl:someValuesFrom>
+          <owl:Class rdf:ID="MozarellaTopping"/>
+        </owl:someValuesFrom>
+      </owl:Restriction>
+    </rdfs:subClassOf>
+    <rdfs:subClassOf>
+      <owl:Class rdf:ID="Pizza"/>
+    </rdfs:subClassOf>
+    <owl:disjointWith>
+      <owl:Class rdf:ID="OtherPizza1"/>
+    </owl:disjointWith>
+    <owl:disjointWith>
+      <owl:Class rdf:ID="OtherPizza2"/>
+    </owl:disjointWith>
+  </owl:Class>
+  <owl:Class rdf:ID="Class0101">
+    <rdfs:subClassOf>
+      <owl:Class rdf:ID="Class01"/>
+    </rdfs:subClassOf>
+    <owl:disjointWith>
+      <owl:Class rdf:ID="Class0102"/>
+    </owl:disjointWith>
+    <owl:disjointWith>
+      <owl:Class rdf:ID="Class0103"/>
+    </owl:disjointWith>
+  </owl:Class>
+  <owl:Class rdf:about="#Class0102">
+    <rdfs:subClassOf>
+      <owl:Class rdf:about="#Class01"/>
+    </rdfs:subClassOf>
+    <owl:disjointWith>
+      <owl:Class rdf:about="#Class0103"/>
+    </owl:disjointWith>
+  </owl:Class>
+  <owl:Class rdf:about="#Class0103">
+    <rdfs:subClassOf>
+      <owl:Class rdf:about="#Class01"/>
+    </rdfs:subClassOf>
+  </owl:Class>
+  <owl:Class rdf:ID="Person">
+    <rdfs:subClassOf>
+      <owl:Class rdf:ID="Animal"/>
+    </rdfs:subClassOf>
+    <rdfs:subClassOf>
+      <owl:Restriction>
+        <owl:allValuesFrom rdf:resource="#Person"/>
+        <owl:onProperty>
+          <owl:ObjectProperty rdf:ID="hasOffspring"/>
+        </owl:onProperty>
+      </owl:Restriction>
+    </rdfs:subClassOf>
+  </owl:Class>
+  <owl:Class rdf:about="#OtherPizza1">
+    <owl:disjointWith rdf:resource="#MargarithaPizza"/>
+    <owl:disjointWith>
+      <owl:Class rdf:about="#OtherPizza2"/>
+    </owl:disjointWith>
+    <rdfs:subClassOf>
+      <owl:Class rdf:about="#Pizza"/>
+    </rdfs:subClassOf>
+  </owl:Class>
+  <owl:Class rdf:ID="FishTopping">
+    <owl:disjointWith>
+      <owl:Class rdf:about="#MozarellaTopping"/>
+    </owl:disjointWith>
+    <owl:disjointWith>
+      <owl:Class rdf:ID="VeggieTopping"/>
+    </owl:disjointWith>
+    <rdfs:subClassOf>
+      <owl:Class rdf:ID="PizzaTopping"/>
+    </rdfs:subClassOf>
+  </owl:Class>
+  <owl:Class rdf:about="#MozarellaTopping">
+    <rdfs:subClassOf>
+      <owl:Class rdf:about="#PizzaTopping"/>
+    </rdfs:subClassOf>
+    <owl:disjointWith rdf:resource="#FishTopping"/>
+    <owl:disjointWith>
+      <owl:Class rdf:about="#VeggieTopping"/>
+    </owl:disjointWith>
+  </owl:Class>
+  <owl:Class rdf:about="#OtherPizza2">
+    <rdfs:subClassOf>
+      <owl:Class rdf:about="#Pizza"/>
+    </rdfs:subClassOf>
+    <owl:disjointWith rdf:resource="#OtherPizza1"/>
+    <owl:disjointWith rdf:resource="#MargarithaPizza"/>
+  </owl:Class>
+  <owl:Class rdf:about="#VeggieTopping">
+    <owl:disjointWith rdf:resource="#MozarellaTopping"/>
+    <owl:disjointWith rdf:resource="#FishTopping"/>
+    <rdfs:subClassOf>
+      <owl:Class rdf:about="#PizzaTopping"/>
+    </rdfs:subClassOf>
+  </owl:Class>
+  <owl:Class rdf:ID="存在論">
+    <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >Japanese language class name ("ontology" in japanese)</rdfs:comment>
+  </owl:Class>
+  <owl:Class rdf:about="http://www.w3.org/2002/07/owl#Thing"/>
+  <owl:Class rdf:ID="Class04">
+    <owl:disjointWith>
+      <owl:Class rdf:ID="Class05"/>
+    </owl:disjointWith>
+    <owl:disjointWith>
+      <owl:Class rdf:ID="Class03"/>
+    </owl:disjointWith>
+    <owl:disjointWith>
+      <owl:Class rdf:about="#Class01"/>
+    </owl:disjointWith>
+  </owl:Class>
+  <owl:Class rdf:about="#Class03">
+    <owl:disjointWith>
+      <owl:Class rdf:about="#Class05"/>
+    </owl:disjointWith>
+    <owl:disjointWith rdf:resource="#Class04"/>
+    <owl:disjointWith>
+      <owl:Class rdf:about="#Class01"/>
+    </owl:disjointWith>
+  </owl:Class>
+  <owl:Class rdf:about="#Animal">
+    <rdfs:subClassOf rdf:resource="#Class03"/>
+  </owl:Class>
+  <owl:Class rdf:ID="Class02a">
+    <owl:equivalentClass>
+      <owl:Class rdf:ID="Class02b"/>
+    </owl:equivalentClass>
+  </owl:Class>
+  <owl:Class rdf:about="#Class05">
+    <owl:disjointWith rdf:resource="#Class04"/>
+    <owl:disjointWith rdf:resource="#Class03"/>
+    <owl:disjointWith>
+      <owl:Class rdf:about="#Class01"/>
+    </owl:disjointWith>
+  </owl:Class>
+  <owl:Class rdf:about="#Pizza">
+    <owl:disjointWith>
+      <owl:Class rdf:about="#PizzaTopping"/>
+    </owl:disjointWith>
+    <rdfs:subClassOf rdf:resource="#Class04"/>
+  </owl:Class>
+  <owl:Class rdf:about="#A%20Class">
+    <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >Class name containing an encoded space</rdfs:comment>
+    <rdfs:subClassOf rdf:resource="#存在論"/>
+  </owl:Class>
+  <owl:Class rdf:about="#PizzaTopping">
+    <owl:disjointWith rdf:resource="#Pizza"/>
+    <rdfs:subClassOf rdf:resource="#Class04"/>
+  </owl:Class>
+  <owl:Class rdf:about="#Class01">
+    <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >The three subclasses of this class are all distinct from each other</rdfs:comment>
+    <owl:disjointWith rdf:resource="#Class05"/>
+    <owl:disjointWith rdf:resource="#Class04"/>
+    <owl:disjointWith rdf:resource="#Class03"/>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="#hasTopping">
+    <rdfs:range rdf:resource="#PizzaTopping"/>
+    <rdfs:domain rdf:resource="#Pizza"/>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="#hasOffspring">
+    <rdfs:range rdf:resource="#Animal"/>
+    <rdfs:domain rdf:resource="#Animal"/>
+  </owl:ObjectProperty>
+  <test1:Class02a rdf:ID="IClass02a_01">
+    <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+    >This should get inferred to be a member of Class02b</rdfs:comment>
+  </test1:Class02a>
+  <test1:Class03 rdf:ID="IClass03_01"/>
+  <test1:Person rdf:ID="IPerson_02">
+    <test1:hasOffspring>
+      <test1:Animal rdf:ID="IAnimal_01">
+        <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string"
+        >This should get inferred to be a person as it has an offSpring that is a Person</rdfs:comment>
+        <test1:hasOffspring>
+          <test1:Person rdf:ID="IPerson_01"/>
+        </test1:hasOffspring>
+      </test1:Animal>
+    </test1:hasOffspring>
+  </test1:Person>
+  <test1:Pizza rdf:ID="ISomePizza01">
+    <test1:hasTopping>
+      <test1:MozarellaTopping rdf:ID="ISomeMozarellaTopping1"/>
+    </test1:hasTopping>
+  </test1:Pizza>
+  <test1:Pizza rdf:ID="SomePizza02">
+    <test1:hasTopping>
+      <test1:FishTopping rdf:ID="SomeFishTopping1"/>
+    </test1:hasTopping>
+  </test1:Pizza>
+</rdf:RDF>
+
+<!-- Created with Protege (with OWL Plugin 3.4.1, Build 536)  http://protege.stanford.edu -->

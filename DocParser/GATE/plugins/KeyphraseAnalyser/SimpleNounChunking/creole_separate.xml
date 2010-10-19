@@ -1,0 +1,44 @@
+<!-- creole.xml SimpleNounChunking -->
+<!--  alesch, 22/2/2008 -->
+<!-- $Id: creole.xml 7419 2006-04-25 18:51:58Z ian_roberts $ -->
+
+<CREOLE-DIRECTORY>
+
+<CREOLE>
+  <RESOURCE>
+    <NAME>SimpleNounChunking</NAME>
+    <JAR>SimpleNounChunking.jar</JAR>
+    <CLASS>ie.deri.sw.smile.nlp.gate.chunking.SimpleNounChunker</CLASS>
+      <PARAMETER COMMENT="The document to be processed" NAME="document" RUNTIME="true">
+      gate.Document
+      </PARAMETER>
+      <PARAMETER NAME="inputASName"
+        COMMENT="The name used for the temporary annotation set"
+        RUNTIME="true" OPTIONAL="true">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="outputASName"
+        COMMENT="The name used for the temporary annotation set"
+        RUNTIME="true" OPTIONAL="true">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="grammarURL"
+        DEFAULT="resources/SimpleNounChunker.jape" RUNTIME="false" 
+        COMMENT="The URL to the custom Jape grammar file"
+        SUFFIXES="jape">
+        java.net.URL
+      </PARAMETER>
+      <PARAMETER NAME="encoding" DEFAULT="UTF-8"
+        COMMENT="The encoding used for reading the grammar">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="ontology"
+        COMMENT="The ontology to be used by this transducer" OPTIONAL="true"
+        RUNTIME="true">
+        gate.creole.ontology.Ontology
+      </PARAMETER>
+    <ICON>jape</ICON>
+  </RESOURCE>
+</CREOLE>
+
+</CREOLE-DIRECTORY>

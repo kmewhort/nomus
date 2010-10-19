@@ -1,0 +1,36 @@
+INSTALL.txt file
+================
+
+1. Place the slider_textfield folder in your modules folder.
+
+2. Download and install the required jQuery Plugin Handler module 
+     (http://drupal.org/project/jqp).
+
+3. Create a directory called "plugins" at sites/all/plugins or 
+   sites/[example.com]/plugins or similar, as described in jqp's 
+   installation instructions.
+
+4. Go to the jQuery UI download page (http://ui.jquery.com/download_builder) 
+   and check the UI Core checkbox.
+
+5. Make sure you've selected JSMin in the compression list and hit the download 
+   button.
+
+6. Rename the downloaded file to 'jquery.ui.core.min.js' and move it to the 
+   plugins folder.
+
+7. Go to the jQuery UI download page (http://ui.jquery.com/download_builder) 
+   again and check the Slider checkbox. This time you also need to make sure the
+   UI Core checkbox is unchecked!
+
+8. Again, make sure you've selected JSMin in the compression list and hit the download 
+   button.
+
+9. Rename the downloaded file to 'jquery.ui.slider.min.js' and move it to the 
+   plugins folder.
+
+10. Enable the slider_textfield module by navigating to:
+    admin/build/modules
+
+11. Read the help section by navigating to admin/help/slider_textfield. Here you'll 
+    find a complete manual about how the module can be used.

@@ -1,0 +1,10 @@
+FirefoxPlugin:
+-To build: run ant from the FirefoxPlugin directory to build to "/dist" subdirectory
+-To install in firefox: 
+--1. Start firefox and create a profile named SiteSpider (firefox -p SiteSpider)
+--2. Disable all browser crash and security warnings, and disable session restore in about:config
+---browser.sessionstore.resume_from_crash = false
+---security.warn* = false
+---network.http.sendRefererHeader = 0
+--3. To install the plugin, open the xul file in firefox (in the /dist subdirectory)
+

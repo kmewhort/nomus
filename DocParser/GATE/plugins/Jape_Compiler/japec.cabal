@@ -1,0 +1,33 @@
+name: japec
+version: 0.0
+license: BSD3
+author: Krasimir Angelov
+synopsis: JAPE to Java translator
+description: JAPE to Java translator
+category: tools
+build-depends: base
+
+executable: japec
+main-is: Main.hs
+other-modules: Main
+               Japec.CmdFlags
+               Japec.FilePath
+               Japec.AbsSyntax
+               Japec.AbsSyntax.Lexer
+               Japec.AbsSyntax.Parser
+               Japec.TSyntax
+               Japec.TranslateGrammar
+               Japec.OptimizeTransducer
+               Japec.OptimizeTransducer.EpsilonClosure
+               Japec.OptimizeTransducer.Determinisation
+               Japec.OptimizeTransducer.Minimization
+               Japec.CodeGen
+               Japec.CodeGen.Java
+               StringUtils.PackedString
+               StringUtils.KeyString
+               StringUtils.KeyStringMap
+               StringUtils.KeyStringSet
+               StringUtils.SrcLoc
+               StringUtils.StringBuffer
+hs-source-dir: src
+ghc-options: -fglasgow-exts

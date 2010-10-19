@@ -1,0 +1,37 @@
+<!-- resource.xml MtlTransducer -->
+<!--  plamondl, 11/11/2003 -->
+<!-- $Id: creole.xml 11845 2009-10-30 15:15:42Z ian_roberts $ -->
+
+<CREOLE-DIRECTORY>
+
+<CREOLE>
+  <RESOURCE>
+    <NAME>Montreal Transducer</NAME>
+    <JAR>MtlTransducer.jar</JAR>
+    <CLASS>ca.umontreal.iro.rali.gate.creole.MtlTransducer</CLASS>
+    <COMMENT>
+      A module for executing augmented Jape grammars.  Many of its features
+      have now been subsumed into the standard JAPE implementation.
+    </COMMENT>
+    <PARAMETER NAME="document" RUNTIME="true"
+      COMMENT="The document to be processed">gate.Document</PARAMETER>
+    <PARAMETER NAME="inputASName" RUNTIME="true"
+      COMMENT="The annotation set to be used as input for the transducer"
+      OPTIONAL="true">java.lang.String</PARAMETER>
+    <PARAMETER NAME="outputASName" RUNTIME="true"
+      COMMENT="The annotation set to be used as output for the transducer"
+      OPTIONAL="true">java.lang.String</PARAMETER>
+    <PARAMETER NAME="authoriseDuplicates" RUNTIME="true"
+      COMMENT="Create annotations even when identical ones already exists"
+      DEFAULT="true">java.lang.Boolean</PARAMETER>
+    <PARAMETER NAME="grammarURL"
+      COMMENT="The URL to the grammar file"
+      SUFFIXES="jape">java.net.URL</PARAMETER>
+    <PARAMETER NAME="encoding" DEFAULT="UTF-8"
+      COMMENT="The encoding used for reading the grammar">java.lang.String</PARAMETER>
+    <PARAMETER NAME="ontology"
+        COMMENT="The ontology to be accesible on the rules RHS">gate.creole.ontology.Ontology</PARAMETER>
+  </RESOURCE>
+</CREOLE>
+
+</CREOLE-DIRECTORY>

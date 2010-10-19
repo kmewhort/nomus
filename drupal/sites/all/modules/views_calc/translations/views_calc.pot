@@ -1,0 +1,322 @@
+# $Id$
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  theme.inc,v 1.9 2009/04/23 18:32:48 karens
+#  views_calc_plugin_style_chart.inc,v 1.7 2009/04/20 19:38:42 karens
+#  views_calc_table.inc,v 1.15 2009/04/22 02:21:41 karens
+#  views_calc.views.inc,v 1.7 2009/05/17 11:11:17 karens
+#  views_calc.module: n/a
+#  views_calc.info,v 1.3 2008/09/15 18:11:11 karens
+#  views_calc_field_handler.inc,v 1.3 2009/04/21 12:15:28 karens
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-11-07 01:07+0100\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: theme.inc:17
+msgid "Field"
+msgstr ""
+
+#: theme.inc:18
+msgid "Justification"
+msgstr ""
+
+#: theme.inc:19
+msgid "Column calculations"
+msgstr ""
+
+#: theme.inc:20
+msgid "Column"
+msgstr ""
+
+#: theme.inc:21
+msgid "Separator"
+msgstr ""
+
+#: theme.inc:23
+msgid "Sortable"
+msgstr ""
+
+#: theme.inc:27
+msgid "Default sort"
+msgstr ""
+
+#: theme.inc:57 views_calc_plugin_style_chart.inc:107 views_calc_table.inc:47
+msgid "None"
+msgstr ""
+
+#: theme.inc:118
+msgid "sort by @s"
+msgstr ""
+
+#: theme.inc:204
+msgid "Page !Calculation"
+msgstr ""
+
+#: theme.inc:207
+msgid "Total !Calculation"
+msgstr ""
+
+#: views_calc.views.inc:29 views_calc.module:96;130 views_calc.info:0
+msgid "Views Calc"
+msgstr ""
+
+#: views_calc.views.inc:61
+msgid "Views Calc Table"
+msgstr ""
+
+#: views_calc.views.inc:62
+msgid "Creates a table with column calculations."
+msgstr ""
+
+#: views_calc_field_handler.inc:32
+msgid "Link this field to its node"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:33
+msgid "Chart format"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:35
+msgid "Line 2D"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:36
+msgid "Horizontal Bar 2D"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:37
+msgid "Vertical Bar 2D"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:38
+msgid "Pie 2D"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:39
+msgid "Pie 3D"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:40
+msgid "Venn"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:41
+msgid "Scatter Plot"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:47
+msgid "Chart height"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:50
+msgid "An integer value, the number of pixels of height for this chart."
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:54
+msgid "Chart width"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:57
+msgid "An integer value, the number of pixels of width for this chart."
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:61
+msgid "Background color"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:63
+msgid "In hexadecimal format (RRGGBB). Do not use the # symbol."
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:68
+msgid "Show legend"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:70
+msgid "Display legend next to the chart."
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:75
+msgid "Aggregation field"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:78
+msgid "Select a field to aggreagate the results on."
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:84
+msgid "Computation field"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:88
+msgid "Select field to perform computations on."
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:92
+msgid "Computation to perform"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:98
+msgid "Precision"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:101
+msgid "Decimal points to use in computed values."
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:108
+msgid "Sum"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:109
+msgid "Count"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:110
+msgid "Average"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:111
+msgid "Minimum"
+msgstr ""
+
+#: views_calc_plugin_style_chart.inc:112
+msgid "Maximum"
+msgstr ""
+
+#: views_calc_table.inc:30
+msgid "Show details"
+msgstr ""
+
+#: views_calc_table.inc:32
+msgid "Yes"
+msgstr ""
+
+#: views_calc_table.inc:32
+msgid "No"
+msgstr ""
+
+#: views_calc_table.inc:34
+msgid "Select 'Yes' to show detailed values followed by column calculations, 'No' to surpress details and show only calculated column totals."
+msgstr ""
+
+#: views_calc_table.inc:48
+msgid "Left"
+msgstr ""
+
+#: views_calc_table.inc:49
+msgid "Right"
+msgstr ""
+
+#: views_calc_table.inc:50
+msgid "Center"
+msgstr ""
+
+#: views_calc_table.inc:57
+msgid "Display calculation"
+msgstr ""
+
+#: views_calc.module:32
+msgid "<p>Set up calculation fields. Calculation fields will be displayed in the views fields list and can be added to any view.</p>"
+msgstr ""
+
+#: views_calc.module:34
+msgid "Put one operator on each line. To avoid the possibility of SQL injection, calculation text will only allow these values, numbers, and field names. Make sure this list includes any text other than field names that should be allowed in the calculation fields."
+msgstr ""
+
+#: views_calc.module:36
+msgid "<ul> <li>Go to admin/settings/views_calc to create calculations.</li> <li>The 'Fields' tab will allow you to create calculated fields that can be inserted into any view. The calculations can include the value of any Views field, combined with numbers, arithmatic operations, and common SQL functions like ROUND() or MIN(). Each available field has a shortcut name like %Node:Title. Create SQL snippets like (%Node:Field1 + 84600) or ROUND(%Node:Field2 / 3). </li> <li>The 'Columns' tab allows you to set column calculations. The column totals are added in the view itself by using the style 'Views Calc Table' and setting the fields in the table that should have column totals.</li> <li>The 'Settings' tab allows you to add new functions to the list of allowable functions. </ul>"
+msgstr ""
+
+#: views_calc.module:97
+msgid "Set Views Calc fields and columns."
+msgstr ""
+
+#: views_calc.module:106
+msgid "Fields"
+msgstr ""
+
+#: views_calc.module:115
+msgid "Settings"
+msgstr ""
+
+#: views_calc.module:135
+msgid "Allowable functions and operators"
+msgstr ""
+
+#: views_calc.module:140;173
+msgid "Save"
+msgstr ""
+
+#: views_calc.module:188
+msgid "Field: "
+msgstr ""
+
+#: views_calc.module:188
+msgid "New"
+msgstr ""
+
+#: views_calc.module:202
+msgid "Label"
+msgstr ""
+
+#: views_calc.module:205
+msgid "The views field name for this field (i.e. Views Calc: My Calculation)."
+msgstr ""
+
+#: views_calc.module:209
+msgid "Calculation"
+msgstr ""
+
+#: views_calc.module:215
+msgid "Format"
+msgstr ""
+
+#: views_calc.module:218
+msgid "The format of the result of this calculation."
+msgstr ""
+
+#: views_calc.module:222
+msgid "Custom function"
+msgstr ""
+
+#: views_calc.module:224
+msgid "The function to call for a custom format."
+msgstr ""
+
+#: views_calc.module:262
+msgid "The values %remaining in %field are not allowed."
+msgstr ""
+
+#: views_calc.module:321
+msgid "Views Calc fields were updated."
+msgstr ""
+
+#: views_calc.module:89
+msgid "create views calc"
+msgstr ""
+
+#: views_calc.module:89
+msgid "administer views calc"
+msgstr ""
+
+#: views_calc.info:0
+msgid "This module will allow you to add calculated fields to views tables and compute columns of numeric data in a views table."
+msgstr ""
+
+#: views_calc.info:0
+msgid "Views"
+msgstr ""
+

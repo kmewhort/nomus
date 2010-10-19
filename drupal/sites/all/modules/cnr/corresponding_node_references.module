@@ -1,0 +1,218 @@
+<?php
+/**
+ *  Implementation hook_menu()
+ */ 
+function corresponding_node_references_menu() {
+  $items = array();
+  $items['admin/settings/corresponding_node_references'] = array(
+    'title' => t('Corresponding node references'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('corresponding_node_references_settings_form'),
+    'access arguments' => array('administer corresponding node references settings'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation hook_perm()
+ */ 
+function corresponding_node_references_perm() {
+  return array('administer corresponding node references settings');
+}
+
+/**
+ * The settings form
+ */
+function corresponding_node_references_settings_form() {  
+  $form['intro'] = array('#value' => t('Check which node references should listen to each other. 
+  When checking a check box a reference on node type A to node B will automatically update the node reference field on node B 
+  adding an entrie which points to node A. To set
+  the node reference to single enable "Set to single". 
+  <b>Make sure</b> that on your node reference instance settings the "number of values property" 
+  is still set to unlimited.'));
+  
+  //only node reference instances which are multiple, sinlge mode is posible see corresponding_nodereferences_form_alter() 
+  $result = db_query("SELECT cnf.field_name, cnf.global_settings FROM {content_node_field} cnf WHERE cnf.type = '%s' AND cnf.multiple = 1", 'nodereference');
+  while ($row = db_fetch_object($result)) {
+    $data = unserialize($row->global_settings);
+    $count = 0;
+    foreach ($data['referenceable_types'] as $reference) {
+      if ($reference != '0') {
+        $references[$row->field_name][] = $reference;
+        $count++;
+      }
+    }
+  }
+
+  $result = db_query("SELECT cnfi.field_name, cnfi.type_name FROM {content_node_field_instance} cnfi INNER JOIN {content_node_field} cnf ON cnf.field_name = cnfi.field_name WHERE cnf.type = '%s' AND cnf.multiple = 1", 'nodereference');
+  while ($row = db_fetch_object($result)) {
+    if (!empty($references[$row->field_name])) {
+      foreach ($references[$row->field_name] as $reference) {
+        $fields_to_compare[] = array('field_type' => $row->field_name, 'node_type' => $row->type_name, 'reference' => $reference);
+      }
+    }
+  }
+  if (!empty($fields_to_compare)) {
+    $corr_noderefs = array(); 
+    foreach ($fields_to_compare as $field) {
+      foreach ($fields_to_compare as $second_field) {     
+        if ($field['node_type'] == $second_field['reference'] && $second_field['node_type'] == $field['reference']) {
+          if (!array_key_exists($field['node_type'] . ' ' . $field['field_type'] . ' ' . $second_field['node_type'] . ' ' . $second_field['field_type'], $corr_noderefs) && !array_key_exists($second_field['node_type'] . ' ' . $second_field['field_type'] . ' ' . $field['node_type'] . ' ' . $field['field_type'], $corr_noderefs)) {
+            $corr_noderefs[$field['node_type'] . ' ' . $field['field_type'] . ' ' . $second_field['node_type'] . ' ' . $second_field['field_type']] = array('node_type_1' => $field['node_type'], 'field_1' => $field['field_type'], 'node_type_2' => $second_field['node_type'], 'field_2' => $second_field['field_type']);
+          }
+        }
+      }
+    }
+    
+    if (!empty($corr_noderefs)) {
+      foreach($corr_noderefs as $key => $corr_noderef) {
+        $formated_label = corresponding_node_references_format_label($key);
+        $formated_key = str_replace(' ', '*', $key);
+    
+        $form['values'][$formated_key] = array(
+          '#type' => 'fieldset',
+        );
+        $form['values'][$formated_key]['enabled ' . $formated_key] = array(
+          '#type' => 'checkbox', 
+          '#default_value' => db_result(db_query("SELECT enabled FROM {corresponding_node_references} WHERE node_types_content_fields = '%s'", $formated_key)),
+          '#title' => $formated_label,
+        );
+        $form['values'][$formated_key]['single ' . $formated_key] = array(
+          '#type' => 'checkbox',
+          '#default_value' => db_result(db_query("SELECT single FROM {corresponding_node_references} WHERE node_types_content_fields = '%s'", $formated_key)),
+          '#title' => t('Set first reference instance to single'),
+        );
+        $form['values'][$formated_key]['single2 ' . $formated_key] = array(
+          '#type' => 'checkbox',
+          '#default_value' => db_result(db_query("SELECT single2 FROM {corresponding_node_references} WHERE node_types_content_fields = '%s'", $formated_key)),
+          '#title' => t('Set second reference instance  to single'),
+        );        
+      }
+      $form['submit'] = array('#type' => 'submit', '#value' => t('Save'));
+    }
+    else {
+      $form['text'] = array('#value' => '<div>'.t('There are no node types which have a corresponding node reference').'</div>'); 
+    }    
+  }
+  
+  return $form; 
+}
+
+/**
+ * Submit function for settings form
+ */ 
+function corresponding_node_references_settings_form_submit($form, $form_values) {
+  db_query("UPDATE {corresponding_node_references} SET enabled = %d", 0);
+  db_query("UPDATE {corresponding_node_references} SET single = %d", 0);
+  db_query("UPDATE {corresponding_node_references} SET single2 = %d", 0);
+  
+  $query_values = array();
+  foreach ($form_values['clicked_button']['#post'] as $key => $value) {
+    $keys = explode('_', $key);
+    
+    if ($keys[0] == 'enabled') {
+      $key = implode('_', $keys); 
+      $key = str_replace('enabled_', '', $key);  
+      $query_values[$key]['enabled'] = $value['#value']; 
+    }
+    if ($keys[0] == 'single') {
+      $key = implode('_', $keys); 
+      $key = str_replace('single_', '', $key);  
+      $query_values[$key]['single'] = $value['#value'];
+    }
+    if ($keys[0] == 'single2') {
+      $key = implode('_', $keys); 
+      $key = str_replace('single2_', '', $key);  
+      $query_values[$key]['single2'] = $value['#value'];
+    }
+  }  
+  
+  foreach($query_values as $key => $values) {
+    db_query("DELETE FROM {corresponding_node_references} WHERE node_types_content_fields='%s'", $key);  
+	  db_query("INSERT INTO {corresponding_node_references} (node_types_content_fields, single, single2, enabled) VALUES ('%s', %d, %d, %d)", $key, $values['single'], $values['single2'],$values['enabled']);   
+  }
+}
+
+/**
+ * Formats a label
+ */ 
+function corresponding_node_references_format_label($key) {
+  $key = explode(' ', $key);
+  return t('!type1 with field !field1 <==> !type2 with field : !field2', array('!type1' => $key[0], '!field1' => $key[1], '!type2' => $key[2], '!field2' => $key[3]));
+}
+
+/**
+ * Implementation of hook_nodeapi()
+ */
+function corresponding_node_references_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+
+  switch ($op) {
+    case insert:
+    case update:
+    case delete:
+      module_load_include('inc', 'corresponding_node_references', 'corresponding_node_references.crud');
+
+      $result = db_query("SELECT node_types_content_fields FROM {corresponding_node_references} WHERE enabled = %d", 1);
+      while ($row = db_fetch_object($result)) {
+        $key = explode('*', $row->node_types_content_fields);
+        
+        switch ($node->type) {
+          case $key[0]:
+            $args = array($node, $key[1], $key[2], $key[3]);
+            $function = 'corresponding_node_references_' . $op;
+            call_user_func_array($function, $args);
+            if ($key[0] != $key[2]) { 
+              break;
+            }
+            // Fall through.
+          case $key[2]:
+            $args = array($node, $key[3], $key[0], $key[1]);
+            $function = 'corresponding_node_references_' . $op;
+            call_user_func_array($function, $args);
+            break;
+        }
+      }
+      break;
+  }
+}
+
+/**
+* Implementation of hook_form_alter()
+* This allows single noderefences to be used for a relationship if the single mode is enabled
+*/
+function corresponding_node_references_form_alter(&$form, $form_state) {
+  if ($form['#id'] == 'node-form') {
+    $result = db_query("SELECT node_types_content_fields, single, single2 FROM {corresponding_node_references} WHERE (single = 1 OR single2 = 1) AND enabled = 1");
+    $type = $form['type']['#value'];
+   
+    while ($row = db_fetch_object($result)) {
+      $key = explode('*', $row->node_types_content_fields);
+
+      if ($key[0] == $type && $row->single == 1) {
+        $form['#field_info'][$key[1]]['multiple'] = 0;
+        // Also unset the form elements that would allow the user to add more
+        if (isset($form[$key[1]][1])) {
+          unset($form[$key[1]][1]);
+        }
+        $add_more = $key[1] . "_add_more";
+        if (isset($form[$key[1]][$add_more])) {
+          unset($form[$key[1]][$add_more]);
+        }
+      }
+      if ($key[2] == $type && $row->single2 == 1) {
+        $form['#field_info'][$key[3]]['multiple'] = 0;
+
+        // Also unset the form elements that would allow the user to add more
+        if (isset($form[$key[3]][1])) {
+          unset($form[$key[3]][1]);
+        }
+        $add_more = $key[3] . "_add_more";
+        if (isset($form[$key[3]][$add_more])) {
+          unset($form[$key[3]][$add_more]);
+        }
+      }
+    }
+  }
+} 

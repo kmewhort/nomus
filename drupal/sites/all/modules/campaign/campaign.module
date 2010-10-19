@@ -1,0 +1,1129 @@
+<?php
+
+/**
+ * Implementation of hook_nodeapi
+ *
+ * Override 'view' to display the campaign page
+ */
+function campaign_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  if($node->type == 'campaign') {
+    switch ($op) {
+      case 'view':
+	     campaign_view($node);
+        break;
+      case 'alter':
+        break;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_theme
+ */
+function campaign_theme() {
+  return array(
+    'campaign_issues_form' => array(
+      'arguments' => array('form' => NULL),
+    ),
+  );
+}
+
+
+/**
+ * Implementation of hook_view().
+ *
+ * When a user views the campaign node, show the e-mail submission
+ * form.
+ */
+function campaign_view($node, $teaser = FALSE, $page = FALSE) {	
+	$formStep = arg(2);
+	
+	// load persistent session data
+	campaign_load_session_data($node);
+	
+	// show the form corresponding to the current step
+	$node->content['campaign'] = array(
+		'#type' => 'markup',
+		'#prefix' => '<div>',
+		'#suffix' => '</div>',
+		'#weight' => 1000,
+		);
+	if(!$formStep || $formStep == 1) {
+		$node->content['campaign']['#value'] =
+			drupal_get_form('campaign_step1_form');
+			
+	} else if($formStep == 2) {
+		$node->content['campaign']['#value'] =
+			drupal_get_form('campaign_step2_form');
+			
+	} else if($formStep == 3) {
+		$node->content['campaign']['#value'] =
+			campaign_step3_html();
+			
+	} else if($formStep == 4) {
+		$node->content['campaign']['#value'] =
+			drupal_get_form('campaign_step4_form');
+			
+	} else if($formStep == 5) {
+		$node->content['campaign']['#value'] =
+			drupal_get_form('campaign_step5_form');
+	}
+
+	return $node;
+}
+
+/**
+* Loads session data that is to persist throughout the multiple steps
+* of the form
+*/
+function campaign_load_session_data($node) {
+   // if the node id has changed, this is a different campaign -> clear
+	// the the node-specific session details (but let the remainder of
+	// the userinformation be reused)
+	
+	if($_SESSION['campaign_node'] != $node->nid || $_SESSION['campaign_modtime'] != $node->changed)
+	{
+		unset($_SESSION['campaign_email_subject']);
+		unset($_SESSION['campaign_email_addressee']);
+		unset($_SESSION['campaign_email_body']);
+		unset($_SESSION['campaign_recipient_list']);
+		unset($_SESSION['campaign_email_formletter']);
+		unset($_SESSION['campaign_email_issues']);
+		unset($_SESSION['campaign_email_questions']);
+		unset($_SESSION['campaign_email_questiontemplate']);
+		unset($_SESSION['campaign_issue_weight_lowerbound']);
+		unset($_SESSION['campaign_issue_weight_upperbound']);
+		$_SESSION['campaign_node'] = $node->nid;
+		$_SESSION['campaign_modtime'] = $node->changed;
+	}
+
+	// set values to defaults if not already set
+	if(!$_SESSION['campaign_email_subject']) {
+			$_SESSION['campaign_email_subject'] =
+				$node->field_default_email_subject[0]['value'];
+	}
+	if(!$_SESSION['campaign_email_addressee']) {
+		if($_SESSION['campaign_mpname'])
+			$_SESSION['campaign_email_addressee'] =
+				'(Ms./Mr./Minister) ' . $_SESSION['campaign_mpname'];
+	}
+	if(!$_SESSION['campaign_email_formletter']) {
+		if($node->field_default_email_body)
+			$_SESSION['campaign_email_formletter'] =
+				$node->field_default_email_body[0]['value'];
+	}
+	if(!$_SESSION['campaign_email_issues']) {
+			$issues = array();
+			if($node->field_issues && $node->field_issues[0]['value'] != null) {
+				$i = 0;
+				$issues = array();
+				foreach($node->field_issues as $val) {
+			   	$split = explode("\n", $val['value'], 3);  
+					$issue = array('label' =>  trim($split[0]),
+						'text' => trim($split[2]));
+					if(strtolower(trim($split[1])) == 'true')
+						$issue['weight'] = 50 + $i++;
+					else
+						$issue['weight'] = 200 + $i++;
+					$issues[] = $issue;
+				}
+						
+				$_SESSION['campaign_email_issues'] = $issues;
+			}
+	}
+	if(!$_SESSION['campaign_email_questions']) {
+			$questions = array();
+			if($node->field_question && $node->field_question[0]['value'] != null) {
+				foreach($node->field_question as $val) {
+			   	$split = explode("\n", $val['value'], 2);  
+					$questions[] = array('label' =>  trim($split[0]),
+						'question' => trim($split[1]),
+						'answer' => '');
+				}
+				$_SESSION['campaign_email_questions'] = $questions;
+			}
+	}
+	if(!$_SESSION['campaign_email_questiontemplate']) {
+		$_SESSION['campaign_email_questiontemplate'] = $node->field_letter_from_questions[0]['value'];
+	}
+	if(!$_SESSION['campaign_domore_actions']) {
+			$_SESSION['campaign_domore_actions'] =
+				$node->field_domore_actions[0]['value'];
+	}
+		
+	$_SESSION['campaign_recipient_list'] = $node->field_recipient_list[0]['value'];
+	if(isset($node->field_recipient_testaddress[0]) && $node->field_recipient_testaddress[0]['value']) {
+		$_SESSION['campaign_recipient_test'] = $node->field_recipient_testaddress[0]['value'];
+	}
+	else {
+		unset($_SESSION['campaign_recipient_test']);
+	}	
+}
+
+
+/**
+* Step 1 form - Basic Info
+*/
+function campaign_step1_form() {
+
+  $form['header'] = array(
+    '#type' => 'markup',
+    '#value' => '<div class="campaign-steps-header"><img src="' . base_path() . drupal_get_path('module', 'campaign') . '/step1.png"></img></div><div>' .
+    	t('Your name and e-mail address are required so that the recipients know who this letter is coming from!')
+    	. '</div>',
+  );
+  
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t("Your name"),
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+    '#default_value' => $_SESSION['campaign_name'],
+  );
+    
+  $form['email'] = array(
+    '#type' => 'textfield',
+    '#title' => t("Your e-mail address"),
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+    '#default_value' => $_SESSION['campaign_email'],
+  );
+    
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Next - Find your MP >'),
+  );
+
+  return $form;
+}
+
+function campaign_step1_form_validate($form, &$form_state)  {
+  // validate e-mail
+  if(!eregi("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$", $form_state['values']['email']))
+  	form_set_error('email', t("Invalid e-mail address."));	
+}
+
+function campaign_step1_form_submit($form, &$form_state) {
+	// store the fields in the user session variables
+	$_SESSION['campaign_email'] = $form_state['values']['email'];
+	$_SESSION['campaign_name'] = $form_state['values']['name'];
+	
+	$form_state['redirect'] = $_GET['q'] . '/2';
+}
+
+
+/**
+* Step 2 - Find your MP
+*/
+function campaign_step2_form() {
+
+  $form['header'] = array(
+    '#type' => 'markup',
+    '#value' => '<div class="campaign-steps-header"><img src="' . base_path() . drupal_get_path('module', 'campaign') . '/step2.png"></img></div><div>'
+    	. t('To find your MP and riding, enter your postal code in the text box below and click "Find MP!" to automatically retrieve this information.')
+    	. '</div>',
+  );
+  
+  $form['postalcodegroup'] = array(
+		'#type' => 'markup',
+   	'#prefix' => '<div class="container-inline">',
+   	'#suffix' => '</div>',
+  		);
+	
+  $form['postalcodegroup']['postalcode'] = array(
+    '#type' => 'textfield',
+    '#title' => t("Postal code"),
+    '#size' => 7,
+    '#maxlength' => 7,
+    '#required' => FALSE,
+  );
+  
+  // Note: the javascript in the suffix is a fix for a bug in AHAH where
+  // it incorrectly places float stylings
+  $form['postalcodegroup']['findmp'] = array(
+	  '#type' => 'button',
+     '#value' => t('Find MP!'),
+      '#ahah' => array(
+      	'path' => 'campaign/mplookup',
+      	'wrapper' => 'mp',
+      	'effect' => 'fade',
+      ),
+ 		'#suffix'  => '<script>'
+ 			. '$(document).ready(function(){$("#edit-findmp").css("float","none");'
+ 			. '$("head").append("<style>.ahah-progress, .ahah-progress .throbber { float: none; } .throbber { padding: 2px 6px; }</style>"); ' 
+ 			. '});</script>', 
+  );
+
+  $form['mp'] = array(
+  		'#type' => 'fieldset',
+		'#title' => t('Your Member of Parliament'),
+  		'#collapsible' => FALSE,
+  		'#prefix' => '<div style="clear:both;" id="mp">',
+  	   '#suffix' => '</div>',
+  );
+    	
+	$form['mp']['mpname'] = array(
+  		'#type' => 'item',
+  		'#title' => t('Member of Parliament'),
+  		'#value' => $_SESSION['campaign_mpname'],
+	);
+	
+	$form['mp']['mpriding'] = array(
+  		'#type' => 'item',
+  		'#title' => t('Riding'),
+  		'#value' => $_SESSION['campaign_mpriding'],
+	);
+
+	$form['mp']['mpemail'] = array(
+  		'#type' => 'item',
+  		'#title' => t('E-mail address'),
+  		'#value' => $_SESSION['campaign_mpemail'],
+  	);
+  		
+	$form['mp']['mpmailtitle'] = array(
+  		'#type' => 'item',
+  		'#title' => t('Mailing address'),
+  		'#value' => $_SESSION['campaign_mpname'],
+	);
+	
+	$form['mp']['mpmail'] = array(
+  		'#type' => 'markup',
+  		'#value' => $_SESSION['campaign_mpmail'],
+	);
+  
+  $form['back'] = array(
+  		'#type' => 'markup',
+  		'#value' => '<input class="form-submit" type="button" onClick="location.href=\''
+  			. url(preg_replace('/\/\d$/', '', $_GET['q']))
+  			. '\'" value="< Back - Basic Information"'
+  			. '>',
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Next - Edit your message >'),
+  );
+
+  return $form;
+}
+
+function campaign_step2_form_validate($form, &$form_state)  {
+  // validate that an MP has been found
+  if(!$_SESSION['campaign_mpemail'] || !$_SESSION['campaign_mpname']
+  || !$_SESSION['campaign_mpriding'] || !$_SESSION['campaign_mpmail'])
+  	form_set_error('email', t("You must find your MP before continuing."));
+}
+
+function campaign_step2_form_submit($form, &$form_state) {
+	$form_state['redirect'] = preg_replace('/\d$/', '', $_GET['q']) . '3';
+}
+
+
+/**
+* Step 3 form - Letter construction
+*/
+function campaign_step3_html() {
+  // generate the recipient list
+  $recipHtml = construct_recipient_list();
+  
+  // subject
+  $commonFormItems['subject'] = array(
+    '#type' => 'textfield',
+    '#title' => t("Letter Subject"),
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+    '#default_value' => $_SESSION['campaign_email_subject'],
+    '#weight' => -1,
+  );
+  // addressee
+  $commonFormItems['addressee'] = array(
+    '#type' => 'textfield',
+    '#title' => t("Letter Addressee"),
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#required' => TRUE,
+    '#default_value' => $_SESSION['campaign_email_addressee'],
+    '#weight' => -1,
+  );
+  
+  $commonFormItems['back'] = array(
+  		'#type' => 'markup',
+  		'#value' => '<input class="form-submit" type="button" onClick="location.href=\''
+  			. url(preg_replace('/\d$/', '', $_GET['q']) . '2')
+  			. '\'" value="< Back - Find Your MP"'
+  			. '>',
+  		'#weight' => 100,
+  );
+  $commonFormItems['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Next - Send or Print >'),
+    '#weight' => 251,
+  );
+  
+  // pick your issue tab
+  $tabs = array();
+  if($_SESSION['campaign_email_issues']) {
+  	$tabs['issues-email'] = array(
+   	'title' => t('Choose your own Issues'),
+  		'type' => 'freetext',
+  		'text' => drupal_get_form('campaign_issues_form', $commonFormItems));
+  	}
+  	
+  // question and answer tab
+  if($_SESSION['campaign_email_questions']) {
+  	$tabs['questions-email'] = array(
+   	'title' => t('Question & Answer'),
+  		'type' => 'freetext',
+  		'text' => drupal_get_form('campaign_qa_form', $commonFormItems));
+  	}
+  	
+  	// form letter tab
+  if($_SESSION['campaign_email_formletter']) {
+  	$tabs['form-email'] = array(
+  		'title' => t('Form Letter'),
+  		'type' => 'freetext',
+  		'text' => drupal_get_form('campaign_formletter_form', $commonFormItems));
+  }
+  
+  // tab instructions
+  $tabInstructions = array();
+  $tabInstructions['issues-email'] = array(
+     'title' => 'Choose your own Issues',
+     'text' => 'Simply drag and drop the issues you feel most strongly about, customizing our proposed text as you see fit.');
+  $tabInstructions['questions-email'] = array(
+  	  'title' => 'Question & Answer',
+  	  'text' => 'Fill out the few questions posed and we will construct a customized letter based on your answers.');
+  $tabInstructions['form-email'] = array(
+  	  'title' => 'Form Letter',
+  	  'text' => 'Cut, paste, edit and/or rewrite our example letter.');
+  
+  
+  // if there's only one tab, don't render the tabs
+  $html = '';
+  if(count($tabs) == 1) {
+   list($key, $tab) = each($tabs);
+   
+   // header/instructions to user
+   $html = '<div class="campaign-steps-header"><img src="' . base_path() . drupal_get_path('module', 'campaign') . '/step3.png"></img></div><div>';
+   $html .= '<p>' . t($tabInstructions[$key]['text']) . '</p>';
+  
+   // tab content
+   $html .= $tab['text'];
+  }
+  
+  // else, create the tabs
+  else {
+  	$quicktabs = array(
+  		'qtid' => 'campaign-tabs',
+  		'tabs' => $tabs,
+  		'style' => 'Excel');
+  	
+  	// if a tab is selected, set it
+  	if($_SESSION['campaign_email_tab']) {
+  		$quicktabs['default_tab'] = $_SESSION['campaign_email_tab'];
+  		} 
+
+  	// header/instructions to the user
+  	$html = '<div class="campaign-steps-header"><img src="' . base_path() . drupal_get_path('module', 'campaign') . '/step3.png"></img></div><div>'
+		. t('<p>We have ' . count($tabs) . ' ways for you to quickly construct a letter: </p>')
+		. '<ul>';
+	foreach($tabs as $key => $tab) {
+		$html.= t('<li><b>' . $tabInstructions[$key]['title'] . ': </b>' .
+			$tabInstructions[$key]['text'] . '</li>');
+	}
+	$html .= '</ul></div>';
+	
+  	// render the tabs
+  	$html .= theme('quicktabs', $quicktabs);
+  }
+
+  return $html;
+
+}
+
+/**
+* Step 3 form - "Form letter" tab
+*/
+function campaign_formletter_form($formid, $commonFormItems) { 
+  $form = array();
+  
+  $form['form_message'] = array(
+    '#type' => 'textarea',
+    '#title' => t("E-mail Message"),
+    '#description' => t('E-mail Message'),
+    '#rows' => 20,
+    '#required' => TRUE,
+    '#default_value' => $_SESSION['campaign_email_formletter'],
+  );
+  $form = array_merge($form, $commonFormItems);
+  return $form;
+}
+
+function campaign_formletter_form_validate($form, &$form_state)  {
+	// set the selected tab
+	$_SESSION['campaign_email_tab'] = 'form-email';
+}
+
+function campaign_formletter_form_submit($form, &$form_state) {
+	// set the letter subject and body as submitted
+	$_SESSION['campaign_email_subject'] = $form_state['values']['subject'];
+	$_SESSION['campaign_email_addressee'] = $form_state['values']['addressee'];
+	$_SESSION['campaign_email_formletter'] = $form_state['values']['form_message'];
+	$_SESSION['campaign_email_body'] = $_SESSION['campaign_email_formletter'];
+	
+	$form_state['redirect'] = preg_replace('/\d$/', '', $_GET['q']) . '4';
+}
+  
+/**
+* Step 3 form - "Choose Your Own Issues" tab
+*/
+function campaign_issues_form($formid, $commonFormItems) { 
+  $form = array();
+  
+  // My Issues header  
+  $form['rows'][1]["row-1-issue"] = array(
+    '#type' => 'markup',
+    '#value' => '<h3>My Issues </h3>',
+   );
+   $form['rows'][1]["row-1-weight"] = array(
+     '#type' => 'textfield',
+     '#size'=>5,
+     '#default_value'=>1,
+     '#attributes' => array('class'=>'weight'),
+   );
+   if($_SESSION['campaign_issue_weight_lowerbound'])
+   	$form['rows'][1]["row-1-weight"]['#default_value'] = $_SESSION['campaign_issue_weight_lowerbound'];
+   else
+   	$form['rows'][1]["row-1-weight"]['#default_value'] = 1;
+   	
+   // Available Issues header
+   $form['rows'][2]["row-2-issue"] = array(
+    '#type' => 'markup',
+    '#value' => '<h3>Available Issues</h3>',
+   );
+   $form['rows'][2]["row-2-weight"] = array(
+     '#type' => 'textfield',
+     '#size'=>5,
+     '#default_value'=>2,
+     '#attributes' => array('class'=>'weight')
+   );
+   if($_SESSION['campaign_issue_weight_upperbound'])
+   	$form['rows'][2]["row-2-weight"]['#default_value'] = $_SESSION['campaign_issue_weight_upperbound'];
+   else
+   	$form['rows'][2]["row-2-weight"]['#default_value'] = 100;
+  
+  // create the rows of issues
+  for($i = 0; $i < count($_SESSION['campaign_email_issues']); $i++) {
+  	$label = $_SESSION['campaign_email_issues'][$i]['label'];
+  	$text = $_SESSION['campaign_email_issues'][$i]['text'];
+  	$weight = $_SESSION['campaign_email_issues'][$i]['weight'];
+  
+   // create the form row
+   $id = $i+3;
+   $form['rows'][$id]["row-$id-issue"] = array(
+    '#type' => 'textarea',
+    '#title' => t($label),
+    '#rows' => 5,
+    '#required' => FALSE,
+    '#default_value' => $text,
+   );
+   $form['rows'][$id]["row-$id-weight"] = array(
+     '#type' => 'textfield',
+     '#size'=>5,
+     '#default_value'=> $weight,
+     '#attributes' => array('class'=>'weight')
+   );
+  }
+
+  $form['issues-table'] = array(
+    '#type' => 'markup',
+    '#value' => $tableHtml,
+  );
+
+  $form = array_merge($form, $commonFormItems);
+  return $form;
+}
+
+function campaign_issues_form_validate($form, &$form_state)  {
+	// set the selected tab
+	$_SESSION['campaign_email_tab'] = 'issues-email';
+	
+	$weightLowerBound = $form_state['values']['row-1-weight'];
+	$weightUpperBound = $form_state['values']['row-2-weight'];
+	
+	// check that at least one issue was submitted
+	$numIssues = 0;
+	foreach($form_state['values'] as $id => $weight) {
+		if(preg_match('/row-(\d+)-weight/', $id, $match))
+			if($weight > $weightLowerBound && $weight < $weightUpperBound){
+				$numIssues++;
+			}
+	}
+	
+	if($numIssues == 0) {
+		form_set_error('row-1-issue', t("You must choose at least one issue to include in your letter."));
+	}
+		
+}
+
+function campaign_issues_form_submit($form, &$form_state) {
+	
+	$weightLowerBound = $form_state['values']['row-1-weight'];
+	$weightUpperBound = $form_state['values']['row-2-weight'];
+	
+	// get each issues that the user has placed under My Issues
+	$selectedRows = array();
+	foreach($form_state['values'] as $id => $weight) {
+		if(preg_match('/row-(\d+)-weight/', $id, $match)) {
+			$rowNum = $match[1];
+			$text = $form_state['values']["row-$rowNum-issue"];
+			
+			if($weight > $weightLowerBound && $weight < $weightUpperBound){
+				$selectedRows[] = $text;
+			}
+			// set the text and weight in the session variable for reloading
+			$index = $rowNum - 3;
+			if($index >= 0) {
+				$_SESSION['campaign_email_issues'][$index]['text'] = $text;
+				$_SESSION['campaign_email_issues'][$index]['weight'] = $weight;
+			}
+		}
+	}
+	$_SESSION['campaign_issue_weight_lowerbound'] = $weightLowerBound;
+	$_SESSION['campaign_issue_weight_upperbound'] = $weightUpperBound;
+	
+	// order the issues by weight
+	ksort($selectedRows, SORT_NUMERIC);
+	
+	// combine the issues into a letter
+	$letter = '';
+	foreach($selectedRows as $issueText) {
+		$letter .= "$issueText\n\n";
+	}
+	
+	$_SESSION['campaign_email_subject'] = $form_state['values']['subject'];
+	$_SESSION['campaign_email_addressee'] = $form_state['values']['addressee'];
+	$_SESSION['campaign_email_body'] = $letter;
+	
+	$form_state['redirect'] = preg_replace('/\d$/', '', $_GET['q']) . '4';
+}
+
+function theme_campaign_issues_form($form) {
+  // create each table row
+  foreach($form['rows'] as $id => $row){
+    if(intval($id)) {
+  		// add the issue text and weight field to the row
+  		$tablerow = array();
+  		$tablerow[] = array('data' => drupal_render($form['rows'][$id]["row-$id-issue"]));
+  		$tablerow[] = array('data' => drupal_render($form['rows'][$id]["row-$id-weight"]));
+  		$weight = $form['rows'][$id]["row-$id-weight"]['#value'];
+  		
+  		// make all non-headers draggable
+  		if($row["row-$id-issue"]['#type'] != 'markup')
+  			$rows[$weight] = array('data' => $tablerow, 'class' => 'draggable');
+  		else
+  			$rows[$weight] = array('data' => $tablerow);
+    }
+  }
+  
+  // sort the rows
+  ksort($rows);
+  $tableRows = array();
+  foreach($rows as $row) {
+  	$tableRows[] = $row;
+  }
+  
+  // create the headers
+  $headers = array();
+  $headers[] = array('data' => t('Issues'));
+  $headers[] = array('data' => t('Weight'), 'style' => 'display: none;');
+  
+  // create the table
+  $tableHtml = theme('table', $headers, $tableRows, array('id' => 'issuestable'));  
+  $form['issues'] = array(
+    '#type' => 'markup',
+    '#value' => $tableHtml,
+  );  
+  
+  $output = drupal_render($form);
+  drupal_add_tabledrag('issuestable', 'order', 'sibling', 'weight');
+
+  return $output;
+}
+
+
+/**
+* Step 3 form - "Question & Answer" tab
+*/
+function campaign_qa_form($formid, $commonFormItems) { 
+  $form = array();
+  
+  // add an answer field for each question
+  foreach($_SESSION['campaign_email_questions'] as $index => $item) {
+  	$form['answer-' . $index] = array(
+  		'#type' => 'textarea',
+  		'#rows' => 3,
+  		'#title' => t($item['question']),
+  		'#required' => TRUE,
+  		'#default_value' => $item['answer']);
+  }
+  
+  $form = array_merge($form, $commonFormItems);
+  return $form;
+}
+
+function campaign_qa_form_validate($form, &$form_state)  {
+	// set the selected tab
+	$_SESSION['campaign_email_tab'] = 'questions-email';
+}
+
+function campaign_qa_form_submit($form, &$form_state) {
+	// place the answers in the placeholders
+	$letter = $_SESSION['campaign_email_questiontemplate'];
+	foreach($form_state['values'] as $id => $answer) {
+		if(preg_match('/answer-(\d+)/', $id, $match)) {
+				$index = $match[1];
+				$label = $_SESSION['campaign_email_questions'][$index]['label'];
+				$letter = preg_replace('/#' . $label . '#/is',
+					$answer, $letter);
+				
+				// store the answer is the session data	
+				$_SESSION['campaign_email_questions'][$index]['answer'] = $answer;
+			}
+	}
+	
+	$_SESSION['campaign_email_subject'] = $form_state['values']['subject'];
+	$_SESSION['campaign_email_addressee'] = $form_state['values']['addressee'];
+	$_SESSION['campaign_email_body'] = $letter;
+	
+	$form_state['redirect'] = preg_replace('/\d$/', '', $_GET['q']) . '4';
+}
+
+/**
+* Step 4 form - Send / Print
+*/
+function campaign_step4_form() {
+ 
+  $form['header'] = array(
+    '#type' => 'markup',
+    '#value' => '<div class="campaign-steps-header"><img src="' . base_path() . drupal_get_path('module', 'campaign') . '/step4.png"></img></div><div>' .
+    	t('<p>Please review your e-mail message below.  For greater impact, <b>we strongly encourage you to mail your letter by post</b>.  A paper letter is much more likely to be read and considered! Simply click on the printer icon below.  Remember that you do not even need a stamp to send a letter to your MP.</p>')
+    	. '<p>Your message will be e-mailed immediately upon clicking "Send E-mail Message!"</p></div>',
+  );
+  $form['fieldset'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'E-mail Message',
+  );
+  $form['fieldset']['to'] = array(
+    '#type' => 'item',
+    '#title' => 'To',
+    '#value' => t(htmlspecialchars($_SESSION['campaign_recipient_to'])),
+  );
+  $form['fieldset']['from'] = array(
+    '#type' => 'item',
+    '#title' => 'From',
+    '#value' => t(htmlspecialchars($_SESSION['campaign_name'] . ' <' . $_SESSION['campaign_email'] . '>')),
+  );
+  $form['fieldset']['subject'] = array(
+    '#type' => 'item',
+    '#title' => 'Subject',
+    '#value' => t(htmlspecialchars($_SESSION['campaign_email_subject'])),
+  );
+  
+  $fullEmailLetter = 
+  	'Dear ' . $_SESSION['campaign_email_addressee'] . ":\n\n" .
+  	$_SESSION['campaign_email_body'] . "\n\n" .
+  	"Yours Truly,\n\n" .
+  	$_SESSION['campaign_name'];
+  $form['fieldset']['message'] = array(
+    '#type' => 'item',
+    '#title' => 'Message',
+    '#value' => check_markup($fullEmailLetter, 'Line break converter', false),
+  );
+
+  $form['print'] = array(
+  		'#type' => 'markup',
+  		'#value' => '<div><a href="' . url('campaign/print') . '" target="_blank" style="text-decoration: none;"><img src="'
+  			. base_path() . drupal_get_path('module', 'campaign') . '/printer.png"></img>'
+  			. '<span style="vertical-align: top"><u style="position: relative; top: 50px; left: 30px;">Print!</u></span></a></div>',
+  );
+  
+  $form['buttons'] = array(
+		'#type' => 'markup',
+   	'#prefix' => '<div class="container-inline">',
+   	'#suffix' => '</div>',
+  		);
+  $form['buttons']['back'] = array(
+  		'#type' => 'markup',
+  		'#value' => '<input class="form-submit" type="button" onClick="location.href=\''
+  			. url(preg_replace('/\d$/', '', $_GET['q']) . '3')
+  			. '\'" value="< Back - Edit Your Letter"'
+  			. '>',
+  );
+  $form['buttons']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t(' Send E-mail Message! >'),
+  );
+
+  return $form;
+}
+
+
+function campaign_step4_form_validate($form, &$form_state)  {
+	// verify that an e-mail from this address has not already been sent
+	$result = db_result(db_query('SELECT count(*) FROM campaign_participants ' .
+		"WHERE campaign_id = '%d' AND email = '%s' AND type='email'", $_SESSION['campaign_node'], $_SESSION['campaign_email']));
+	if($result > 0) {
+		form_set_error('email', t("Sorry, but you have already sent an e-mail from " . $_SESSION['campaign_email'] . '.'));	
+	}
+}
+
+function campaign_step4_form_submit($form, &$form_state) {
+
+   // send the e-mail
+   drupal_mail('campaign', 'campaign_send_email',
+   	$_SESSION['campaign_recipient_to'],
+   	'en', array(),
+	   $_SESSION['campaign_email'],
+   	true);
+   	
+    // record participant in the db
+    db_query("INSERT INTO campaign_participants (campaign_id, email, name, type) VALUES ('%d', '%s', '%s', '%s')",
+   	array($_SESSION['campaign_node'], $_SESSION['campaign_email'], $_SESSION['campaign_name'], 'email'));
+   	
+    $form_state['redirect'] = preg_replace('/\d$/', '', $_GET['q']) . '5';
+}
+function campaign_mail($key, &$message, $params) {
+	// construct the full e-mail letter
+	$fullEmailLetter = 
+  		'Dear ' . $_SESSION['campaign_email_addressee'] . ":\n\n" .
+  		$_SESSION['campaign_email_body'] . "\n\n" .
+  		"Yours Truly,\n\n" .
+  		$_SESSION['campaign_name'];
+  	
+	$message['subject'] = $_SESSION['campaign_email_subject'];
+	$message['body'] = $fullEmailLetter; 
+	
+   $headers = array();
+   $headers['From'] = $headers['Sender'] = $headers['Return-Path'] = $headers['Reply-to']
+      = $_SESSION['campaign_name'] . ' <' . $_SESSION['campaign_email'] .'>';
+   $message['headers'] = $headers;
+}
+
+
+/**
+* Step 5 form - Do more
+*/
+function campaign_step5_form() {
+
+  // add the MP
+  $recipients[] = array($_SESSION['campaign_mpname'], $_SESSION['campaign_mpemail']);
+
+  $furtherActions = '<ul>';
+  
+  // facebook link
+  $furtherActions .= '<li>Share a link to this campaign on facebook:  '
+  	. '<a name="fb_share" type="icon_link" share_url="'
+  	. url(preg_replace('/\d$/', '', $_GET['q']))
+   . '"></a><script src="http://static.ak.fbcdn.net/connect.php/js/FB.Share" type="text/javascript"></script></li>'; 
+ 
+  
+  // user-specidifed links
+  $furtherActions .= $_SESSION['campaign_domore_actions'];
+  $furtherActions .= "</ul>";
+  
+  $form['header'] = array(
+    '#type' => 'markup',
+    '#value' => '<div class="campaign-steps-header"><img src="' . base_path() . drupal_get_path('module', 'campaign') . '/step5.png"></img></div><div>'
+    	 . t("<p><b>Your e-mail has been sent!</b>  We encourage you to take further action on this issue:$furtherActions</p>")
+		 . '</div>'
+		 . '<script>$(document).load($(".messages").css("display", "none"));</script>'
+  );
+  
+  return $form;
+}
+
+
+function campaign_step5_form_validate($form, &$form_state)  {
+}
+
+function campaign_step5_form_submit($form, &$form_state) {
+	$form_state['redirect'] = preg_replace('/\d$/', '', $_GET['q']) . '5';
+}
+
+
+
+/**
+ * Implementation of hook_menu().
+ *
+ * Sets up the lookup MP AHAH callback, as well as the page to print a letter
+ */
+function campaign_menu() {
+  // callback to perform an mp lookup
+  $items['campaign/mplookup'] = array(
+    'title' => 'MP Lookup callback',
+    'page callback' => 'campaign_mplookup_ahah_callback',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+$items['campaign/print'] = array(
+    'title' => 'Print letter to MP',
+    'page callback' => 'campaign_print_letter',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+
+/**
+ * Mp lookup AHAH callback
+ */
+function campaign_mplookup_ahah_callback() {	
+	// set session vars to dummy values to avoid
+	// validation errors on the form rebuild
+  	$_SESSION['campaign_mpname'] = 'temp';
+	$_SESSION['campaign_mpriding'] = 'temp';
+	$_SESSION['campaign_mpemail'] = 'temp';
+	$_SESSION['campaign_mpmail'] = 'temp';
+	
+	// clear addressee to force recalc from the mp info
+	unset($_SESSION['campaign_email_addressee']);
+	
+	// rebuild the form
+	$form_state = array('storage' => NULL, 'submitted' => FALSE);
+  	$form_build_id = $_POST['form_build_id'];
+  	$form = form_get_cache($form_build_id, $form_state);
+  	$args = $form['#parameters'];
+  	$form_id = array_shift($args);
+  	$form_state['post'] = $form['#post'] = $_POST;
+	$form['#programmed'] = $form['#redirect'] = FALSE;
+	$postalCode = $_POST['postalcode'];
+
+  	drupal_process_form($form_id, $form, $form_state);
+  	$form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
+	   
+	// find the mp
+	$mp = campaign_mplookup($postalCode);
+	if($mp) {		
+		// alter the mp fieldset to be populated with the mp info
+		list($mpname, $mpriding, $mpemail, $mpmail) = $mp;
+		$form['mp']['mpname']['#value'] = $mpname;
+		$form['mp']['mpriding']['#value'] = $mpriding;
+		$form['mp']['mpemail']['#value'] = $mpemail;
+		$form['mp']['mpmailtitle']['#value'] = $mpname;
+		$form['mp']['mpmail']['#value'] = $mpmail;
+	}
+	
+	// reorder mp name to be first-name last-name
+	$elems = explode(',', $mpname);
+	array_unshift($elems, array_pop($elems));
+	$mpname = trim(implode(' ', $elems));
+
+	// output the mp fieldset
+  	$output = drupal_render($form['mp']);
+  	print drupal_json(array('status' => TRUE, 'data' => $output));
+  	
+  	// store the mp values is the user session variables
+  	$_SESSION['campaign_mpname'] = $mpname;
+	$_SESSION['campaign_mpriding'] = $mpriding;
+	$_SESSION['campaign_mpemail'] = $mpemail;
+	$_SESSION['campaign_mpmail'] = $mpmail;
+	
+}
+
+/**
+* Lookup MP from a postal code at the Parliamentary website
+*/
+function campaign_mplookup($postalCode) {
+	 // check that the postal code is valid
+	 if(!preg_match('/\s*(\w\d\w)\s*(\d\w\d)\s*/', $postalCode, $matches))
+	 	return false;
+	 $postalCode = strtoupper($matches[1] . $matches[2]);
+
+	 // postal code lookup page on parl.gc.ca
+	 $url = 'http://www2.parl.gc.ca/parlinfo/compilations/houseofcommons/memberbypostalcode.aspx';
+ 
+	 // generate firefox headers to site can properly detect
+	 // this is a compatible browser
+	 $ch = curl_init();
+	 $header = array();
+	 $header[0] = "Accept: text/xml,application/xml,application/xhtml+xml,";
+	 $header[0] .= "text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5";
+	 $header[] = "Cache-Control: max-age=0";
+	 $header[] = "Connection: keep-alive";
+	 $header[] = "Keep-Alive: 300";
+	 $header[] = "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7";
+	 $header[] = "Accept-Language: en-us,en;q=0.5";
+	 $header[] = "Pragma: ";
+	 $browser = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.3) Gecko/2008092510 Ubuntu/8.04 (hardy) Firefox/3.0.3";
+	 curl_setopt($ch, CURLOPT_URL, $url);
+	 curl_setopt($ch, CURLOPT_USERAGENT, $browser);
+	 curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+	 curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	 curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+	 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+	 curl_setopt($ch, CURLOPT_HEADERS, 0);
+	 curl_setopt($ch, CURLINFO_HEADER_OUT, true);
+	 $lookuppage = curl_exec($ch);
+ 	 //echo '<fieldset><legend>request headers 1</legend><pre>', htmlspecialchars(curl_getinfo($ch, CURLINFO_HEADER_OUT)), '</pre></fieldset>';
+	 //echo '<fieldset><legend>response 1</legend><pre>', htmlspecialchars($lookuppage), '</pre></fieldset>';
+
+	 // set the post constant variables
+	 $postData = array(
+	 	'Language' => 'E',
+	 	'Parl' => '40',
+	 	'Ses' => '2',
+	 	'ct' => 'wwwparl',
+	 	'search_term' => 'Search+Terms',
+	 	'dest' => '%23',
+	 	'__EVENTARGUMENT' => '',
+		'__EVENTTARGET' => '',
+	 );
+	 
+	 // set the date
+	 $postData['section'] = date('Y-m-d');
+	 
+	 // set the ctl's
+	 $postData['ctl00%24cphContent%24txtPostalCriteria'] = $postalCode;
+	 $postData['ctl00%24cphContent%24btnRefreshList'] = 'Search';
+	 
+	 // set the event validation
+	 if(!preg_match('/id="__EVENTVALIDATION"\s+value="(.*?)"/s', $lookuppage, $matches))
+	 { 
+		return false;
+	 }
+	 $postData['__EVENTVALIDATION'] = urlencode($matches[1]);
+	 
+	 // set the event validation
+	 if(!preg_match('/id="__VIEWSTATE"\s+value="(.*?)"/s', $lookuppage, $matches))
+	 { 
+		return false;
+	 }
+	 $postData['__VIEWSTATE'] = urlencode($matches[1]);
+	 	
+	 $postStr = '';
+	 foreach($postData as $key => $val)
+	 {
+	 	$postStr .= $key . '=' . $val . '&';
+	 } 
+	 $postStr = rtrim($postStr, '&');
+	 
+	 // get the postal code result page
+	 $url = 'http://www2.parl.gc.ca/parlinfo/compilations/houseofcommons/memberbypostalcode.aspx?PostalCode='
+	 	. $postalCode;
+
+	 curl_setopt($ch, CURLOPT_URL, $url);
+	 curl_setopt($ch, CURLOPT_POST, 1);
+	 curl_setopt($ch, CURLOPT_POSTFIELDS, $postStr);
+	 $postalCodeResult = curl_exec($ch);
+	 //echo '<fieldset><legend>request headers</legend><pre>', htmlspecialchars(curl_getinfo($ch, CURLINFO_HEADER_OUT)), '</pre></fieldset>';
+	 //echo '<fieldset><legend>response</legend><pre>', htmlspecialchars($postalCodeResult), '</pre></fieldset>';
+
+	 if(!preg_match('/lblYellowBar.*?>(.*?)</s', $postalCodeResult, $matches))
+	 	return false;
+	 $mpriding = $matches[1];
+
+	 if(!preg_match('/lnkPerson.*?>(.*?)</s', $postalCodeResult, $matches))
+	 	return false;
+	 $mpname = $matches[1];
+	 
+	 if(!preg_match('/E-mail\:.*?mailto\:(.*?)"/s', $postalCodeResult, $matches))
+	 	return false;
+	 $mpemail = $matches[1];
+	 
+	 if(!preg_match('/<div[^>]*?pnlAddressExternal.*?<\/div>/s', $postalCodeResult, $matches))
+	 	return false;
+	 $mpmail = $matches[0];
+	       
+	 return array($mpname, $mpriding, $mpemail, $mpmail);
+}
+
+/**
+ * Print an already-prepared letter
+ */
+function campaign_print_letter() {
+    // record participant in the db
+    db_query("REPLACE INTO campaign_participants (campaign_id, email, name, type) VALUES ('%d', '%s', '%s', '%s')",
+   	array($_SESSION['campaign_node'], $_SESSION['campaign_email'], $_SESSION['campaign_name'], 'print'));
+?>
+<html>
+<head>
+	<title>Letter to MP (Print)</title>
+<style media="screen, handheld">
+#letter {
+  width: 600px ;
+  margin-left: auto ;
+  margin-right: auto ;
+  border: 2px groove #DDDDDD;
+  padding: 12px 20px;
+}
+</style>
+<script type="text/javascript">window.onload = function(){ window.print(); };</script>
+</head>
+<body>
+<div id="letter">
+<p style="text-align: right;"><?php print $_SESSION['campaign_name']; ?><br />
+<?php print $_SESSION['campaign_email']; ?></p>
+<?php print $_SESSION['campaign_mpname']; ?>
+<?php print $_SESSION['campaign_mpmail']; ?><br /><br />
+<?php print date("F n, Y"); ?><br /><br /><br />
+<b><?php print "Re: " . $_SESSION['campaign_email_subject']; ?></b><br /><br />
+<?php print 'Dear ' . $_SESSION['campaign_email_addressee'] . ':'; ?><br />
+<?php print check_markup($_SESSION['campaign_email_body'], 'Line break converter', false); ?><br />
+<?php print 'Yours Truly,'; ?><br /><br /><br />
+<?php print $_SESSION['campaign_name']; ?> 
+</div>
+</body>
+</html>
+<?php
+}
+
+/**
+ * Construct a recipient list
+ * -Constructs the list of recipients from the campaign_recipient_list,
+ *  campaign_mpname, campaign_mpemail, and campaign_recipient_test SESSION
+ *  variables.  Stores an RFC 2822 list of e-mail recipients to campaign_recipient_to.
+ *  Returns an HTML-formatted unordered list of the recipients.
+ */
+function construct_recipient_list() {
+  // parse the configured recipient list
+  if($_SESSION['campaign_recipient_list'])
+  	$recipients = explode("\n", $_SESSION['campaign_recipient_list']);
+  else
+  	$recipients = array();
+  if($recipients) {
+  	foreach($recipients as $key => $val) {
+   	 	$recipients[$key] = explode(', ', $val);
+  		}
+  	}
+  	
+  // add the MP
+  array_unshift($recipients, array($_SESSION['campaign_mpname'], $_SESSION['campaign_mpemail']));
+  
+  // html and RFC 2822 list of recipients
+  $recipHtml = '<ul>';
+  $recipTo = '';
+  foreach($recipients as $key => $val) {
+  		if(count($val) != 2) {
+  			unset($recipients[$key]);
+  			drupal_set_message('Error in campaign configuration: "'
+  				. $val[0] . '" is not configured with a valid e-mail address."', 'error');
+  		}
+  		else {
+  			$email = $val[1];
+  			if(isset($_SESSION['campaign_recipient_test']))
+  				$email = $_SESSION['campaign_recipient_test'];
+  			$recipHtml .= "<li>" . htmlspecialchars($val[0] . ", " . $email) . "</li>";
+  			$recipTo .= $val[0] . " <" . $email . ">, ";
+  		}
+  }
+  $recipHtml .= '</ul>';
+  $_SESSION['campaign_recipient_to'] = rtrim($recipTo, ', ');
+
+  return $recipHtml;
+}
+
+?>

@@ -1,0 +1,10 @@
+; $Id: clickpath.info,v 1.1.2.1 2007/11/15 18:51:39 eaton Exp $
+name = Clickpath
+description = "Saves and displays the user's most recently visited links in the site."
+core = 6.x
+; Information added by drupal.org packaging script on 2010-03-28
+version = "6.x-1.2"
+core = "6.x"
+project = "clickpath"
+datestamp = "1269748216"
+

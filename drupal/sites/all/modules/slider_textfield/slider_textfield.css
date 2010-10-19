@@ -1,0 +1,86 @@
+.slider_wrapper {
+  display: inline;
+  height:30px;
+  width:auto;
+  margin-left:10px;
+  margin-top:3px;
+}
+
+.slider_bar {
+  background:url(images/bar.png) repeat-x 0px 5px;
+  height:16px;
+  margin:0px 10px;
+  position:relative;
+}
+
+.slider_bar .left,
+.slider_bar .right {
+  width:6px;
+  height:6px;
+  position:absolute;
+  top:5px;
+}
+
+.slider_bar .left {
+  left:0px;
+  background:url(images/left.png) no-repeat white 5px 0px;
+}
+
+.slider_bar .right {
+  right:0px;
+  width:11px;
+  background:url(images/right.png) no-repeat white;
+}
+
+.slider_bar,
+.slider_wrapper .field-prefix,
+.slider_wrapper .field-suffix,
+.slider_wrapper .small_label,
+.slider_wrapper .large_label {
+  float:left;
+}
+
+.small_label,
+.large_label {
+  background:url(images/minus.png) no-repeat;
+  height:16px;
+  width:16px;
+  overflow:hidden;
+  display:none;
+}
+
+.large_label {
+  background-image:url(images/plus.png);
+}
+
+.slider_handle {
+  height:18px;
+  width:18px;
+  overflow:hidden;
+  position:absolute;
+}
+
+.slider_callout {
+  background:url(images/callout.png) no-repeat;
+  height:44px;
+  width:40px;
+  display:none;
+  overflow:hidden;
+  position:absolute;
+  top:-50px;
+  margin-left:-11px;
+  padding:8px 0px 0px 0px;
+	font-family:"Myriad Pro";
+	color:#284a6e;
+	font-weight:bold;
+	text-align:center;
+}
+
+html.js fieldset.collapsed .fieldset-wrapper.slider,
+html.js fieldset.collapsed .fieldset-wrapper.slider .form-item, 
+html.js fieldset.collapsed .fieldset-wrapper.slider .slider_wrapper {
+  display:block;
+}
+
+.fieldset-wrapper.slider .form-item {
+}

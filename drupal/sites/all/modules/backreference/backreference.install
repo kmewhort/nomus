@@ -1,0 +1,38 @@
+<?php
+// $Id: backreference.install,v 1.1 2009/08/20 00:04:36 jcfiala Exp $
+
+/**
+ * @file
+ * Your standard installation file - installs the backreference_field_symmetry table.
+ */
+function backreference_schema() {
+  $schema = array();
+
+  $schema['backreference_field_symmetry'] = array(
+    'description' => t('Stores the symmetrical inverse of a nodereference field.'),
+    'fields' => array(
+      'field_left' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'field_right' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      )
+    ),
+    'primary key' => array('field_left'),
+    'unique keys' => array('idx_backreference_field_symmetry_right' => array('field_right')),
+  );
+
+  return $schema;
+}
+
+function backreference_install() {
+  drupal_install_schema('backreference');
+}
+
+function backreference_uninstall() {
+  drupal_uninstall_schema('backreference');
+}

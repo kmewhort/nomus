@@ -1,0 +1,8 @@
+name = Nomus
+description = Document retrieval and parsing
+dependencies[] = content
+dependencies[] = content_copy
+dependencies[] = tokenauth
+core = 6.x
+
+

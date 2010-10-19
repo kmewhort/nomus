@@ -1,0 +1,15 @@
+#!/bin/bash
+
+cd src
+
+#compile JodConvertHandler
+javac -classpath ./WEB-INF/lib/servlet-api-2.5.jar:./WEB-INF/lib/jodconverter-core-3.0-beta-3.jar:./WEB-INF/lib/commons-io-1.4.jar:./WEB-INF/lib/commons-fileupload-1.2.1.jar:./WEB_INF/GATE/bin/gate.jar:./WEB_INF/GATE/lib/activation.jar:./WEB_INF/GATE/lib/jaxws-api-2.0.jar:./WEB_INF/GATE/lib/ant-contrib-1.0b2.jar:./WEB_INF/GATE/lib/jdom.jar:./WEB_INF/GATE/lib/ant.jar:./WEB_INF/GATE/lib/junit.jar:./WEB_INF/GATE/lib/ant-junit.jar:./WEB_INF/GATE/lib/jwnl.jar:./WEB_INF/GATE/lib/ant-launcher.jar:./WEB_INF/GATE/lib/log4j-1.2.14.jar:./WEB_INF/GATE/lib/antlr.jar:./WEB_INF/GATE/lib/lubm.jar:./WEB_INF/GATE/lib/ant-nodeps.jar:./WEB_INF/GATE/lib/lucene-core-2.2.0.jar:./WEB_INF/GATE/lib/ant-trax.jar:./WEB_INF/GATE/lib/mail.jar:./WEB_INF/GATE/lib/Bib2HTML.jar:./WEB_INF/GATE/lib/nekohtml-1.9.8+2039483.jar:./WEB_INF/GATE/lib/commons-discovery-0.2.jar:./WEB_INF/GATE/lib/ontotext.jar:./WEB_INF/GATE/lib/commons-fileupload-1.0.jar:./WEB_INF/GATE/lib/PDFBox-0.7.2.jar:./WEB_INF/GATE/lib/commons-lang-2.4.jar:./WEB_INF/GATE/lib/pg73jdbc3.jar:./WEB_INF/GATE/lib/commons-logging.jar:./WEB_INF/GATE/lib/poi-2.5.1-final-20040804.jar:./WEB_INF/GATE/lib/concurrent.jar:./WEB_INF/GATE/lib/spring-beans-2.0.8.jar:./WEB_INF/GATE/lib/gate-asm.jar:./WEB_INF/GATE/lib/spring-core-2.0.8.jar:./WEB_INF/GATE/lib/gate-compiler-jdt.jar:./WEB_INF/GATE/lib/stax-api-1.0.1.jar:./WEB_INF/GATE/lib/gateHmm.jar:./WEB_INF/GATE/lib/tm-extractors-0.4.jar:./WEB_INF/GATE/lib/geronimo-ws-metadata_2.0_spec-1.1.1.jar:./WEB_INF/GATE/lib/wstx-lgpl-3.2.3.jar:./WEB_INF/GATE/lib/GnuGetOpt.jar:./WEB_INF/GATE/lib/xercesImpl.jar:./WEB_INF/GATE/lib/icu4j.jar:./WEB_INF/GATE/lib/xml-apis.jar:./WEB_INF/GATE/lib/jakarta-oro-2.0.5.jar:./WEB_INF/GATE/lib/xmlunit-1.2.jar:./WEB_INF/GATE/lib/javacc.jar:./WEB_INF/GATE/lib/xpp3-1.1.3.3_min.jar:./WEB_INF/GATE/lib/jaxb-api-2.0.jar:./WEB_INF/GATE/lib/xstream-1.2.jar:./WEB_INF/GATE/lib/jaxen-1.1.jar -Djava.ext.dirs=./WEB_INF/GATE/lib/ext ./WEB-INF/classes/*.java
+
+#create war
+jar -cvf ../bin/DocConverter.war .
+cd ..
+
+#copy servlet config into Nomus2 servlet dir
+cp -f ./config/docconverter.xml ../config/servlet_contexts/
+
+

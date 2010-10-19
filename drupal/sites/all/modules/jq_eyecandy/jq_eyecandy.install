@@ -1,0 +1,18 @@
+<?php
+// $Id: jq_eyecandy.install,v 1.1 2008/04/14 18:50:13 worldfallz Exp $
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function jq_eyecandy_uninstall() {
+
+  // to add support for additional plugins, add them as keys to the $plugins array
+  $plugins = array ('colorblend' => '', 'curvycorners' => '', 'dropshadow' => '', 'gradient' => '', 'reflect' => '');
+  
+  foreach ($plugins as $k => $v) {
+    variable_del('jq_eyecandy_.' . $k . '_code'); 
+	variable_del('jq_eyecandy_.' . $k . '_enabled'); 
+  }
+
+  drupal_set_message(t('jQuery EyeCandy module uninstalled.'));
+}

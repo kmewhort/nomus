@@ -1,0 +1,11 @@
+; $Id: node_privacy_byrole.info,v 1.3 2007/11/28 22:48:37 deekayen Exp $
+name = Node Privacy By Role
+description = Provides node level access control based on role membership.
+core = 6.x
+
+; Information added by drupal.org packaging script on 2009-06-17
+version = "6.x-1.5"
+core = "6.x"
+project = "node_privacy_byrole"
+datestamp = "1245264946"
+

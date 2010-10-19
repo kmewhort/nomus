@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Created-By: 1.6.0 (Sun Microsystems Inc.)
+Extension-Name: NomusSolrPlugins
+Implementation-Title: NomusSolrPlugins
+

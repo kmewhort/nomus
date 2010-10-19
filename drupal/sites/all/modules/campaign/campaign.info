@@ -1,0 +1,6 @@
+name = Campaign
+description = E-mail campaign, allowing users to send e-mails to Canadian MPs
+dependencies[] = content
+dependencies[] = quicktabs
+core = 6.x
+php = 5.0

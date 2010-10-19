@@ -1,0 +1,10 @@
+; $Id: jqp.info,v 1.4 2010/02/11 09:13:28 skilip Exp $
+name = "jQuery Plugin Handler"
+description = "Provides both an API for modules, and an UI for administrators, to manage and include javascript libraries like jQuery plugins"
+core = "6.x"
+; Information added by drupal.org packaging script on 2010-05-01
+version = "6.x-2.3"
+core = "6.x"
+project = "jqp"
+datestamp = "1272720308"
+

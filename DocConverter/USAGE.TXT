@@ -1,0 +1,5 @@
+POST any document to the service.  The file extension
+(or, if the file extension does not exist, the MIME type)
+will be used to recognize the input format. The document will be
+converted to the type requested in the "to" parameter
+(a document extension) and returned.

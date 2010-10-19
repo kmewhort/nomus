@@ -1,0 +1,32 @@
+Ontotext Japec Compiler
+=======================
+
+This directory contains the Japec JAPE-to-Java compiler, developed by Ontotext,
+and a reimplementation of the standard JAPE transducer that uses Japec to
+compile the grammar into Java, allowing much faster running times than the
+standard transducer implementation.  Documentation describing how to use the
+Japec transducer in GATE is given in the GATE user guide at
+
+http://gate.ac.uk/sale/tao/#sec:misc-creole:japec
+
+Building the compiler
+---------------------
+
+The Japec compiler is written in Haskell.  Compiled binaries are supplied for
+Windows, Linux (x86) and Mac OS X (PowerPC), so it should work out of the box.
+However, if there is no precompiled binary for your platform or if you need to
+make changes to the compiler, you will need to build the compiler yourself.
+
+To build Japec, you will need to install the latest version of the Glasgow
+Haskell Compiler.  The included binaries were built with GHC version 6.4.1.
+Once you have installed GHC, you can build the compiler using Ant:
+
+../../bin/ant japec.clean japec
+
+This will build the compiler and create the executable "japec" ("japec.exe" on
+Windows) in the Jape_Compiler plugin directory.  The JapecTransducer will use
+this in preference to the supplied "japec-<platform>".
+
+*Note to committers: do not check the new binary into CVS unless you are sure
+you know what you are doing.  Distributed binaries must be 'strip'ped and must
+link statically to the GMP library.*

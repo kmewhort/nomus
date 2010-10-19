@@ -1,0 +1,9 @@
+all
+clean
+clean.classes
+compile
+copy.resources
+doc.prepare
+jar
+javadoc
+prepare

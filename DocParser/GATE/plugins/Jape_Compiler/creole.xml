@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!-- $Id$ -->
+<CREOLE-DIRECTORY>
+  <!-- Processing Resources -->
+  <CREOLE>
+    <!--creole.xml for Japec -->
+    <RESOURCE>
+      <JAR>japec.jar</JAR>		
+      <NAME>Ontotext Japec Transducer</NAME>
+      <CLASS>com.ontotext.gate.japec.JapecTransducer</CLASS>
+      <COMMENT>JAPE compiler.</COMMENT>
+      <HELPURL>http://gate.ac.uk/userguide/sec:misc-creole:japec</HELPURL>
+      <PARAMETER NAME="document" RUNTIME="true"
+        COMMENT="The document to be processed">gate.Document</PARAMETER>
+      <PARAMETER NAME="inputASName" RUNTIME="true"
+        COMMENT="The annotation set to be used for getting features from"
+        OPTIONAL="true">java.lang.String</PARAMETER>
+      <PARAMETER NAME="outputASName" RUNTIME="true"
+        COMMENT="The annotation set to be used for the generated annotations"
+        OPTIONAL="true">java.lang.String</PARAMETER>
+      <PARAMETER NAME="grammarURL"
+        COMMENT="The path to the main file in the grammar."
+        OPTIONAL="false">java.net.URL</PARAMETER>
+      <PARAMETER NAME="encoding" DEFAULT="UTF-8"
+        COMMENT="The encoding used for reading the grammar">java.lang.String</PARAMETER>
+      <PARAMETER NAME="ontology"
+        COMMENT="The ontology to be used by this transducer"
+        OPTIONAL="true">gate.creole.ontology.Ontology</PARAMETER>
+    </RESOURCE>
+  </CREOLE>
+</CREOLE-DIRECTORY>

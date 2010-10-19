@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!-- $Id: creole.xml 8925 2007-07-12 15:47:04Z ian_roberts $ -->
+<!--
+These VRs make up the obsolete document editor.  This editor has been replaced
+by the classes in gate.gui.docview.
+-->
+<CREOLE-DIRECTORY>
+  <CREOLE>
+   <RESOURCE>
+      <NAME>OLD Document Editor</NAME>
+      <CLASS>gate.gui.DocumentEditor</CLASS>
+      <COMMENT>Old editor for documents, superseded by gate.gui.docview.*</COMMENT>
+      <!-- type values can be "large" or "small"-->
+      <GUI TYPE="large">
+        <RESOURCE_DISPLAYED>gate.Document</RESOURCE_DISPLAYED>
+      </GUI>
+    </RESOURCE>
+
+    <!-- VR def for gate unrestricted annotation viewer -->
+    <RESOURCE>
+      <NAME>Unrestricted annotation editor</NAME>
+      <CLASS>gate.gui.UnrestrictedAnnotationEditor</CLASS>
+      <GUI>
+        <MAIN_VIEWER/>
+      </GUI>
+    </RESOURCE>
+    
+    <!-- VR def for gate annotation schema viewer -->
+    <RESOURCE>
+      <NAME>Schema annotation editor</NAME>
+      <CLASS>gate.gui.SchemaAnnotationEditor</CLASS>
+      <GUI>
+        <MAIN_VIEWER/>
+      </GUI>
+    </RESOURCE>
+    
+    <RESOURCE>
+      <NAME>Features Editor</NAME>
+      <CLASS>gate.gui.FeaturesEditor</CLASS>
+      <COMMENT>Old editor for feature values of any resource.  Superseded by the small feature editor in the bottom-left corner of the GUI.</COMMENT>
+      <!-- type values can be "large" or "small"-->
+      <GUI TYPE="large">
+        <RESOURCE_DISPLAYED>gate.util.FeatureBearer</RESOURCE_DISPLAYED>
+      </GUI>
+    </RESOURCE>
+  </CREOLE>
+</CREOLE-DIRECTORY>

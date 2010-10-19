@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleExecutable</key>
+	<string>GATE</string>
+	<key>CFBundleGetInfoString</key>
+	<string>GATE 5.2.1 - http://gate.ac.uk/</string>
+	<key>CFBundleIconFile</key>
+	<string>gate-launcher.icns</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>8.0</string>
+	<key>CFBundleName</key>
+	<string>GATE</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>8.0</string>
+	<key>Java</key>
+	<dict>
+		<key>Arguments</key>
+		<array>
+			<string>run</string>
+		</array>
+		<key>ClassPath</key>
+		<array>
+			<string>lib/ant-launcher.jar</string>
+		</array>
+		<key>JVMVersion</key>
+		<string>1.5+</string>
+		<key>MainClass</key>
+		<string>org.apache.tools.ant.launch.Launcher</string>
+		<key>Properties</key>
+		<dict>
+			<key>apple.laf.useScreenMenuBar</key>
+			<string>true</string>
+			<key>com.apple.mrj.application.growbox.intrudes</key>
+			<string>true</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

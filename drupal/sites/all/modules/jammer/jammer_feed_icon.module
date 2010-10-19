@@ -1,0 +1,17 @@
+<?php
+// $Id: jammer_feed_icon.module,v 1.1.4.1 2010/03/15 14:53:49 afreeman Exp $
+
+/**
+ * @file
+ * Remove the feed icon from templates that use the PHPTemplate engine.
+ */
+
+/**
+ * Remove the feed icon.
+ *
+ * @param string $url
+ * @return string
+ */
+function phptemplate_feed_icon($url) {
+  return '';
+}

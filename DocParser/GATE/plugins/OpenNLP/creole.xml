@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<!-- $Id: creole.xml Thu Dec 11 16:25:59 EET 2008 georgiev, georgi.georgiev@ontotext.com $ -->
+<!-- creole.xml directory file for OpenNLP tools -->
+<CREOLE-DIRECTORY>
+	<!-- Opennlp sentence split wrapper-->
+	<CREOLE>
+		<RESOURCE>
+			<NAME>OpenNlpSentenceSplit</NAME>
+			<JAR>opennlp.jar</JAR>
+			<JAR>lib/opennlp-tools-1.1.0.jar</JAR>
+			<JAR>lib/opennlp-api-0.9.0.jar</JAR>
+			<JAR>lib/maxent-2.5.2.jar</JAR>
+			<JAR>lib/trove.jar</JAR>
+			<COMMENT>Gate wrapper of the OpenNlp Sentence Splitter.</COMMENT>
+			<HELPURL>http://opennlp.sourceforge.net/</HELPURL>
+			<CLASS>gate.opennlp.OpenNlpSentenceSplit</CLASS>
+			<PARAMETER NAME="document" RUNTIME="true">gate.Document</PARAMETER>
+			<PARAMETER NAME="annotationSetName" RUNTIME="true" OPTIONAL="true">java.lang.String</PARAMETER>
+			<PARAMETER NAME="model" RUNTIME="false" OPTIONAL="false" COMMENT="This URL must point to the model file." DEFAULT="models/english/sentdetect/EnglishSD.bin.gz">java.net.URL</PARAMETER>
+		</RESOURCE>
+	</CREOLE>
+	<!-- Opennlp tokenizer wrapper-->
+	<CREOLE>
+		<RESOURCE>
+			<NAME>OpenNlpTokenizer</NAME>
+			<JAR>opennlp.jar</JAR>
+			<JAR>lib/opennlp-tools-1.1.0.jar</JAR>
+			<JAR>lib/opennlp-api-0.9.0.jar</JAR>
+			<JAR>lib/maxent-2.5.2.jar</JAR>
+			<JAR>lib/trove.jar</JAR>
+			<COMMENT>Implementation of the OpenNlp Token Splitter.</COMMENT>
+			<HELPURL>http://opennlp.sourceforge.net/</HELPURL>
+			<CLASS>gate.opennlp.OpenNlpTokenizer</CLASS>
+			<PARAMETER NAME="document" RUNTIME="true">gate.Document</PARAMETER>
+			<PARAMETER NAME="annotationSetName" RUNTIME="true" OPTIONAL="true">java.lang.String</PARAMETER> 
+			<PARAMETER NAME="model" RUNTIME="false" OPTIONAL="false" COMMENT="This URL must point to the model file." DEFAULT="models/english/tokenize/EnglishTok.bin.gz">java.net.URL</PARAMETER>
+			<!--<JAR></JAR>-->
+		</RESOURCE>
+	</CREOLE>
+	<!-- Opennlp pos wrapper-->
+	<CREOLE>
+		<RESOURCE>
+			<NAME>OpenNlpPOS</NAME>
+			<JAR>opennlp.jar</JAR>
+			<JAR>lib/opennlp-tools-1.1.0.jar</JAR>
+			<JAR>lib/opennlp-api-0.9.0.jar</JAR>
+			<JAR>lib/maxent-2.5.2.jar</JAR>
+			<JAR>lib/trove.jar</JAR>
+			<COMMENT>Implementation of the OpenNlp POS Tagger.</COMMENT>
+			<HELPURL>http://opennlp.sourceforge.net/</HELPURL>
+			<CLASS>gate.opennlp.OpenNlpPOS</CLASS>
+			<PARAMETER NAME="document" RUNTIME="true">gate.Document</PARAMETER>
+			<PARAMETER NAME="annotationSetName" RUNTIME="true" OPTIONAL="true">java.lang.String</PARAMETER>
+			<PARAMETER NAME="model" RUNTIME="false" OPTIONAL="false" COMMENT="This URL must point to the model file." DEFAULT="models/english/postag/EnglishPOS.bin.gz">java.net.URL</PARAMETER>
+			<PARAMETER NAME="dictionary" RUNTIME="false" OPTIONAL="false" COMMENT="This URL must point to the dictionary POS file." DEFAULT="models/english/postag/tagdict">java.net.URL</PARAMETER>
+			<PARAMETER NAME="dictionaryEncoding" RUNTIME="false" OPTIONAL="false" COMMENT="The character encoding of the dictionary POS file." DEFAULT="UTF-8">java.lang.String</PARAMETER>
+			<!--<JAR></JAR>-->
+		</RESOURCE>
+	</CREOLE>
+	<!-- Opennlp chunker wrapper-->
+	<CREOLE>
+		<RESOURCE>
+			<NAME>OpenNlpChunker</NAME>
+			<JAR>opennlp.jar</JAR>
+			<JAR>lib/opennlp-tools-1.1.0.jar</JAR>
+			<JAR>lib/opennlp-api-0.9.0.jar</JAR>
+			<JAR>lib/maxent-2.5.2.jar</JAR>
+			<JAR>lib/trove.jar</JAR>
+			<COMMENT>Implementation of the OpenNlp Chunker.</COMMENT>
+			<HELPURL>http://opennlp.sourceforge.net/</HELPURL>
+			<CLASS>gate.opennlp.OpenNlpChunker</CLASS>
+			<PARAMETER NAME="document" RUNTIME="true">gate.Document</PARAMETER>
+			<PARAMETER NAME="annotationSetName" RUNTIME="true" OPTIONAL="true">java.lang.String</PARAMETER>
+			<PARAMETER NAME="model" RUNTIME="false" OPTIONAL="false" COMMENT="This URL must point to the model file." DEFAULT="models/english/chunker/EnglishChunk.bin.gz">java.net.URL</PARAMETER>
+		</RESOURCE>
+	</CREOLE>
+		<!-- Opennlp namefinder wrapper-->
+	<CREOLE>
+		<RESOURCE>
+			<NAME>OpenNlpNameFinder</NAME>
+			<JAR>opennlp.jar</JAR>
+			<JAR>lib/opennlp-tools-1.1.0.jar</JAR>
+			<JAR>lib/opennlp-api-0.9.0.jar</JAR>
+			<JAR>lib/maxent-2.5.2.jar</JAR>
+			<JAR>lib/trove.jar</JAR>
+			<COMMENT>Implementation of the OpenNlp Name Finder.</COMMENT>
+			<HELPURL>http://opennlp.sourceforge.net/</HELPURL>
+			<CLASS>gate.opennlp.OpenNLPNameFin</CLASS>
+			<PARAMETER NAME="document" RUNTIME="true">gate.Document</PARAMETER>
+			<PARAMETER NAME="inputASName" RUNTIME="true" OPTIONAL="true">java.lang.String</PARAMETER>
+			<PARAMETER NAME="outputASName" RUNTIME="true" OPTIONAL="true">java.lang.String</PARAMETER>
+			<PARAMETER NAME="model" RUNTIME="false" OPTIONAL="false" COMMENT="This URL must point to the model directory, and should end with a slash." DEFAULT="models/english/namefind/">java.net.URL</PARAMETER>
+		</RESOURCE>
+	</CREOLE>
+	<!-- Opennlp parser wrapper-->
+	<!--<CREOLE>
+		<RESOURCE>
+			<NAME>OpenNlpParser</NAME>
+			<JAR>opennlp.jar</JAR>
+			<JAR>lib/opennlp-tools-1.4.2.jar</JAR>
+			<JAR>lib/opennlp-api-0.9.0.jar</JAR>
+			<JAR>lib/maxent-2.5.2.jar</JAR>
+			<COMMENT>Implementation of the OpenNlp Parser.</COMMENT>
+			<HELPURL>http://opennlp.sourceforge.net/</HELPURL>
+			<CLASS>gate.opennlp.OpenNlpParser</CLASS>
+			<PARAMETER NAME="document" RUNTIME="true">gate.Document</PARAMETER>
+			<PARAMETER NAME="inputASName" DEFAULT="" RUNTIME="true" OPTIONAL="false">java.lang.String</PARAMETER>
+			<PARAMETER NAME="model" RUNTIME="false" OPTIONAL="false" COMMENT="This URL must point to the model directory.">java.net.URL</PARAMETER>
+		</RESOURCE>
+	</CREOLE>-->
+</CREOLE-DIRECTORY>

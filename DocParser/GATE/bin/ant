@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# When CDPATH is set, the cd command prints out the current directory, which 
+# breaks ANT's routine for finding ANT_HOME.
+# Because of this, ANT_HOME is now set here
+
+PRG="$0"
+# need this for relative symlinks
+while [ -h "$PRG" ] ; do
+  ls=`ls -ld "$PRG"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '/.*' > /dev/null; then
+    PRG="$link"
+  else
+    PRG=`dirname "$PRG"`"/$link"
+  fi
+done
+ANT_HOME=`dirname "$PRG"`/..
+export ANT_HOME
+# make it fully qualified
+# When CDPATH is set, the cd command prints out the dir name. Because of this
+# we need to execute the cd command separately, and only then get the value
+# via `pwd`
+ANT_HOME=`cd $ANT_HOME 2>&1 > /dev/null ; pwd`
+
+if [ -x "$ANT_HOME/bin/real-ant" ]; then
+  exec $ANT_HOME/bin/real-ant --noconfig "$@"
+else
+  echo "Couldn't find real-ant"
+fi

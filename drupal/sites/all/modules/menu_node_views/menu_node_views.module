@@ -1,0 +1,14 @@
+<?php
+
+// $Id: menu_node_views.module,v 1.1 2009/06/22 15:35:13 agentken Exp $
+
+/**
+ * @file Enables Views to leverage menu hierarchies when displaying nodes.
+ */
+
+/**
+ * Implement hook_views_api().
+ */
+function menu_node_views_views_api() {
+  return array('api' => 2.0);
+}

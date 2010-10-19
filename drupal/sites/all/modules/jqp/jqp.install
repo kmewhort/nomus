@@ -1,0 +1,16 @@
+<?php
+// $Id: jqp.install,v 1.2 2010/02/11 09:13:28 skilip Exp $
+
+/**
+ * @file
+ *
+ * Delete all javascript library entries from the system table
+ */
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function jqp_uninstall() {
+  db_query("DELETE FROM {system} WHERE type = '%s'", 'javascript library');
+  variable_del('jqp_stop_message_libraries');
+}

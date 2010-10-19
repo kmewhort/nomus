@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<!-- $Id: creole.xml 8925 2007-07-12 15:47:04Z ian_roberts $ -->
+<!--
+This is the old HTML document format, which uses the Swing HTML parser.  It
+has been replaced by a new parser, based on NekoHTML, which is much better at
+handling modern HTML, but the old format is here for existing applications
+that depend on its behaviour.
+-->
+<CREOLE-DIRECTORY>
+  <CREOLE>   
+    <!-- creole.xml for the old HTML document format -->
+    <RESOURCE>
+      <NAME>Old GATE HTML Document Format</NAME>
+      <CLASS>gate.corpora.HtmlDocumentFormat</CLASS>
+      <COMMENT>Old HTML document parser, based on the Swing parser that drives JEditorPane.</COMMENT>
+      <AUTOINSTANCE/>
+      <PRIVATE/>
+    </RESOURCE>
+  </CREOLE>
+</CREOLE-DIRECTORY>

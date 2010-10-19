@@ -1,0 +1,352 @@
+<!-- creole.xml KeyphraseAnalyser -->
+<!--  alesch, 2008-09-05 -->
+
+<CREOLE-DIRECTORY>
+
+  <!-- Processing Resources -->
+  <CREOLE>
+    
+    <!-- HERE COME OUR OWN GLORIOUSLY IMPLEMENTED PLUGINS -->
+    <!-- creole.xml for the Language idenitfier -->
+    <RESOURCE>
+      <NAME>Language Identifier</NAME>
+      <JAR>LanguageIdentification/LanguageIdentification.jar</JAR>
+      <JAR>LanguageIdentification/lib/cngram.jar</JAR>
+      <CLASS>ie.deri.sw.smile.nlp.gate.language.LanguageIdentifier</CLASS>
+      <COMMENT>
+        Language Identifier for a number of languages based on character n-grams.
+      </COMMENT>
+      <PARAMETER NAME="document"
+                 COMMENT="The document to be processed" 
+                 RUNTIME="true">
+        gate.Document
+      </PARAMETER>
+      <PARAMETER NAME="languageFeatureName"
+                 COMMENT="The document feature to contain the language information" 
+                 RUNTIME="true"
+                 DEFAULT="language">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="encoding"
+                 COMMENT="Encoding to use to read rules and lexicons"
+                 OPTIONAL="true">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="maxPartitionChars"
+                 COMMENT="Maximum number of characters used in partition to determine language"
+                 RUNTIME="true"
+                 DEFAULT="1000"
+                 OPTIONAL="true">
+        java.lang.Integer
+      </PARAMETER>
+
+    </RESOURCE>
+    
+    <!-- creole.xml for the Stopword marker -->
+    <RESOURCE>
+      <NAME>Stopword Marker</NAME>
+      <JAR>StopwordMarker/StopwordMarker.jar</JAR>
+      <CLASS>ie.deri.sw.smile.nlp.gate.stopword.StopwordMarker</CLASS>
+      <COMMENT>
+        Stopword Marker for a number of languages based on stopword lists.
+      </COMMENT>
+      <PARAMETER COMMENT="The document to be processed"
+                 NAME="document" RUNTIME="true">
+        gate.Document
+      </PARAMETER>
+      <PARAMETER NAME="resourceDir"
+                 COMMENT="the directory holding the stopword lists relative to this"
+                 DEFAULT="StopwordMarker/resources" RUNTIME="false">
+        java.net.URL
+      </PARAMETER>
+      <PARAMETER NAME="annotationSetName"
+                 COMMENT="The name used for the input annotation set" RUNTIME="true"
+                 OPTIONAL="true">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="encoding"
+                 COMMENT="The encoding used for reading the stopword list files"
+                 DEFAULT="UTF-8">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="stopwordFeatureName"
+                 COMMENT="The token feature to contain the stopword information"
+                 RUNTIME="true"
+                 DEFAULT="stopword">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="languageFeatureName"
+                 COMMENT="The document feature containing the language information"
+                 RUNTIME="true"
+                 DEFAULT="language">
+        java.lang.String
+      </PARAMETER>
+
+    </RESOURCE>
+
+    <!-- creole.xml for the Part-of-Speech Tag mapper -->
+    <RESOURCE>
+      <NAME>POSTag Mapper</NAME>
+      <JAR>POSTagMapper/POSTagMapper.jar</JAR>
+      <CLASS>ie.deri.sw.smile.nlp.gate.postag.mapper.PosTagMapper</CLASS>
+      <COMMENT>
+        A Part-of-Speech Tag mapper from language-specific pos-tags to coarse-grained, universal tags.
+      </COMMENT>
+      <PARAMETER COMMENT="The document to be processed"
+                 NAME="document" RUNTIME="true">
+        gate.Document
+      </PARAMETER>
+      <PARAMETER NAME="resourceDir"
+                 COMMENT="the directory holding the mapping files for part-of-speech tags relative to this"
+                 DEFAULT="POSTagMapper/resources" RUNTIME="false">
+        java.net.URL
+      </PARAMETER>
+      <PARAMETER NAME="annotationSetName"
+                 COMMENT="The name used for the input annotation set" RUNTIME="true"
+                 OPTIONAL="true">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="encoding"
+                 COMMENT="The encoding used for reading the mapping files"
+                 DEFAULT="UTF-8">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="coarseCategoryFeatureName"
+                 COMMENT="The token feature to contain the coarse category information"
+                 RUNTIME="true"
+                 DEFAULT="coarse_category">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="languageFeatureName"
+                 COMMENT="The document feature containing the language information"
+                 RUNTIME="true"
+                 DEFAULT="language">
+        java.lang.String
+      </PARAMETER>
+
+    </RESOURCE>
+
+    <!-- creole.xml for the Simple Noun Chunker -->
+    <RESOURCE>
+      <NAME>Simple Noun Chunker</NAME>
+      <JAR>SimpleNounChunking/SimpleNounChunking.jar</JAR>
+      <CLASS>ie.deri.sw.smile.nlp.gate.chunking.SimpleNounChunker</CLASS>
+      <COMMENT>
+        A Noun Chunker for English.
+      </COMMENT>
+      <PARAMETER COMMENT="The document to be processed" NAME="document" RUNTIME="true">
+        gate.Document
+      </PARAMETER>
+      <PARAMETER NAME="inputASName"
+                 COMMENT="The name used for the temporary annotation set"
+                 RUNTIME="true" OPTIONAL="true">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="outputASName"
+                 COMMENT="The name used for the temporary annotation set"
+                 RUNTIME="true" OPTIONAL="true">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="grammarURL"
+                 DEFAULT="SimpleNounChunking/resources/SimpleNounChunker.jape" RUNTIME="false" 
+                 COMMENT="The URL to the custom Jape grammar file"
+                 SUFFIXES="jape">
+        java.net.URL
+      </PARAMETER>
+      <PARAMETER NAME="encoding" DEFAULT="UTF-8"
+                 COMMENT="The encoding used for reading the grammar">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="ontology"
+                 COMMENT="The ontology to be used by this transducer" OPTIONAL="true"
+                 RUNTIME="true">
+        gate.creole.ontology.Ontology
+      </PARAMETER>
+      <ICON>jape</ICON>
+
+    </RESOURCE>
+
+    <!-- creole.xml for the Frequency analyser -->
+    <RESOURCE>
+      <NAME>Frequency Analyser</NAME>
+      <JAR>FrequencyAnalyser/FrequencyAnalyser.jar</JAR>
+      <CLASS>ie.deri.sw.smile.nlp.gate.frequency.FrequencyAnalyser</CLASS>
+      <COMMENT>
+        A Frequency Analyser providing frequency lists for various aspects (token, lemma, part-of-speech).
+      </COMMENT>
+      <PARAMETER COMMENT="The document to be processed"
+                 NAME="document" RUNTIME="true">
+        gate.Document
+      </PARAMETER>
+      <!-- THIS MUST CORRESPOND TO THE VALUE OF POSTAGMAPPER RUN PRIOR TO THIS -->
+      <PARAMETER NAME="coarseCategoryFeatureName"
+                 COMMENT="The token feature to contain the coarse category information"
+                 RUNTIME="true"
+                 DEFAULT="coarse_category">
+        java.lang.String
+      </PARAMETER>
+      
+      <!-- THIS MUST CORRESPOND TO THE VALUE OF PROCESSING RESOURCES RUN PRIOR TO THIS -->
+      <PARAMETER NAME="lemmaFeatureName"
+                 COMMENT="The token feature to contain the lemma/root information"
+                 RUNTIME="true"
+                 DEFAULT="lemma">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="tokenFrequencyFeatureName"
+                 COMMENT="The document feature containing the overall token frequencies"
+                 RUNTIME="true"
+                 DEFAULT="overall-token_frequency">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="lemmaFrequencyFeatureName"
+                 COMMENT="The document feature containing the overall lemma frequencies"
+                 RUNTIME="true"
+                 DEFAULT="overall-lemma_frequency">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="lemmaNounFrequencyFeatureName"
+                 COMMENT="The document feature containing the lemma frequencies for nouns"
+                 RUNTIME="true"
+                 DEFAULT="noun-lemma_frequency">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="lemmaVerbFrequencyFeatureName"
+                 COMMENT="The document feature containing the lemma frequencies for verbs"
+                 RUNTIME="true"
+                 DEFAULT="verb-lemma_frequency">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="lemmaAdjectiveFrequencyFeatureName"
+                 COMMENT="The document feature containing the lemma frequencies for adjectives"
+                 RUNTIME="true"
+                 DEFAULT="adj-lemma_frequency">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="documentSizeFeatureName"
+                 COMMENT="The document feature containing the size of the document (in tokens)"
+                 RUNTIME="true"
+                 DEFAULT="document_size">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="lexiconSizeFeatureName"
+                 COMMENT="The document feature containing the size of the lexicon (number of different lemmas)"
+                 RUNTIME="true"
+                 DEFAULT="lexicon_size">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="unknownLemmaValue"
+                 COMMENT="The lemma value assigned to unknown words"
+                 RUNTIME="true"
+                 DEFAULT="&lt;unknown&gt;">
+        java.lang.String
+      </PARAMETER>
+    </RESOURCE>
+
+    <!-- creole.xml for the Keyword analyser -->
+    <RESOURCE>
+      <NAME>Keyphrase Analyser</NAME>
+      <JAR>KeywordAnalyser/KeywordAnalyser.jar</JAR>
+      <JAR>KeywordAnalyser/lib/secondstring-20060615.jar</JAR>
+      <CLASS>ie.deri.sw.smile.nlp.gate.keyword.KeywordAnalyser</CLASS>
+      <COMMENT>
+        A Keyphrase Analyser.
+      </COMMENT>
+      <PARAMETER COMMENT="The document to be processed"
+                 NAME="document" RUNTIME="true">
+        gate.Document
+      </PARAMETER>
+      <PARAMETER NAME="resourceDir"
+                 COMMENT="the directory holding the frequency lists relative to this"
+                 DEFAULT="KeywordAnalyser/resources" RUNTIME="false">
+        java.net.URL
+      </PARAMETER>
+      <PARAMETER NAME="annotationSetName"
+                 COMMENT="The name used for the input annotation set" RUNTIME="true"
+                 OPTIONAL="true">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="encoding"
+                 COMMENT="The encoding used for reading the frequency list files"
+                 DEFAULT="UTF-8">
+        java.lang.String
+      </PARAMETER>
+      
+      <!-- THIS MUST CORRESPOND TO THE VALUE OF POSTAGMAPPER RUN PRIOR TO THIS -->
+      <PARAMETER NAME="coarseCategoryFeatureName"
+                 COMMENT="The token feature to contain the coarse category information"
+                 RUNTIME="true" DEFAULT="coarse_category">
+        java.lang.String
+      </PARAMETER>
+      
+      <!-- THIS MUST CORRESPOND TO THE VALUE OF PROCESSING RESOURCES RUN PRIOR TO THIS -->
+      <PARAMETER NAME="lemmaFeatureName"
+                 COMMENT="The token feature to contain the lemma/root information"
+                 RUNTIME="true" DEFAULT="lemma">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="languageFeatureName"
+                 COMMENT="The feature to contain the language information"
+                 RUNTIME="true" DEFAULT="language">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="nounchunkAnnotationType"
+                 COMMENT="The annotation type of noun chunk"
+                 RUNTIME="true" DEFAULT="NounChunk">
+        java.lang.String
+      </PARAMETER>
+      
+      <PARAMETER NAME="tokenFrequencyFeatureName"
+                 COMMENT="The document feature containing the overall token frequencies"
+                 RUNTIME="true" DEFAULT="overall-token_frequency">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="lemmaFrequencyFeatureName"
+                 COMMENT="The document feature containing the overall lemma frequencies"
+                 RUNTIME="true" DEFAULT="overall-lemma_frequency">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="lemmaNounFrequencyFeatureName"
+                 COMMENT="The document feature containing the lemma frequencies for nouns"
+                 RUNTIME="true" DEFAULT="noun-lemma_frequency">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="lemmaVerbFrequencyFeatureName"
+                 COMMENT="The document feature containing the lemma frequencies for verbs"
+                 RUNTIME="true" DEFAULT="verb-lemma_frequency">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="lemmaAdjectiveFrequencyFeatureName"
+                 COMMENT="The document feature containing the lemma frequencies for adjectives"
+                 RUNTIME="true" DEFAULT="adj-lemma_frequency">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="documentSizeFeatureName"
+                 COMMENT="The document feature containing the size of the document (in tokens)"
+                 RUNTIME="true" DEFAULT="document_size">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="lexiconSizeFeatureName"
+                 COMMENT="The document feature containing the size of the lexicon (number of different lemmas)"
+                 RUNTIME="true" DEFAULT="lexicon_size">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="unknownLemmaValue"
+                 COMMENT="The lemma value assigned to unknown words" RUNTIME="true"
+                 DEFAULT="&lt;unknown&gt;">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="keywordFeatureName"
+                 COMMENT="The document feature containing the keywords" RUNTIME="true"
+                 DEFAULT="keywords">
+        java.lang.String
+      </PARAMETER>
+      <PARAMETER NAME="stopwordFeatureName"
+                 COMMENT="The token feature containing the stopword information" RUNTIME="true"
+                 DEFAULT="stopword">
+        java.lang.String
+      </PARAMETER>
+    </RESOURCE>
+
+  </CREOLE>
+</CREOLE-DIRECTORY>

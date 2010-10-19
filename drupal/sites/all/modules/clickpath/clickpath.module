@@ -1,0 +1,200 @@
+<?php
+// $Id: clickpath.module,v 1.1.2.1.2.4 2010/03/14 01:56:49 coltrane Exp $
+
+/**
+ * @file
+ * Saves and displays the user's most recently visited links in the site.
+ *
+ * The goal is to track the path a user has taken through the site, and
+ * display it in a sidebar block or (optionally) the breadcrumb trail.
+ */
+
+/**
+ * Implementation of hook_perm.
+ *
+ * Exposes permission to see one's own clickpath.
+ */
+function clickpath_perm() {
+  return array('view clickpath block');
+}
+
+/**
+ * Implementation of hook_menu.
+ *
+ * Exposes the Clickpath administration page.
+ */
+function clickpath_menu() {
+  $items['admin/settings/clickpath'] = array(
+    'title' => 'Clickpath settings',
+    'description' => 'Configure what information will be displayed about the paths users take when clicking through the site.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('clickpath_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+function clickpath_admin_settings() {
+  $form = array();
+
+  $form['clickpath_count'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Number of paths to save'),
+    '#default_value' => variable_get('clickpath_count', 5),
+  );
+  
+  $form['clickpath_title_length'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Limit titles to a specific length'),
+    '#default_value' => variable_get('clickpath_title_length', 20),
+  );
+
+  $description = t("Enter one page per line as Drupal paths. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", array('%blog' => 'blog', '%blog-wildcard' => 'blog/*', '%front' => '<front>'));
+  $form['clickpath_ignore_list'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Paths to ignore'),
+    '#default_value' => variable_get('clickpath_ignore_list', "admin*\nnode/*/*"),
+    '#description' => $description,
+  );
+
+  $form['clickpath_home_title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title to display for frontpage'),
+    '#default_value' => variable_get('clickpath_home_title', 'Home'),
+    '#description' => t('The title entered here will be used to represent homepage. If nothing is entered, the title will default to site name.'),
+  );
+
+  $form['clickpath_breadcrumb'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Override breacrumb trail'),
+    '#default_value' => variable_get('clickpath_breadcrumb', FALSE),
+    '#description' => t('Replace the standard Drupal breadcrumb trail with a list of the most recent pages a user has visited. If this option is used, ignoring paths is NOT recommended.'),
+  );
+  
+  $form['#validate'][] = 'clickpath_admin_settings_validate';
+
+  return system_settings_form($form);
+}
+
+function clickpath_admin_settings_validate($form, &$form_state) {
+  if (!is_numeric($form_state['values']['clickpath_count'])) {
+    form_set_error('clickpath_count', t('Number of paths to save must be a positive number.'));
+  }
+  if (!empty($form_state['values']['clickpath_title_length']) && !is_numeric($form_state['values']['clickpath_title_length'])) {
+    form_set_error('clickpath_title_length', t('Title length must be a positive number.'));
+  }
+}
+
+/**
+ * Implementation of hook_block.
+ * 
+ * Exposes a block containing the current user's most recently visited
+ * pages -- the path they've taken through the site.
+ */
+function clickpath_block($op = 'list', $delta = 0) {
+  global $user;
+  if ($op == 'list') {
+    $block[0]['info'] = t('Recently visited pages');
+    return $block;
+  }
+  else if ($op == 'view') {
+    if (user_access('view clickpath block') && $links = clickpath_get_paths()) {
+      $list = array();
+      $links = array_reverse($links, TRUE);
+      foreach ($links as $path => $title) {
+        $list[] = l(_clickpath_truncate_title($title), $path, array('html' => TRUE));
+      }
+
+      $block['subject'] = t('Recently visited pages');
+      $block['content'] = theme('item_list', $list);
+      return $block;
+    }
+  }
+}
+
+function clickpath_preprocess_page(&$variables) {
+  if (variable_get('clickpath_breadcrumb', FALSE)) {
+    $list = array();
+    $links = clickpath_get_paths();
+    foreach ($links as $path => $title) {
+      $list[] = l(_clickpath_truncate_title($title), $path, array('html' => TRUE));
+    }
+    drupal_set_breadcrumb($list);
+    $variables['breadcrumb'] = theme('breadcrumb', $list);
+  }
+}
+
+/**
+ * Implementation of hook_exit.
+ *
+ * Saves the path a user visited on page exit.
+ */
+function clickpath_exit() {
+  global $user;
+  if (function_exists('drupal_get_path_alias')) {
+    clickpath_save_path($_GET['q']);
+  }
+}
+
+function clickpath_get_paths() {
+  return empty($_SESSION['clickpath']) ? array() : $_SESSION['clickpath'];
+}
+
+function _clickpath_path_is_frontpage($path) {
+  return $path == drupal_get_normal_path(variable_get('site_frontpage', 'node'));
+}
+
+function _clickpath_truncate_title($title) {
+  $length = variable_get('clickpath_title_length', 20);
+  if ($length > 0 && strlen($title) > $length) {
+    $title = substr($title, 0, $length) . '&hellip;';
+  }
+  return $title;
+}
+
+function clickpath_save_path($path) {
+  $path_pattern = variable_get('clickpath_ignore_list', "admin*\nnode/*/*");
+
+  // Match path if necessary
+  if (!empty($path_pattern)) {
+    $aliased_path = drupal_get_path_alias($path);
+    // Compare with the internal and path alias (if any).
+    $page_match = drupal_match_path($aliased_path, $path_pattern);
+    if ($aliased_path != $_GET['q']) {
+      $page_match = $page_match || drupal_match_path($path, $path_pattern);
+    }
+    
+    // Since it's a list of patterns to ignore, flip it.
+    $page_match = !$page_match;
+  }
+  else {
+    $page_match = TRUE;
+  }
+  
+  if ($page_match) {
+    if (_clickpath_path_is_frontpage($path)) {
+      if ($home_title = variable_get('clickpath_home_title', 'Home')) {
+        $title = $home_title;    
+      } else {
+        $title = variable_get('site_name', 'Home');
+      }
+    } else {
+      $title = drupal_get_title();
+    }
+    
+    $clickpath = clickpath_get_paths();
+    if (empty($clickpath[$path])) {
+      $clickpath[$path] = $title;
+      while (count($clickpath) > variable_get('clickpath_count', 5)) {
+        array_shift($clickpath);
+      }
+    }
+    else {
+      unset($clickpath[$path]);
+      $clickpath[$path] = $title;
+    }
+    $_SESSION['clickpath'] = $clickpath;
+  }
+}

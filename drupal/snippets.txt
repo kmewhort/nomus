@@ -1,0 +1,2 @@
+drush -l http://199.204.47.84 vbo-execute cases_no_heading nomus_bulk_process
+

@@ -1,0 +1,205 @@
+<?php
+
+/**
+ * Implementation of hook theme.
+ *
+ */
+function apachesolr_custom_sort_theme() {
+
+  return array(
+    'apachesolr_sort_groups' => array(
+      'arguments' => array('form' => NULL),
+      'file' => 'apachesolr_custom_sort.admin.inc',
+    ),
+  );
+}
+
+/**
+ * Implementation of hook menu.
+ *
+ */
+function apachesolr_custom_sort_menu() {
+
+  $items = array();
+
+  // the sort group overview page
+  $items['admin/settings/apachesolr_sort_groups'] = array(
+    'title' => 'Apache Solr Custom Sort Groups',
+    'file' => 'apachesolr_custom_sort.admin.inc',
+    'description' => 'Administer sorting groups for Apache Solr.',
+    'page callback' => 'apachesolr_custom_sort_apachesolr_sort_group_overview',
+    'access arguments' => array('administer search'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  // add a new sort group page
+  $items['admin/settings/apachesolr_sort_group/add'] = array(
+    'title' => 'New sort group',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('apachesolr_custom_sort_apachesolr_sort_group_form'),
+    'access arguments' => array('administer search'),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'apachesolr_custom_sort.admin.inc',
+  );
+
+  // edit existing sort group page
+  $items['admin/settings/apachesolr_sort_group/%apachesolr_sort_group/edit'] = array(
+    'title callback' => 'apachesolr_custom_sort_apachesolr_sort_group_title_callback',
+    'title arguments' => array('Edit sort group: !sortname', 3),
+    'file' => 'apachesolr_custom_sort.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('apachesolr_custom_sort_apachesolr_sort_group_form', 3),
+    'access arguments' => array('administer search'),
+    'type' => MENU_CALLBACK,
+  );
+
+  // delete specified sort group page
+  $items['admin/settings/apachesolr_sort_group/%apachesolr_sort_group/delete'] = array(
+    'title' => 'Delete sort group',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('apachesolr_custom_sort_apachesolr_sort_group_delete_form', 3),
+    'access arguments' => array('administer search'),
+    'type' => MENU_CALLBACK,
+    'file' => 'apachesolr_custom_sort.admin.inc',
+  );
+
+  // ahah callback button
+  $items['apachesolr_sorting/ahah/callback'] = array(
+    'type' => MENU_CALLBACK,
+    'page callback' => 'apachesolr_custom_sort_apachesolr_sort_group_ahah',
+    'access callback' => TRUE,
+    'file' => 'apachesolr_custom_sort.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Customises the title of the form page by showing the name of the sort group.
+ *
+ * @param mixed $title
+ * @param mixed $sort
+ * @param mixed $action
+ * @return string
+ */
+function apachesolr_custom_sort_apachesolr_sort_group_title_callback($title, $sort = NULL, $action = array()) {
+  return t($title, array('!sortname' => $sort->name));
+}
+
+/**
+ * Loads the required sort group settings.
+ *
+ * @param mixed $group_name
+ *   Name of the group to load.
+ */
+function apachesolr_sort_group_load($group_name) {
+
+  $result = NULL;
+
+  $settings = apachesolr_custom_sort_apachesolr_sort_group_load();
+
+  foreach ($settings as $key => $value) {
+
+    if ($key == $group_name) {
+      $result = $value;
+    }
+  }
+
+  return $result;
+}
+
+/**
+ * Loads the sort group settings.
+ *
+ */
+function apachesolr_custom_sort_apachesolr_sort_group_load() {
+  return variable_get('sort_field_settings', array());
+}
+
+/**
+ * Delete the named sort group from the settings collection.
+ *
+ * @param mixed $group_name
+ *   Name of the group to remove.
+ */
+function apachesolr_custom_sort_apachesolr_sort_group_delete($group_name) {
+
+  $settings = apachesolr_custom_sort_apachesolr_sort_group_load();
+  $updated_settings = array();
+
+  foreach ($settings as $key => $value) {
+    if ($value->name != $group_name) {
+      $updated_settings[$key] = $value;
+    }
+  }
+
+  variable_set('sort_field_settings', $updated_settings);
+}
+
+/**
+ * Removes the sorts from the sort block that shouldn't be exposed to the user. This
+ * allows for custom sorting on non standard fields without showing the user the
+ * sort link.
+ *
+ * @param mixed $sort_links
+ *   List of links that are currently assigned to the sort block.
+ */
+function apachesolr_custom_sort_apachesolr_sort_links_alter(&$sort_links) {
+
+  $sorts = apachesolr_custom_sort_get_available_sorts();
+
+  foreach ($sort_links as $name => $link) {
+    // remove the sort link if it isn't exposed to the user
+    if (isset($sorts[$name]) && $sorts[$name]['exposed'] == FALSE) {
+      unset($sort_links[$name]);
+    }
+  }
+}
+
+/**
+ * Returns the sort fields that are configured for the current url pattern.
+ *
+ */
+function apachesolr_custom_sort_get_available_sorts() {
+
+  static $sorts = NULL;
+
+  if (isset($sorts)) {
+    return $sorts;
+  }
+
+  $sorts = array();
+
+  $default_sorts = variable_get('sort_field_settings', array());
+
+  foreach ($default_sorts as $sort_name => $sort) {
+
+    // get the settings for this page
+    $visibility_type = $sort->visibility['type'];
+    $visibility_pages = $sort->visibility['pages'];
+
+    if ($visibility_type < 2) {
+      $path = drupal_get_path_alias($_GET['q']);
+      // Compare with the internal and path alias (if any).
+      $page_match = drupal_match_path($path, $visibility_pages);
+      if ($path != $_GET['q']) {
+        $page_match = $page_match || drupal_match_path($_GET['q'], $visibility_pages);
+      }
+      // When $block->visibility has a value of 0, the block is displayed on
+      // all pages except those listed in $block->pages. When set to 1, it
+      // is displayed only on those pages listed in $block->pages.
+      $page_match = !($visibility_type xor $page_match);
+
+      if ($page_match) {
+
+        foreach ($sort->fields as $key => $value) {
+          $sorts[$key]['title'] = $value['display_value'];
+          $sorts[$key]['default'] = $value['sort'];
+          $sorts[$key]['exposed'] = $value['exposed'];
+        }
+      }
+    }
+  }
+
+  return $sorts;
+}

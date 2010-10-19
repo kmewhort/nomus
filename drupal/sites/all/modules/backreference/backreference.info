@@ -1,0 +1,12 @@
+; $Id: backreference.info,v 1.1 2009/08/20 00:04:36 jcfiala Exp $
+name = Back Reference
+description = NodeAPI module for maintaining 1-1 relationships between nodes sharing the same noderefence field instance.
+package = CCK
+dependencies[] = nodereference
+core = 6.x
+; Information added by drupal.org packaging script on 2010-05-11
+version = "6.x-1.1"
+core = "6.x"
+project = "backreference"
+datestamp = "1273602303"
+

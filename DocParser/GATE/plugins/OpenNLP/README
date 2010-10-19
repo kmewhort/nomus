@@ -1,0 +1,26 @@
+This directory contains wrappers for the OpenNLP java-based tools for
+sentence detection, tokenization, pos-tagging, chunking and parsing,
+named-entity detection, and coreference. The tools use the Maxent
+machine learning package.
+
+The wrappers use the following libraries:
+
+OpenNLP Java API from http://opennlp.sourceforge.net/
+OpenNLP Tools from http://opennlp.sourceforge.net/
+OpenNLP Maxent from http://maxent.sourceforge.net/
+GNU Trove from http://trove4j.sourceforge.net/
+
+All of the above libraries are redistributed here under the GNU Lesser
+General Public License (LGPL) Version 2.1, a copy of which can be
+found in the file LICENSE.
+
+By default, the wrappers use models for English which can be found in
+models/english directory. The models are copies of those in the "models"
+module in the OpenNLP CVS repository at http://opennlp.cvs.sourceforge.net
+These models have also been redistributed here under the GNU Lesser General
+Public License (LGPL) Version 2.1, a copy of which can be found in the file
+LICENSE.
+
+
+Thanks are due to Georgi D. Georgiev of Ontotext for wrapping the
+OpenNLP tools for GATE, and to the OpenNLP project.
