@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#locations
+#export DISPLAY=:99
+export NOMUS2HOME="/var/www/nomus-dev"
+export OPENOFFICEHOME="/usr/lib/openoffice";
+#export OPENOFFICELIB="/usr/lib/ure/lib";
+export OPENOFFICELIB="/usr/lib/openoffice/program";
+export GATEHOME="/var/www/nomus-dev/DocParser/GATE";
+export SOLRHOME="/var/www/nomus-dev/config/solr_home";
+
+cd $NOMUS2HOME/jetty
+java -Xms512m -Xmx512m -XX:MaxPermSize=256m -DOPTIONS=Server,deploy,jsp -DNOMUS2HOME="$NOMUS2HOME" -Djava.library.path="$OPENOFFICELIB" -DOPENOFFICEHOME="$OPENOFFICEHOME" -Dgate.home="$GATEHOME" -Dsolr.solr.home="$SOLRHOME" -jar ./start.jar $NOMUS2HOME/config/jetty.xml
