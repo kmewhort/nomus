@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Date;
  
 public class DocConverter extends HttpServlet
 {
@@ -248,10 +249,6 @@ public class DocConverter extends HttpServlet
 			// create a temporary file for the output
 			File tempOutFile = File.createTempFile("NDC", "." + outputFormat.getExtension(), tempDir);
 	    	
-	    	System.out.println("->" + tempInFile.toString() + "<-");
-	    	System.out.println("-->" + tempOutFile.toString() + "<--");
-	    	System.out.println("--->" + outputFormat.getMediaType() + "<---");
-	    	System.out.println("--->" + inputFormat.getMediaType() + "<---");
     		// get the singleton office manager
 	 		OfficeManager officeManager = getOfficeManager();
 
@@ -520,7 +517,7 @@ public class DocConverter extends HttpServlet
 			officeManager = new DefaultOfficeManagerConfiguration()
 			.setOfficeHome(System.getProperty("OPENOFFICEHOME"))
 			.setConnectionProtocol(OfficeConnectionProtocol.PIPE)
-			.setPipeNames("DocConvOONamedPipe")
+			.setPipeNames("NDC" + (new Date()).getTime())
 			.setTaskExecutionTimeout(60000L)
 			.buildOfficeManager();
 			officeManager.start();

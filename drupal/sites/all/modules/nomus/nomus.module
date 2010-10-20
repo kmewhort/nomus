@@ -468,13 +468,6 @@ function nomus_bulk_process($nids){
 	// for drupal memory leaks
 	$nodesProcessed = 0;
 	foreach($nids as $nid) {
-		// WORKAROUND for GATE memory leaks (used by documentparser)
-		// - restart the servlet every 10 nodes
-		if($nodesprocessed++ % 10 == 0){
-			`touch ../config/servlet_contexts/docparser.xml`;
-			sleep(4);
-		}
-	
 		$url = url('nomus/process', array("absolute" => true)) . '?nid=' . $nid . '&token=' . tokenauth_get_token();
 		$request = new HttpRequest($url);
 		$request->setMethod(HTTP_METH_GET);

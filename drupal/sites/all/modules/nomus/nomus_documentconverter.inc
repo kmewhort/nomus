@@ -55,6 +55,9 @@ function nomus_documentconverter_convert($node,
 		if($docsourceNode->field_docconverter_regexp) {
 			foreach($docsourceNode->field_docconverter_regexp as $regexpField) {
 				$regexp = $regexpField['value'];
+				
+				if(empty($regex))
+					continue;
 			
 				// split out the regexp, replacement string, and flags
 				$regexpElems = preg_split('/([^\x5c])\//', trim($regexp), -1, PREG_SPLIT_DELIM_CAPTURE);

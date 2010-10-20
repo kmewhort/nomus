@@ -248,6 +248,9 @@ function nomus_documentparser_fulltext_run($docNode, $docParserUserId) {
 	if($docNode->field_converted_file) {
 		$htmlFilename = 
 			$docNode->field_converted_file[0]['filepath'];
+			
+		// convert text from utf-8
+		$text = utf8_decode(file_get_contents($htmlFilename));
 				
 		// send the request
 		$url = $server . '?req=run';
@@ -257,7 +260,7 @@ function nomus_documentparser_fulltext_run($docNode, $docParserUserId) {
 		$request->setMethod(HTTP_METH_POST);
 		$opts = array("Content-Type"=>"text/html", "Accept"=>"text/plain");
 		$request->addHeaders($opts);
-		$request->setBody(file_get_contents($htmlFilename));
+		$request->setBody($text);
 		$result = $request->send();
 		$contentOutput = $result->getBody();			
 	}
