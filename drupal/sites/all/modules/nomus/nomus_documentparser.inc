@@ -71,7 +71,7 @@ function nomus_documentparser_parse($docNode, $documentSourceNid) {
  * Initialize the parser for parsing linktext
  * Returns true if there are linktext parsers to run.
  */
-function nomus_documentparser_linktext_init($docNode, $documentSourceNid) {
+function nomus_documentparser_linktext_init($docNode, $documentSourceNid, $useCachedDocParser = false) {
 	global $user;
 	// document parser server
 	$server = variable_get('nomus_documentparser_server', '');
@@ -83,8 +83,8 @@ function nomus_documentparser_linktext_init($docNode, $documentSourceNid) {
 	$docSourceNode = node_load($documentSourceNid);
 	
 	// generate a unique DocParser "user" from the userid and doctype
-	// (it's better to create a new DocParser user for each
-	// unique DocParser and never reset it, otherwise GATE leaks
+	// (it's better to cache a new DocParser user for each
+	// unique DocParser, otherwise GATE leaks
 	// the JAPE Parsers into the JVM each time the parser is
 	// initialized)
 	$docParserUserId = $user->uid . '-' .
@@ -100,9 +100,18 @@ function nomus_documentparser_linktext_init($docNode, $documentSourceNid) {
 		$request->setMethod(HTTP_METH_GET);
 		$result = $request->send();
 		
-		// if this parser has been initialized, nothing further to do
+		// if this parser exists
 		if($result->getBody() == 'true') {
-			return $docParserUserId;
+			// if useCachedDocParser is true, nothing further to do
+			if($useCachedDocParser)
+				return $docParserUserId;
+				
+			// othewise, need to reset this DocParser
+			$url = $server . '?req=clearApplications';
+			$url .= '&user=' . $docParserUserId;
+			$request = new HttpRequest($url);
+			$request->setMethod(HTTP_METH_GET);
+			$result = $request->send();
 		}
 	
 		// add each GATE document to the document parser
@@ -116,7 +125,7 @@ function nomus_documentparser_linktext_init($docNode, $documentSourceNid) {
 				$url = $server . '?req=addApplication';
 				$url .= '&user=' . $docParserUserId;
 				$url .= '&fileUrl=' .
-					urlencode(nomus_documentparser_gatedoc_url($gateFileNid));
+					urlencode(nomus_documentparser_gatedoc_node_url($gateFileNid));
 				$url .= '&fileType=' . $gateFileType;
 				$url .= '&debug=true';
 				
@@ -125,6 +134,7 @@ function nomus_documentparser_linktext_init($docNode, $documentSourceNid) {
 				$result = $request->send();
 			}
 		}
+		
 		return $docParserUserId;
 	}
 	return false;
@@ -134,7 +144,7 @@ function nomus_documentparser_linktext_init($docNode, $documentSourceNid) {
  * Initialize the parser for parsing fulltext
  * Returns true if there are fulltext parsers to run.
  */
-function nomus_documentparser_fulltext_init($docNode, $documentSourceNid) {
+function nomus_documentparser_fulltext_init($docNode, $documentSourceNid, $useCachedDocParser = false) {
 	global $user;
 	
 	// document parser server
@@ -160,11 +170,19 @@ function nomus_documentparser_fulltext_init($docNode, $documentSourceNid) {
 		$request->setMethod(HTTP_METH_GET);
 		$result = $request->send();
 		
-		// if this parser has been initialized, nothing further to do
+		// if this parser exists
 		if($result->getBody() == 'true') {
-			return $docParserUserId;
+			// if useCachedDocParser is true, nothing further to do
+			if($useCachedDocParser)
+				return $docParserUserId;
+				
+			// othewise, need to reset this DocParser
+			$url = $server . '?req=clearApplications';
+			$url .= '&user=' . $docParserUserId;
+			$request = new HttpRequest($url);
+			$request->setMethod(HTTP_METH_GET);
+			$result = $request->send();
 		}
-		
 		
 		// add each GATE document to the document parser
 		foreach($docSourceNode->field_docparser_fulltext_gate as $gateFileField) {
@@ -178,7 +196,7 @@ function nomus_documentparser_fulltext_init($docNode, $documentSourceNid) {
 				$url .= '&user=' . $docParserUserId;
 				$url .= '&parserid=' . $docSourceNode->nid;
 				$url .= '&fileUrl=' .
-					urlencode(nomus_documentparser_gatedoc_url($gateFileNid));
+					urlencode(nomus_documentparser_gatedoc_node_url($gateFileNid));
 				$url .= '&fileType=' . $gateFileType;
 				$url .= '&debug=true';
 				$request = new HttpRequest($url);
@@ -186,6 +204,28 @@ function nomus_documentparser_fulltext_init($docNode, $documentSourceNid) {
 				$result = $request->send();
 			}
 		}
+		
+		// add each input dictionary to the document parser
+		$inputDictionaries = array();
+		if(!empty($docSourceNode->field_docparser_dict_input)){
+			foreach($docSourceNode->field_docparser_dict_input as $dictInputField) { 
+				$inputDictionaries[] = $dictInputField['value'];
+			}
+		}
+		if(!empty($inputDictionaries)){			
+	   	// send a request to the server to add the dictionary
+			$url = $server . '?req=addApplication';
+			$url .= '&user=' . $docParserUserId;
+			$url .= '&fileUrl=' .
+				urlencode(nomus_documentparser_gatedoc_vocabularies_url($inputDictionaries));
+			$url .= '&fileType=' . 'gate_gaz';
+			$url .= '&debug=true';
+			
+			$request = new HttpRequest($url);
+			$request->setMethod(HTTP_METH_GET);
+			$result = $request->send();
+		}
+		
 		return $docParserUserId;
 	}
 	return false;
@@ -306,7 +346,7 @@ function nomus_documentparser_fulltext_run($docNode, $docParserUserId) {
   			$tempFile, array(), $targetDir);
 	}
 	return $docNode;
-		
+
 }
 
 /**
@@ -327,57 +367,105 @@ function nomus_documentparser_translate_gate_urls(&$node) {
  * along with a user authentication token
  *
  */
-function nomus_documentparser_gatedoc_url($gateDocNodeId) {
+function nomus_documentparser_gatedoc_node_url($gateDocNodeId) {
 	return url('nomus/documentparser/gatedoc', array('absolute' => TRUE))
 	   			. '?nodeId=' . $gateDocNodeId 
 	   			. '&token=' . tokenauth_get_token();
 }
 
 /**
+ * Generates an external URL to retrieve one or more vocabularies as a 
+ * GATE gazetteer
+ *
+ */
+function nomus_documentparser_gatedoc_vocabularies_url($dictionaryIds) {
+	return url('nomus/documentparser/gatedoc', array('absolute' => TRUE))
+	   			. '?dictIds=' . implode('-', $dictionaryIds)
+	   			. '&token=' . tokenauth_get_token();
+}
+
+
+/**
  * Menu callback to retrieve GATE documents
  */
 function nomus_documentparser_gatedoc() {
+	$dictIds = $_GET['dictIds'];
 	$nodeId = $_GET['nodeId'];
-	$gateDoc = node_load($nodeId);
 	
-	// only retrieve GATE document types
-	if($gateDoc && preg_match('/^gate_/', $gateDoc->type)) {
-		$output = $gateDoc->body;
-		
-	   // special case for gazetteers
-	   if($gateDoc->type == 'gate_gaz') {
-	   	// if this is a def file request, generate the definition
-	   	// list of the gazetteer lists
-	   	if(!isset($_GET['lst'])) {
-	   		$output = '';
-	   	   foreach($gateDoc->field_gate_gazetteer as $key => $val) {
-	   	   	$filename = "gatedoc?nodeId=$nodeId&lst=$key&token=" .
-	   	   		tokenauth_get_token();
-	   	   	$types = substr($val['value'], 0,
-	   	   		strpos($val['value'], "\n"));
-	   			$output .= $filename . ":" . $types . "\n";
-	   		} 
-	   	}
-	   	// else, output the particular gazetteer list requested
-	   	else {
-	   		$lstId = $_GET['lst'];
-	   		$gazField = $gateDoc->field_gate_gazetteer[$lstId]['value'];
-	   		$output = substr($gazField, strpos($gazField, "\n")+1);
+	// return dictionary ids as gazetteers
+	if(!empty($dictIds)){
+		$output = '';
+	   // if this is a def file request, generate the definition
+	   // list of the multiple gazetteer lists (one for each dictionary
+	   if(!isset($_GET['dict'])) {
+	   	$output = '';
+	   	foreach(explode('-', $dictIds) as $dictId) {
+	   	  	$filename = "gatedoc?dictIds=$dictIds&dict=$dictId&token=" .
+	   	  		tokenauth_get_token();
+	   	  	$vocab = db_fetch_array(db_query('SELECT name FROM {vocabulary} WHERE vid = %d', $dictId));
+	   	  	$types = substr($val['value'], 0,
+	   	  		strpos($val['value'], "\n"));
+	   		$output .= $filename . ":" . 'taxonomy' . ":" . $vocab['name'] . "\n";
+	   	} 
+	   }
+	   // else, output the particular gazetteer list requested
+	   else {
+	   	$vocabId = $_GET['dict'];
+	   	$result = db_query('SELECT tid, name FROM {term_data} WHERE vid = %d', $vocabId);
+	   	while($row = db_fetch_array($result)){
+	   		$output .= $row['name'] .
+	   			'|term=' . $row['name'] .
+	   			'|tid=' . $row['tid'] .
+	   			'|vid=' . $vocabId .
+	   			"\n";
 	   	}
 	   }
+	   print $output;
+	}
 	
-		// special case for applications
-		if($gateDoc->type == 'gate_gapp') {
-			// replace the token document root with the document root of this server, and
-			// token for this user
-		   $output = preg_replace('/<urlString>http.*?nomus\/documentparser\/gatedoc\?(.*?token\=).*?<\/urlString>/s',
-		   	'<urlString>' . url('nomus/documentparser/gatedoc', array('absolute' => TRUE)) . 
-		   	'?${1}' . tokenauth_get_token() . '</urlString>', $output);
-		   	/* $output = preg_replace('/<urlString>http.*?documentparser\/gatedoc(.*?token\=).*?<\/urlString>/s',
-		   	'a', $output);*/
+	// return GATE files for GATE nodes
+	else if(!empty($nodeId)){
+		$gateDoc = node_load($nodeId);
+	
+		// only retrieve GATE document types
+		if($gateDoc && preg_match('/^gate_/', $gateDoc->type)) {
+			$output = $gateDoc->body;
+		
+	   	// special case for gazetteers
+	   	if($gateDoc->type == 'gate_gaz') {
+	   		// if this is a def file request, generate the definition
+	   		// list of the gazetteer lists
+	   		if(!isset($_GET['lst'])) {
+	   			$output = '';
+	   	   	foreach($gateDoc->field_gate_gazetteer as $key => $val) {
+	   	   		$filename = "gatedoc?nodeId=$nodeId&lst=$key&token=" .
+	   	   			tokenauth_get_token();
+	   	   		$types = substr($val['value'], 0,
+	   	   			strpos($val['value'], "\n"));
+	   				$output .= $filename . ":" . $types . "\n";
+	   			} 
+	   		}
+	   		// else, output the particular gazetteer list requested
+	   		else {
+	   			$lstId = $_GET['lst'];
+	   			$gazField = $gateDoc->field_gate_gazetteer[$lstId]['value'];
+	   			$output = substr($gazField, strpos($gazField, "\n")+1);
+	   		}
+	   	}
+	
+			// special case for applications
+			if($gateDoc->type == 'gate_gapp') {
+				// replace the token document root with the document root of this server, and
+				// token for this user
+		   	$output = preg_replace('/<urlString>http.*?nomus\/documentparser\/gatedoc\?(.*?token\=).*?<\/urlString>/s',
+		   		'<urlString>' . url('nomus/documentparser/gatedoc', array('absolute' => TRUE)) . 
+		   		'?${1}' . tokenauth_get_token() . '</urlString>', $output);
+		   		/* $output = preg_replace('/<urlString>http.*?documentparser\/gatedoc(.*?token\=).*?<\/urlString>/s',
+		   		'a', $output);*/
 
+			}
+			print $output;	
 		}
-		print $output;	
 	}
 }
 ?>

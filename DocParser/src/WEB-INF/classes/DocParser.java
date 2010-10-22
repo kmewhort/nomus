@@ -294,6 +294,23 @@ public class DocParser extends HttpServlet
          thisRequest.gateApplication.add(pr);
 
    	}
+   	else if(fileType.toLowerCase().equals("gate_gaz"))
+   	{
+         // load the gazetteer
+         FeatureMap params = Factory.newFeatureMap();
+         params.put("encoding", "UTF-8");
+         params.put("listsURL", url);
+         params.put("caseSensitive", "false");
+         params.put("annotationSetName", "XMLOutput");
+         params.put("gazetteerFeatureSeparator", "|");
+         ProcessingResource pr =
+       	  (ProcessingResource) Factory.createResource(
+       	  "gate.creole.gazetteer.DefaultGazetteer", params);
+       	   
+			// add the gasetteer
+         thisRequest.gateApplication.add(pr);
+
+   	}
    	else if(fileType.toLowerCase().equals("gate_gapp"))
    	{
    		// create a controller for the new application

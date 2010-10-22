@@ -174,35 +174,29 @@ function nomus_documentrenderer_render($node) {
 		$node->language = $node->field_meta_language[0]['value'];
 	}
 	
+	// delete existing terms for this node
+	db_query('DELETE FROM {term_node} WHERE nid = %d', $node->nid);
+	$node->vid = $node->nid;
+	
 	// set the taxonomy terms
-	if($node->field_meta_keywords[0]['value'] &&
-		$node->field_meta_keywords[0]['value'] != '') {
-		$terms = array();
-		$keywords = preg_split("/[\{\},]/", $node->field_meta_keywords[0]['value'],
-			-1, PREG_SPLIT_NO_EMPTY);
-		foreach($keywords as $val) {
-			if($val != '')
-			{
-				$terms[] = strtolower(substr($val, 0, strpos($val, '=')));
-			}
-			// max 5 terms
-			if(count($terms) >= 5)
-				break;
-		}
-		
-		// get the first vocabulary for this node type
-		$vocabs = taxonomy_get_vocabularies($node->type);
-
-		if(count($vocabs) > 0)
-		{
-			$vid = reset($vocabs)->vid;
-			$taxon = array();
-			$taxon['tags'][$vid] = implode(",", $terms);
-			taxonomy_node_save($node, $taxon);
-			$node->taxonomy = taxonomy_node_get_terms($node, 'tid', true);
+	$taxterms = array();
+	foreach($fulltextXML->Lookup as $val){
+		$vid = (string) $val['vid'];
+		$tid = (string) $val['tid'];
+		if(empty($taxterms[$vid]) || !in_array($tid, $taxterms[$vid])){
+			$taxterms[$vid][] = $tid;
 		}
 	}
 	
+	// for each vocabulary
+	foreach($taxterms as $vid => $tids){
+		// for each term
+		foreach($tids as $tid){
+			db_query('INSERT INTO {term_node} (nid, vid, tid) VALUES (%d, %d, %d)',
+				$node->nid, $node->vid, $tid);
+		}
+	}
+	$node->taxonomy = taxonomy_node_get_terms($node, 'tid', true);
 	
 	// check whether this node already exists in a different
 	// language
