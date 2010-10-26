@@ -367,8 +367,11 @@ public class SiteSpider extends HttpServlet
 			userRequest.currentXMLInstruction = instructAction;
 			if(instructAction.equals("open-url"))
 			{
+				// convert any forward slashes to back slashes
+				String targetUrl = instructTarget.replace('\\', '/');
+				
 				// if the url is actually javascript, run it directly
-				Matcher jsMatcher = Pattern.compile("javascript\\:(.+)").matcher(instructTarget);
+				Matcher jsMatcher = Pattern.compile("javascript\\:(.+)").matcher(targetUrl);
 				if(jsMatcher.find())
 				{
 					sendCommand(userId, "*",
@@ -379,7 +382,7 @@ public class SiteSpider extends HttpServlet
 				else
 				{
 					sendCommand(userId, "*",
-						"location.href = '" + instructTarget + "';",
+						"location.href = '" + targetUrl + "';",
 						true, responseUrl);
 				}
 				try
@@ -726,7 +729,7 @@ public class SiteSpider extends HttpServlet
 			if(intMonth <=9)
 				string = string.replaceAll("\\#MONTH01-12\\#", "0" + month);
 			else
-				string = string.replaceAll("\\#MONTH0-11\\#", month);
+				string = string.replaceAll("\\#MONTH01-12\\#", month);
 				
 			string = string.replaceAll("\\#MONTH0-11\\#",
 				(new Integer(intMonth - 1)).toString());
@@ -845,9 +848,12 @@ public class SiteSpider extends HttpServlet
 		String uniqueId, String linkText, String forcedExtension)
 		throws IOException
 	{
+		// replace any backslashes in the link with forward slashes
+		String linkUrl = link.replace('\\', '/');
+		
 		// get the file as binary, synchronously
 		String jsCommand = "var req = new XMLHttpRequest(); ";  
-		jsCommand += "req.open('GET', '" + link +"', false); ";  
+		jsCommand += "req.open('GET', '" + linkUrl +"', false); ";  
 		jsCommand += "req.overrideMimeType('text/plain; charset=x-user-defined'); ";  
 		jsCommand += "req.send(null); ";
       

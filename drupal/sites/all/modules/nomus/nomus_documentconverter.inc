@@ -56,7 +56,7 @@ function nomus_documentconverter_convert($node,
 			foreach($docsourceNode->field_docconverter_regexp as $regexpField) {
 				$regexp = $regexpField['value'];
 				
-				if(empty($regex))
+				if(empty($regexp))
 					continue;
 			
 				// split out the regexp, replacement string, and flags

@@ -691,14 +691,11 @@ function nomus_documentrenderer_generate_citation($contenttype, $group, $date){
 	// get all citations for this group/year
 	$result = db_query("SELECT field_meta_index_value FROM content_type_$contenttype"
 		. " WHERE field_meta_index_value LIKE '${year}Nomus${group}%'");
-	dpm("SELECT field_meta_index_value FROM content_type_$contenttype"
-		. " WHERE field_meta_index_value LIKE '${year}Nomus${group}%'");
+
 	// find the maximum existing index number
 	$maxExisting = 0;
 	while($row = db_fetch_array($result)){
-		dpm($row['field_meta_index_value']);
 		if(preg_match("/${year}Nomus${group}(\d+)/", $row['field_meta_index_value'], $match)){
-			dpm($match);
 			if($maxExisting < $match[1])
 				$maxExisting = $match[1];
 		}

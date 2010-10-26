@@ -1,0 +1,107 @@
+# $Id: job_queue.pot,v 1.1.2.2 2009/09/13 09:12:18 hass Exp $
+#
+# LANGUAGE translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  job_queue.module,v 1.7.2.1 2009/09/13 01:51:51 drumm
+#  job_queue.info: n/a
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"POT-Creation-Date: 2009-09-13 11:11+0200\n"
+"PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
+"Last-Translator: NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: job_queue.module:41;22 job_queue.info:0
+msgid "Job queue"
+msgstr ""
+
+#: job_queue.module:43
+msgid "There are no queued jobs."
+msgstr ""
+
+#: job_queue.module:134
+msgid "There are <strong>no queued jobs</strong>. Modules may programmatically add queued jobs."
+msgstr ""
+
+#: job_queue.module:140
+msgid "Created"
+msgstr ""
+
+#: job_queue.module:141
+msgid "Description"
+msgstr ""
+
+#: job_queue.module:193
+msgid "Do not run"
+msgstr ""
+
+#: job_queue.module:199
+msgid "All other functions"
+msgstr ""
+
+#: job_queue.module:207
+msgid "Save settings"
+msgstr ""
+
+#: job_queue.module:215
+msgid "Job type"
+msgstr ""
+
+#: job_queue.module:216
+msgid "Priority"
+msgstr ""
+
+#: job_queue.module:236
+msgid "Saved job queue settings."
+msgstr ""
+
+#: job_queue.module:110;113
+msgid "job_queue"
+msgstr ""
+
+#: job_queue.module:110
+msgid "Ran queued job \"!description\""
+msgstr ""
+
+#: job_queue.module:113
+msgid "Failed to run queued job \"!description\" because the function %function is not defined."
+msgstr ""
+
+#: job_queue.module:43;137
+msgid "There is <strong>@count</strong> queued job."
+msgid_plural "There are <strong>@count</strong> queued jobs."
+msgstr[0] ""
+msgstr[1] ""
+
+#: job_queue.module:32
+msgid "view queued jobs"
+msgstr ""
+
+#: job_queue.module:32
+msgid "administer job queue"
+msgstr ""
+
+#: job_queue.module:16
+msgid "Queued jobs"
+msgstr ""
+
+#: job_queue.module:17
+msgid "View a list of the queued jobs."
+msgstr ""
+
+#: job_queue.module:23
+msgid "Set queue priorities."
+msgstr ""
+
+#: job_queue.info:0
+msgid "An API for modules to add jobs to a queue for running on cron."
+msgstr ""
+

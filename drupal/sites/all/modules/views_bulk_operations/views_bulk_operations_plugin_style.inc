@@ -1,7 +1,8 @@
 <?php
-// $Id: views_bulk_operations_plugin_style.inc,v 1.1.2.48.2.4 2010/04/17 17:13:10 kratib Exp $
+// $Id: views_bulk_operations_plugin_style.inc,v 1.1.2.60 2010/08/29 23:55:00 kratib Exp $
 
 class views_bulk_operations_plugin_style extends views_plugin_style_table {
+
   var $all_operations = array();
 
   function option_definition() {
@@ -194,6 +195,7 @@ class views_bulk_operations_plugin_style extends views_plugin_style_table {
           'callback'            => $operation['callback'],
           'callback arguments'  => isset($operation['callback arguments']) ? $operation['callback arguments'] : array(),
           'configurable'        => isset($operation['configurable']) ? $operation['configurable'] : FALSE,
+          'form properties'     => isset($operation['form properties']) ? $operation['form properties'] : array(),
           'source'              => 'operation',
           'type'                => $object_type,
           'aggregate'           => isset($operation['aggregate']) ? (int)$operation['aggregate'] : VBO_AGGREGATE_OPTIONAL,
@@ -210,9 +212,10 @@ class views_bulk_operations_plugin_style extends views_plugin_style_table {
       $operations[$key] = array(
         'key'                   => $key,
         'label'                 => $operation['description'],
-        'callback'              => $callback,
+        'callback'              => isset($operation['callback']) ? $operation['callback'] : $callback,
         'callback arguments'    => isset($operation['parameters']) ? $operation['parameters'] : array(),
         'configurable'          => isset($operation['configurable']) ? $operation['configurable'] : FALSE,
+        'form properties'       => isset($operation['form properties']) ? $operation['form properties'] : array(),
         'source'                => 'action',
         'type'                  => $operation['type'],
         'aggregate'             => isset($operation['aggregate']) ? (int)$operation['aggregate'] : VBO_AGGREGATE_FORBIDDEN,
@@ -258,8 +261,11 @@ class views_bulk_operations_plugin_style extends views_plugin_style_table {
         'parameters' => $parameters,
         'key' => $action->callback . (empty($parameters) ? '' : ':'. md5($action->parameters)),
       );
-      foreach (array('behavior', 'aggregate', 'permissions', 'hooks') as $attribute) {
+      foreach (array('callback', 'behavior', 'aggregate', 'permissions', 'hooks', 'form properties') as $attribute) {
         if (isset($static_actions[$action->callback][$attribute])) $actions[$action->aid][$attribute] = $static_actions[$action->callback][$attribute];
+      }
+      if (isset($static_actions[$action->callback['parameters']])) {
+        $actions[$action->aid]['parameters'] = array_merge($actions[$action->aid]['parameters'], $static_actions[$action->callback]['parameters']);
       }
     }
     return $actions;
@@ -273,6 +279,10 @@ class views_bulk_operations_plugin_style extends views_plugin_style_table {
     if (isset($this->view->query->pager)) {
       $this->view->pager_original = $this->view->query->pager;
       $this->view->query->pager = NULL;
+    }
+    else {
+      $this->view->pager_original = $this->view->pager;
+      $this->view->set_use_pager(FALSE);
     }
     $this->view->exposed_widgets = NULL;
     $this->view->display_handler->set_option('header', '');

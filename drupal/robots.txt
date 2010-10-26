@@ -27,6 +27,8 @@ Disallow: /profiles/
 Disallow: /scripts/
 Disallow: /sites/
 Disallow: /themes/
+Disallow: /en/flag/
+Disallow: /fr/flag/
 # Files
 Disallow: /CHANGELOG.txt
 Disallow: /cron.php

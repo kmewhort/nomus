@@ -228,7 +228,7 @@ function nomus_nodeapi(&$node, $op, $teaser, $page) {
 			}
 		// for all gate document nodes, show an external url
 		if($teaser == false && preg_match('/^gate_/', $node->type)) {
-			$url = nomus_documentparser_gatedoc_url($node->nid);
+			$url = nomus_documentparser_gatedoc_node_url($node->nid);
 			$node->content['nomus_documentparser_rawurl'] = array(
 				'#type' => 'item',
 				'#title' => t('External URL (<i>Security note: this contains your user authentication token</i>)'),
@@ -450,34 +450,29 @@ function nomus_node_operations() {
 
 function nomus_menu_process(){	
 	// perform operations on the document node
-	$nids = array($_GET['nid']);
-	nomus_bulk_convert($nids);
-	nomus_bulk_parse($nids);
-	nomus_bulk_render($nids);
-	nomus_bulk_citetables($nids);
+	nomus_process($_GET['nid']);
 }
 
 /**
  * Bulk process
  */
 function nomus_bulk_process($nids){
-	// no timeout
-	set_time_limit(0);
-	
-	// process each document as a seperate request as a workaround
-	// for drupal memory leaks
-	$nodesProcessed = 0;
-	foreach($nids as $nid) {
-		$url = url('nomus/process', array("absolute" => true)) . '?nid=' . $nid . '&token=' . tokenauth_get_token();
-		$request = new HttpRequest($url);
-		$request->setMethod(HTTP_METH_GET);
-		$opts = array("Content-Type"=>"text/html", "Accept"=>"text/plain");
-		$request->addHeaders($opts);
-		$result = $request->send();
-		$outputData = $result->getBody();
+	foreach($nids as $nid) {	
+		nomus_process($nid);
 	}
 }
-	
+
+/**
+ * Process a single document
+ */
+function nomus_process($nid){
+	$nids = array($nid);
+	nomus_bulk_convert($nids);
+	nomus_bulk_parse($nids);
+	nomus_bulk_render($nids);
+	nomus_bulk_citetables($nids);
+}
+
 /**
  * Implementation of hook_perm().
  *

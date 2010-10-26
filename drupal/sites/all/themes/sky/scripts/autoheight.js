@@ -1,4 +1,9 @@
 // on page load, set the main window title to the title of the document in the iframe
+var launchfixIframeHeight = function()
+{
+	fixIframeHeight();
+}
+
 var fixIframeHeight = function()
 {
 	var height = $('iframe').contents().get(0).height;
@@ -8,12 +13,18 @@ var fixIframeHeight = function()
 	{
 	   height = $('iframe').contents().get(0).body.scrollHeight;
 	}
-		
-	$("iframe").css("height", height);
-		
+	
+	if(height != 0)
+	{	
+		$("iframe").eq(0).css("height", height);
+	}
+	else
+	{
+		setTimeout('fixIframeHeight()', 1000);
+	}
 }
 
 $(document).ready(function()
 {
-	$("iframe").load(fixIframeHeight);
+	$("iframe").load(launchfixIframeHeight);
 });

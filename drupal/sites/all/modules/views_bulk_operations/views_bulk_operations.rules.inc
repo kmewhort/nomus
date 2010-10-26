@@ -1,5 +1,5 @@
 <?php
-// $Id: views_bulk_operations.rules.inc,v 1.1.2.1.2.1 2010/03/24 03:13:48 kratib Exp $
+// $Id: views_bulk_operations.rules.inc,v 1.1.2.3 2010/05/05 00:27:02 kratib Exp $
 
 /**
  * Implementation of hook_rules_action_alter().
@@ -9,7 +9,7 @@ function views_bulk_operations_rules_action_info_alter(&$actions) {
     $actions['views_bulk_operations_action_' . $type] = array(
       'label' => t('Execute a VBO programmatically on !type', array('!type' => $type)),
       // Make sure there is something passed for $object to the action.
-      'arguments' => array('object' => array('type' => $type, 'default value' => NULL)),
+      'arguments' => array('object' => array('type' => $type, 'label' => t('Object'))),
       'module' => 'Views Bulk Operations',
       'eval input' => array(),
       // Let the rules system for executing core style actions execute it.

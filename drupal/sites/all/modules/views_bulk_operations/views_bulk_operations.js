@@ -1,4 +1,4 @@
-// $Id: views_bulk_operations.js,v 1.1.4.16.2.1 2010/02/26 23:06:54 kratib Exp $
+// $Id: views_bulk_operations.js,v 1.1.4.19 2010/09/15 17:23:35 kratib Exp $
 (function ($) {
 // START jQuery
 
@@ -17,7 +17,7 @@ Drupal.vbo.selectAll = function() {
   $('input#vbo-select-this-page', table).click(function() {
     setSelectAll(false);
   });
-  var checkboxes = $('td input:checkbox', table).click(function() {
+  var checkboxes = $('td input:checkbox.vbo-select', form).click(function() {
     if (checkboxes.length > $(checkboxes).filter(':checked').length) {
       $('input#edit-objects-select-all', form).val(0);
     }
@@ -40,23 +40,19 @@ Drupal.vbo.selectAll = function() {
     });
   }
 
-  var strings = { 'selectAll': Drupal.t('Select all rows in this table'), 'selectNone': Drupal.t('Deselect all rows in this table') };
-  var updateSelectAll = function(state) {
-    $('th.select-all input:checkbox', table).each(function() {
-      $(this).attr('title', state ? strings.selectNone : strings.selectAll);
-      this.checked = state;
-      setSelectAll($('input#edit-objects-select-all', form).val() == 1);
-    });
-  };
-
   // Update UI based on initial values.
-  updateSelectAll(checkboxes.length == $(checkboxes).filter(':checked').length);
+  if ($('input#edit-objects-select-all', form).val() == 1 || checkboxes.length == $(checkboxes).filter(':checked').length) {
+    $('th.select-all input:checkbox', table).each(function() {
+      this.checked = true;
+    });
+    setSelectAll($('input#edit-objects-select-all', form).val() == 1);
+  }
 }
 
 Drupal.vbo.startUp = function(context) {
   // Reset the form action that Views Ajax might destroy.
   $('form[id^=views-bulk-operations-form]').each(function() {
-    $(this).attr('action', Drupal.settings.vbo.url);
+    $(this).attr('action', Drupal.settings.basePath+Drupal.settings.vbo.url);
   });
 
   // Set up the VBO table for select-all functionality.
@@ -64,8 +60,8 @@ Drupal.vbo.startUp = function(context) {
 
   // Set up the ability to click anywhere on the row to select it.
   $('tr.rowclick', context).click(function(event) {
-    if (event.target.tagName.toLowerCase() != 'input' && event.target.tagName.toLowerCase() != 'a') {
-      $(':checkbox', this).each(function() {
+    if (event.target.nodeName.toLowerCase() != 'input' && event.target.nodeName.toLowerCase() != 'a') {
+      $(':checkbox.vbo-select', this).each(function() {
         var checked = this.checked;
         // trigger() toggles the checkmark *after* the event is set, 
         // whereas manually clicking the checkbox toggles it *beforehand*.
@@ -78,6 +74,24 @@ Drupal.vbo.startUp = function(context) {
       });
     }
   });
+
+  // Set up pager handling to store the current selection.
+  $('ul.pager a', context).click(function() {
+    var selection = [];
+    $(':checkbox.vbo-select', context).filter(':checked').each(function() {
+      selection.push($(this).val());
+    });
+    var select_all = $('#edit-objects-select-all', context).val();
+    var page = location.href.match(/page=(\d+)/) || [0,0];
+    $.ajax({
+      type: 'POST',
+      url: Drupal.settings.basePath+'views-bulk-operations/js/pager',
+      data: 'url='+escape(Drupal.settings.vbo.url)+'&selection='+selection+'&select_all='+select_all+'&page='+page[1],
+      datatype: 'json',
+      async: false,
+    });
+    return true;
+  });
 }
 
 Drupal.behaviors.vbo = function(context) {
@@ -86,7 +100,9 @@ Drupal.behaviors.vbo = function(context) {
   window.onunload = function(){}
 
   // Set up VBO UI.
-  Drupal.vbo.startUp(context);
+  if (Drupal.settings.vbo) {
+    Drupal.vbo.startUp(context);
+  }
 }
 
 // END jQuery

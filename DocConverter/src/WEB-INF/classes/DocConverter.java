@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.Date;
+import java.util.Random;
  
 public class DocConverter extends HttpServlet
 {
@@ -286,7 +286,9 @@ public class DocConverter extends HttpServlet
 	}
 	catch(Exception e)
 	{
-		response.getWriter().write("<Error>Exception: " + e.toString() + "</Error>");
+		response.getWriter().write("<Error>Exception: ");
+		e.printStackTrace(response.getWriter());
+		response.getWriter().write("</Error>");
 	}
 	}
 	
@@ -514,10 +516,16 @@ public class DocConverter extends HttpServlet
    {
 		if(officeManager == null)
 		{
+			// unique pipename of letters only
+			String pipeName = new String("NDC");
+			Random random = new Random();
+			for(int i = 0; i < 8; i++)
+				pipeName += (char)(random.nextInt('Z'-'A'+1)+'A');
+			
 			officeManager = new DefaultOfficeManagerConfiguration()
 			.setOfficeHome(System.getProperty("OPENOFFICEHOME"))
 			.setConnectionProtocol(OfficeConnectionProtocol.PIPE)
-			.setPipeNames("NDC" + (new Date()).getTime())
+			.setPipeNames(pipeName)
 			.setTaskExecutionTimeout(60000L)
 			.buildOfficeManager();
 			officeManager.start();

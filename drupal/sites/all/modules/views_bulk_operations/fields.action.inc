@@ -1,5 +1,5 @@
 <?php
-// $Id: fields.action.inc,v 1.1.2.22.2.1 2010/03/24 03:13:48 kratib Exp $
+// $Id: fields.action.inc,v 1.1.2.32 2010/07/17 15:30:47 kratib Exp $
 /**
  * @file Drupal action to set individual field values. 
  * 
@@ -15,6 +15,7 @@ function views_bulk_operations_fields_action_info() {
     'description' => t('Modify node fields'),
     'configurable' => TRUE,
     'behavior' => array('changes_node_property'),
+    'form properties' => array('#field_info'),
   ));
 }
 
@@ -91,7 +92,7 @@ function views_bulk_operations_fields_action_form($context) {
         '#prefix' => '<div class="fields-action-togglable">', 
         '#suffix' => '</div>',
         '#attributes' => array(
-          'title' => t('Check this box to add the new values to existing ones, instead of overwriting them.'),
+          'title' => t('Check this box to add new values to this multi-valued field, instead of overwriting existing values.'),
         ),
       );
     }
@@ -147,10 +148,18 @@ function views_bulk_operations_fields_action_form($context) {
   return $form;
 }
 
-function theme_views_bulk_operations_fields_action_form(&$form) {
+function theme_views_bulk_operations_fields_action_form($form) {
   $output = '';
-  if (user_access('Use PHP input for field settings (dangerous - grant with care)') && $form['#settings']['php_code']) {
-    $output  = t('<h3>Using the Code widget</h4>
+  if (module_exists('token')) {
+    $output .= t('<h3>Using tokens</h3>
+                  In text fields, you can use the following tokens:
+                  <fieldset class="collapsed collapsible"><legend>Available tokens</legend>!tokens</fieldset>', array('!tokens' => theme('token_help', 'node'))
+    );
+    drupal_add_js('misc/collapse.js');
+  }
+  $access = user_access('Use PHP input for field settings (dangerous - grant with care)');
+  if ($access && $form['#settings']['php_code']) {
+    $output .= t('<h3>Using the Code widget</h3>
                   <ul>
                   <li>Will override the value specified in the Field widget.</li>
                   <li>Should include &lt;?php ?&gt; delimiters.</li>
@@ -164,11 +173,11 @@ function theme_views_bulk_operations_fields_action_form(&$form) {
     $header = array();
     if ($form[$field_name . '_add']['#type'] == 'checkbox') {
       $row[] = drupal_render($form[$field_name . '_add']);
-      $header[] = t('Add?');
+      $header[] = array('data' => t('Add?'), 'title' => t('Checkboxes in this column allow you to add new values to multi-valued fields, instead of overwriting existing values.'));
     }
     $row[] = drupal_render($form[$field_name]);
     $header[] = t('Field');
-    if (user_access('Use PHP input for field settings (dangerous - grant with care)') && $form['#settings']['php_code']) {
+    if ($access && $form['#settings']['php_code']) {
       $row[] = drupal_render($form[$field_name . '_code']);
       $header[] = t('Code');
     }
@@ -181,10 +190,10 @@ function theme_views_bulk_operations_fields_action_form(&$form) {
     drupal_add_js(drupal_get_path('module', 'views_bulk_operations') . '/fields.action.js');
 
     $header = array(theme('table_select_header_cell'), t('Add?'), t('Field'));
-    if (user_access('Use PHP input for field settings (dangerous - grant with care)') && $form['#settings']['php_code']) {
+    if ($access && $form['#settings']['php_code']) {
       $header[] = t('Code');
     }
-    foreach ($form['#field_info'] as $field_name => $field) {
+    if (!empty($form['#field_info'])) foreach ($form['#field_info'] as $field_name => $field) {
       $row = array(
         'class' => 'fields-action-row',
         'id' => 'fields-action-row-' . str_replace('_', '-', $field_name), 
@@ -194,7 +203,7 @@ function theme_views_bulk_operations_fields_action_form(&$form) {
           drupal_render($form[$field_name]),
         ),
       );
-      if (user_access('Use PHP input for field settings (dangerous - grant with care)') && $form['#settings']['php_code']) {
+      if ($access && $form['#settings']['php_code']) {
         $row['data'][] = drupal_render($form[$field_name . '_code']);
       }
       $rows[] = $row;
@@ -214,7 +223,7 @@ function views_bulk_operations_fields_action_validate($form, $form_state) {
       if (function_exists($function)) {
         $form['#node']->$field_name = $form_state['values'][$field_name];
         $items = isset($form['#node']->$field_name) ? $form['#node']->$field_name : array();
-        call_user_func($function, 'validate', $form['#node'], $field, $items, $form, NULL);
+        $function('validate', $form['#node'], $field, $items, $form, NULL);
         content_field('validate', $form['#node'], $field, $items, $form, NULL);
       }
     }
@@ -264,7 +273,7 @@ function _views_bulk_operations_fields_action_non_cck($type) {
 
 function views_bulk_operations_fields_action_views_bulk_operations_form_options() {
   $options['php_code'] = FALSE;
-  $options['display_fields'] = VBO_ACTION_FIELDS_ALL;
+  $options['display_fields'] = array(VBO_ACTION_FIELDS_ALL);
   return $options;
 }
 
@@ -289,7 +298,7 @@ function views_bulk_operations_fields_action_views_bulk_operations_form($options
   }
   */
   if (empty($options['display_fields'])) {
-    $options['display_fields'] = VBO_ACTION_FIELDS_ALL;
+    $options['display_fields'] = array(VBO_ACTION_FIELDS_ALL);
   }
   $form['display_fields'] = array(
     '#type' => 'select',
@@ -318,6 +327,27 @@ function views_bulk_operations_fields_action(&$node, $context) {
         $value = $context[$field_name];
       }
       if ($context[$field_name . '_add']) {
+        if (!is_array($node->$field_name) || empty($node->$field_name)) {
+          $node->$field_name = array();
+        }
+        else {
+          $function = $field['module'] .'_content_is_empty';
+          foreach ($node->$field_name as $delta => $item) {
+            if (call_user_func($function, $item, $field)) {
+              unset($node->$field_name[$delta]);
+            }
+          }
+          $node->$field_name = array_values($node->$field_name);
+        }
+        foreach ($value as $v_delta => $v_item) {
+          if (is_string($v_delta)) {
+            $node->$field_name[$v_delta] = _views_bulk_operations_fields_action_token($v_item, $node, $field, $v_delta);
+          }
+          else {
+            $node->{$field_name}[] = _views_bulk_operations_fields_action_token($v_item, $node, $field, $v_delta);
+          }
+        }
+/*
         $function = $field['module'] .'_content_is_empty';
         foreach ($node->$field_name as $delta => $item) {
           if (call_user_func($function, $item, $field)) {
@@ -330,9 +360,10 @@ function views_bulk_operations_fields_action(&$node, $context) {
             }
           }
         }
+*/
       }
       else {
-        $node->$field_name = $value;
+        $node->$field_name = _views_bulk_operations_fields_action_token($value, $node, $field);
       }
       if ($field_name == 'name') { // special case: fix uid when given author name
         if ($account = user_load(array('name' => $node->name))) {
@@ -344,5 +375,30 @@ function views_bulk_operations_fields_action(&$node, $context) {
       }
     }
   }
+}
+
+function _views_bulk_operations_fields_action_token($value, $node, $field, $delta = NULL) {
+  if (module_exists('token')) {
+    if (isset($delta) && isset($field['columns'])) {
+      if (is_array($value)) foreach (array_keys($field['columns']) as $column) {
+        if (isset($value[$column])) {
+          $value[$column] = token_replace($value[$column], 'node', $node);
+        }
+      }
+    }
+    else if (is_array($value) && isset($field['columns'])) {
+      foreach ($value as $v_delta => $v_item) {
+        if (is_array($v_item)) foreach (array_keys($field['columns']) as $column) {
+          if (isset($v_item[$column])) {
+            $value[$v_delta][$column] = token_replace($v_item[$column], 'node', $node);
+          }
+        }
+      }
+    }
+    else {
+      $value = token_replace($value, 'node', $node);
+    }
+  }
+  return $value;
 }
 

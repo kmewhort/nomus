@@ -1,5 +1,5 @@
 <?php
-// $Id: profile.action.inc,v 1.1.2.3.2.1 2010/02/26 23:06:54 kratib Exp $
+// $Id: profile.action.inc,v 1.1.2.6 2010/07/17 15:42:51 kratib Exp $
 
 function views_bulk_operations_profile_action_info() {
   if (!module_exists('profile')) return array();
@@ -33,6 +33,7 @@ function views_bulk_operations_profile_action_form($context) {
           'class' => 'profile-action-toggler', 
           'onchange' => 'Drupal.vbo.profileAction.updateField(this, true)',
         ),
+        '#default_value' => @$context[$field->name . '_check'],
       );
     }
   }
@@ -40,7 +41,7 @@ function views_bulk_operations_profile_action_form($context) {
   return $form;
 }
 
-function theme_views_bulk_operations_profile_action_form(&$form) {
+function theme_views_bulk_operations_profile_action_form($form) {
   $header = array(theme('table_select_header_cell'), t('Category'), t('Field'));
   $rows = array();
   foreach (profile_categories() as $category) {

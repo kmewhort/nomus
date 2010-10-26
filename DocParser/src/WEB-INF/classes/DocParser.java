@@ -391,6 +391,8 @@ public class DocParser extends HttpServlet
 		StringWriter inputHtml = new StringWriter();
 		Tidy tidy = new Tidy();
 		tidy.setXHTML(true); 
+		tidy.setShowWarnings(false);
+		tidy.setQuiet(true);
 		tidy.parse(new StringReader(new String(postBuf)), inputHtml);
 		
 	   // create the GATE document, containing the POST content
@@ -473,8 +475,7 @@ public class DocParser extends HttpServlet
 		
 		// JTidy the HTML and write it out
 		writer.write("<GateHTML>");
-		tidy.parse(new StringReader(html), writer);
-		writer.write(html);		
+		tidy.parse(new StringReader(html), writer);		
 		writer.write("</GateHTML>");
 		
 		// delete the document and corpus

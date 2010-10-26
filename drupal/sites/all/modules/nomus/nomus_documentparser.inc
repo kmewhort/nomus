@@ -4,9 +4,6 @@
  * Bulk parse
  */
 function nomus_bulk_parse($nids){
-	// no timeout
-	set_time_limit(0);
-
 	// sort the nodes by document source type (don't
 	// hang on to the actual node due for memory considerations)
 	$nodes = array();
@@ -24,9 +21,8 @@ function nomus_bulk_parse($nids){
 	foreach($nodes as $nodeType => &$nodeGrouping){
 		// initialize the parser for linktext
 		if($docParserUserId = 
-			nomus_documentparser_linktext_init(node_load($nodeGrouping[0], false, true),
-				$node->field_documentsource_ref[0])) {
-		
+			nomus_documentparser_linktext_init($nodeType)) {
+	
 			// for each node	
 			foreach($nodeGrouping as $nid){
 				$node = node_load($nid, false, true);
@@ -38,8 +34,8 @@ function nomus_bulk_parse($nids){
 		}
 	
 		// initialize the parser for parsing the fulltext
-		if($docParserUserId = nomus_documentparser_fulltext_init(node_load($nodeGrouping[0], null, true),
-			$node->field_documentsource_ref[0])) {
+		if($docParserUserId = nomus_documentparser_fulltext_init($nodeType)) {
+		
 			// for each node
 			foreach($nodeGrouping as $nid){
 				$node = node_load($nid, null, true);
@@ -58,10 +54,11 @@ function nomus_bulk_parse($nids){
  */
 function nomus_documentparser_parse($docNode, $documentSourceNid) {
 	global $user;
-	if($docParserUserId = nomus_documentparser_linktext_init($docNode, $documentSourceNid)) {
+	
+	if($docParserUserId = nomus_documentparser_linktext_init($documentSourceNid)) {
 		$docNode = nomus_documentparser_linktext_run($docNode, $docParserUserId);
 	}
-	if($docParserUserId = nomus_documentparser_fulltext_init($docNode, $documentSourceNid)) {
+	if($docParserUserId = nomus_documentparser_fulltext_init($documentSourceNid)) {
 		$docNode = nomus_documentparser_fulltext_run($docNode, $docParserUserId);
 	}
 	return $docNode;
@@ -71,16 +68,13 @@ function nomus_documentparser_parse($docNode, $documentSourceNid) {
  * Initialize the parser for parsing linktext
  * Returns true if there are linktext parsers to run.
  */
-function nomus_documentparser_linktext_init($docNode, $documentSourceNid, $useCachedDocParser = false) {
+function nomus_documentparser_linktext_init($documentSourceNid, $useCachedDocParser = true) {
 	global $user;
 	// document parser server
 	$server = variable_get('nomus_documentparser_server', '');
 	if($server == '') {
 		return;
 	}
-	
-	// get the document source node
-	$docSourceNode = node_load($documentSourceNid);
 	
 	// generate a unique DocParser "user" from the userid and doctype
 	// (it's better to cache a new DocParser user for each
@@ -90,10 +84,22 @@ function nomus_documentparser_linktext_init($docNode, $documentSourceNid, $useCa
 	$docParserUserId = $user->uid . '-' .
 		$documentSourceNid . '-linktext';
 	
+	// check whether the drupal cache indicates that the parser
+	// has been initiatiled (to ensure reinitialization occurs
+	// when the drupal cache is cleared)
+	$drupalCacheExists = false;
+	if (($cache = cache_get("nomus_dp_$docParserUserId")) && $cache->data) {
+      $drupalCacheExists = true;
+   }
+
+	// get the document source node
+	$docSourceNode = node_load($documentSourceNid);
+
 	// initialize
 	if($docSourceNode->field_docparser_linktext_gate) {
 	
 		// query whether the parser exists
+		$parserCacheExists = false;
 		$url = $server . '?req=parserExists';
 		$url .= '&user=' . $docParserUserId;
 		$request = new HttpRequest($url);
@@ -102,10 +108,17 @@ function nomus_documentparser_linktext_init($docNode, $documentSourceNid, $useCa
 		
 		// if this parser exists
 		if($result->getBody() == 'true') {
-			// if useCachedDocParser is true, nothing further to do
-			if($useCachedDocParser)
+			$parserCacheExists = true;
+		}
+		
+		// if both the drupal and docparser caches exist, and using the cache,
+		// nothing furthe to do  
+		if($useCachedDocParser && $drupalCacheExists && $parserCacheExists){
 				return $docParserUserId;
-				
+		}
+		
+		// if the parser cache exists, need to reset it
+		if($parserCacheExists){
 			// othewise, need to reset this DocParser
 			$url = $server . '?req=clearApplications';
 			$url .= '&user=' . $docParserUserId;
@@ -135,6 +148,7 @@ function nomus_documentparser_linktext_init($docNode, $documentSourceNid, $useCa
 			}
 		}
 		
+		cache_set("nomus_dp_$docParserUserId", '1');
 		return $docParserUserId;
 	}
 	return false;
@@ -144,7 +158,7 @@ function nomus_documentparser_linktext_init($docNode, $documentSourceNid, $useCa
  * Initialize the parser for parsing fulltext
  * Returns true if there are fulltext parsers to run.
  */
-function nomus_documentparser_fulltext_init($docNode, $documentSourceNid, $useCachedDocParser = false) {
+function nomus_documentparser_fulltext_init($documentSourceNid, $useCachedDocParser = true) {
 	global $user;
 	
 	// document parser server
@@ -153,17 +167,25 @@ function nomus_documentparser_fulltext_init($docNode, $documentSourceNid, $useCa
 		return;
 	}
 	
-	// get the document source node
-	$docSourceNode = node_load($documentSourceNid);
-
 	// generate a unique DocParser "user" from the userid and doctype
 	$docParserUserId = $user->uid . '-' .
 		$documentSourceNid . '-fulltext';
+	
+	// check whether the drupal cache indicates that the parser
+	// has been initiatiled (to ensure reinitialization occurs
+	// when the drupal cache is cleared)
+	if (($cache = cache_get("nomus_dp_$docParserUserId")) && $cache->data) {
+      $drupalCacheExists = true;
+   }
 		
+	// get the document source node
+	$docSourceNode = node_load($documentSourceNid);
+
 	// initialize
 	if($docSourceNode->field_docparser_fulltext_gate) {
 	
 		// query whether the parser exists
+		$parserCacheExists = false;
 		$url = $server . '?req=parserExists';
 		$url .= '&user=' . $docParserUserId;
 		$request = new HttpRequest($url);
@@ -172,10 +194,17 @@ function nomus_documentparser_fulltext_init($docNode, $documentSourceNid, $useCa
 		
 		// if this parser exists
 		if($result->getBody() == 'true') {
-			// if useCachedDocParser is true, nothing further to do
-			if($useCachedDocParser)
+			$parserCacheExists = true;
+		}
+		
+		// if both the drupal and docparser caches exist, and using the cache,
+		// nothing furthe to do  
+		if($useCachedDocParser && $drupalCacheExists && $parserCacheExists){
 				return $docParserUserId;
-				
+		}
+		
+		// if the parser cache exists, need to reset it
+		if($parserCacheExists){
 			// othewise, need to reset this DocParser
 			$url = $server . '?req=clearApplications';
 			$url .= '&user=' . $docParserUserId;
@@ -208,8 +237,9 @@ function nomus_documentparser_fulltext_init($docNode, $documentSourceNid, $useCa
 		// add each input dictionary to the document parser
 		$inputDictionaries = array();
 		if(!empty($docSourceNode->field_docparser_dict_input)){
-			foreach($docSourceNode->field_docparser_dict_input as $dictInputField) { 
-				$inputDictionaries[] = $dictInputField['value'];
+			foreach($docSourceNode->field_docparser_dict_input as $dictInputField) {
+				if(!empty($dictInputField['value']))
+					$inputDictionaries[] = $dictInputField['value'];
 			}
 		}
 		if(!empty($inputDictionaries)){			
@@ -226,6 +256,7 @@ function nomus_documentparser_fulltext_init($docNode, $documentSourceNid, $useCa
 			$result = $request->send();
 		}
 		
+		cache_set("nomus_dp_$docParserUserId", '1'); 		
 		return $docParserUserId;
 	}
 	return false;

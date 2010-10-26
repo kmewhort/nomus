@@ -355,6 +355,7 @@ function nomus_documentloader_fileupload() {
 	$fh = fopen($tempFile, "w");
 	fwrite($fh, $decodedData);
 	fclose($fh);
+	chmod($tempFile, 0666);
 	
 	// get the static data from the user variables
 	$staticData = $user->nomus_documentloader_staticdata;
@@ -401,6 +402,10 @@ function nomus_documentloader_fileupload() {
 	$node->status = 0;
 	$node->uid = $user->uid;
 	node_save($node);
+	
+	// queue the node for processing
+	job_queue_add('nomus_process', 'Process a document (convert, parse & render)',
+		array($node->nid), '', TRUE, -1);
 
 	// acknowledge
 	print "{\"response\": \"FileReceived\"}";
