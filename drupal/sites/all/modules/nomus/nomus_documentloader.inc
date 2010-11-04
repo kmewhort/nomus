@@ -402,9 +402,9 @@ function nomus_documentloader_fileupload() {
 	$node->status = 0;
 	$node->uid = $user->uid;
 	node_save($node);
-	
+
 	// queue the node for processing
-	job_queue_add('nomus_process', 'Process a document (convert, parse & render)',
+	job_queue_add('nomus_process', 'Process node ' . $node->nid . ' (convert, parse & render)',
 		array($node->nid), '', TRUE, -1);
 
 	// acknowledge

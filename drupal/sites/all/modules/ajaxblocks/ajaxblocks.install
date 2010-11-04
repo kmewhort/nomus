@@ -1,0 +1,48 @@
+<?php
+// $Id: ajaxblocks.install,v 1.1.2.1 2010/09/20 21:13:07 maximpodorov Exp $
+
+/**
+ * @file
+ * Install, update and uninstall functions for the ajaxblocks module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function ajaxblocks_schema() {
+  $schema['ajaxblock'] = array(
+    'description' => 'Stores AJAX settings for blocks.',
+    'fields' => array(
+      'block_id' => array(
+        'description' => 'The primary identifier for a block.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE),
+      'is_ajax' => array(
+        'description' => 'Boolean indicating whether the block is to be loaded via AJAX.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0),
+      ),
+    'primary key' => array('block_id'),
+  );
+
+  return $schema;
+}
+
+
+/**
+ * Implements hook_install().
+ */
+function ajaxblocks_install() {
+  drupal_install_schema('ajaxblocks');
+}
+
+
+/**
+ * Implements hook_uninstall().
+ */
+function ajaxblocks_uninstall() {
+  drupal_uninstall_schema('ajaxblocks');
+  cache_clear_all('ajaxblocks', 'cache');
+}

@@ -28,6 +28,7 @@ scripts[] = scripts/sky.js
 scripts[] = scripts/autoheight.js
 scripts[] = scripts/sortable.js
 scripts[] = scripts/scroll.js
+scripts[] = scripts/sidebar.js
 
 ; THEME SETTINGS
 ; -----------------------------------------------------------------------------

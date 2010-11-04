@@ -801,6 +801,13 @@ function apachesolr_block_visibility($query, $module, $delta) {
       }
     }
   }
+  // if the block is to be loaded via ajax, and this is not ajax call for
+  // this block, set invisible
+	$id = 'apachesolr_search-'. $delta;
+   if (ajaxblocks_is_ajax($id) && ajaxblocks_in_ajax_handler() != $id) {
+      return FALSE;
+   }
+        
   return TRUE;
 }
 

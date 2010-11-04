@@ -40,7 +40,7 @@ function jquery_ui_add($files = array(), $theme = 'smoothness') {
   $compression = variable_get('jquery_update_compression_type', 'mini');
 
   // add css
-  drupal_add_css(JQUERY_UI_PATH . "/css/$theme/jquery-ui-1.8.2.custom.css");
+  drupal_add_css(JQUERY_UI_PATH . "/css/$theme/jquery-ui-1.8.5.custom.css");
  
   // Convert file to an array if it's not one already, to compensate for
   // lazy developers. ;)
@@ -84,7 +84,14 @@ function jquery_ui_add($files = array(), $theme = 'smoothness') {
       $loaded_files[$file] = $js_path;
       
       // load any necessary plugin-specific css
-      if($file == "ui.selectmenu") {
+      /*
+      if(file_exists(JQUERY_UI_PATH .
+      		"/themes/base/jquery.$file.css")){
+      	drupal_add_css(JQUERY_UI_PATH .
+      		"/themes/base/jquery.$file.css");
+      }*/
+      if(file_exists(JQUERY_UI_PATH .
+      		"/themes/$theme/jquery.$file.css")){
       	drupal_add_css(JQUERY_UI_PATH .
       		"/themes/$theme/jquery.$file.css");
       }

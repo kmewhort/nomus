@@ -1,0 +1,12 @@
+; $Id: ajaxblocks.info,v 1.1.2.1 2010/06/13 23:11:08 maximpodorov Exp $
+
+name = Ajax Blocks
+description = Loads dynamic blocks on cached page for anonymous users by performing AJAX request.
+package = Cache
+
+; Information added by drupal.org packaging script on 2010-10-13
+version = "6.x-1.2"
+core = "6.x"
+project = "ajaxblocks"
+datestamp = "1287009379"
+

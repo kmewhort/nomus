@@ -153,7 +153,8 @@ function nomus_documentrenderer_render($node) {
 	// generate citation if necessary
 	if(empty($node->field_meta_citation[0]['value']) &&
 	   $docsourceNode->field_generate_citations[0]['value'] &&
-	   !empty($node->field_meta_date[0]['value'])){
+	   !empty($node->field_meta_date[0]['value']) &&
+	   !empty($node->field_meta_casename[0]['value'])){
 	   	$node->field_meta_citation[0]['value']
 	 			 = nomus_documentrenderer_generate_citation(
 					$node->type, $node->field_raw_group[0]['value'],

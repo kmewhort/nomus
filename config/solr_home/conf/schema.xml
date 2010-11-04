@@ -383,12 +383,12 @@
     <fieldType name="citation" class="solr.TextField">
 	  <analyzer>
 
-	    <!-- remove all but alphanumeric characters -->
-		<charFilter class="solr.PatternReplaceCharFilterFactory"
-                pattern="[^A-Za-z\d]"
-                replacement="" />
 		<!-- make a token out of the first year in the text spanning to the last number -->
 		<tokenizer class="solr.PatternTokenizerFactory" pattern="\D*?([12]\d{3}.*\d+)" group="1" />
+      <!-- remove all but alphanumeric characters -->		
+		<filter class="solr.PatternReplaceFilterFactory"
+                pattern="([^A-Za-z\d])" replacement="" replace="all"
+        />
 		<filter class="solr.LowerCaseFilterFactory"/>
 		<filter class="solr.ASCIIFoldingFilterFactory"/> 
       </analyzer>
@@ -532,7 +532,7 @@
    <!-- Copy terms to a single field that contains all taxonomy term names -->
    <copyField source="ts_vid_*" dest="taxonomy_names"/>
    <!-- The teaser can be used when a better snippet is not available -->
-   <copyField source="body" dest="teaser" maxChars="300"/>
+   <!-- <copyField source="body" dest="teaser" maxChars="300"/> -->
   
    <!-- A set of fields to contain text extracted from tag contents which we
         can boost at query time. -->
@@ -554,7 +554,7 @@
         is added to the index.  It's used either to index the same field differently,
         or to add multiple fields to the same field for easier/faster searching.  -->
    <copyField source="title" dest="spell"/>
-   <copyField source="body" dest="spell"/>
+   <!-- <copyField source="body" dest="spell"/> -->
 
    <!-- Dynamic field definitions.  If a field name is not found, dynamicFields
         will be used if the name matches any of the patterns.
@@ -569,9 +569,9 @@
    <dynamicField name="sis_*" type="sint"    indexed="true"  stored="true" multiValued="false"/>
    <dynamicField name="sim_*" type="sint"    indexed="true"  stored="true" multiValued="true"/>
    <dynamicField name="sm_*"  type="text_ws"    indexed="true"  stored="true" multiValued="true"/>
-   <dynamicField name="tm_*"  type="text"    indexed="true"  stored="true" multiValued="true" termVectors="true"/>
+   <dynamicField name="tm_*"  type="text"    indexed="true"  stored="false" multiValued="true" termVectors="false"/>
    <dynamicField name="ss_*"  type="text_ws"    indexed="true"  stored="true" multiValued="false"/>
-   <dynamicField name="ts_*"  type="text"    indexed="true"  stored="true" multiValued="false" termVectors="true"/>
+   <dynamicField name="ts_*"  type="text"    indexed="true"  stored="false" multiValued="false" termVectors="false"/>
    <dynamicField name="tsen2k_*" type="edge_n2_kw_text" indexed="true" stored="true" multiValued="false" omitNorms="true" omitTermFreqAndPositions="true" />
    <dynamicField name="ds_*" type="date"    indexed="true"  stored="true" multiValued="false"/>
    <dynamicField name="dm_*" type="date"    indexed="true"  stored="true" multiValued="true"/>

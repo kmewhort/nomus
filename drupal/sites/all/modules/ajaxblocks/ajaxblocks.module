@@ -1,0 +1,282 @@
+<?php
+// $Id: ajaxblocks.module,v 1.1.2.3 2010/10/13 22:28:07 maximpodorov Exp $
+
+/**
+ * @file
+ * Loads dynamic blocks on cached page for anonymous users by performing AJAX request.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function ajaxblocks_menu() {
+  $items['ajaxblocks'] = array(
+    'title' => 'Ajax blocks',
+    'page callback' => 'ajaxblocks_ajax_handler',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ * Adds AJAX settings to the block configure page.
+ */
+function ajaxblocks_form_block_admin_configure_alter(&$form, &$form_state) {
+  // Retrieve current setting for this block.
+  $block_id = $form['module']['#value'] . '-' .  $form['delta']['#value'];
+  $value = (int) ajaxblocks_is_ajax($block_id);
+
+  $options = array(0 => t('no'), 1 => t('yes'));
+
+  // AJAX settings fieldset.
+  $form['ajaxblocks'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('AJAX settings'),
+    '#description' => t('The settings for loading the block via AJAX request made after the page loading. '),
+    '#weight' => 1,
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['ajaxblocks']['ajaxblocks_' . $block_id] = array(
+    '#type' => 'select',
+    '#title' => t('Load block via AJAX'),
+    '#description' => t("Select 'yes' if this block has dynamic content and isn't displayed correctly on cached pages."),
+    '#options' => $options,
+    '#default_value' => $value,
+  );
+
+  $form['submit']['#weight'] = 2;
+  $form['#submit'][] = 'ajaxblocks_save_settings';
+}
+
+
+/**
+ * Additional submit handler for block settings form. Saves AJAX settings for the block.
+ */
+function ajaxblocks_save_settings($form, &$form_state) {
+  $block_id = $form_state['values']['module'] . '-' . $form_state['values']['delta'];
+  $is_ajax = (int) $form_state['values']['ajaxblocks_' . $block_id];
+  db_query("UPDATE {ajaxblock} SET is_ajax = %d WHERE block_id = '%s'", $is_ajax, $block_id);
+  if (!db_affected_rows()) {
+    db_query("INSERT INTO {ajaxblock} (block_id, is_ajax) VALUES ('%s', %d)", $block_id, $is_ajax);
+  }
+  ajaxblocks_update_cache();
+}
+
+
+/**
+ * Stores AJAX settings for the blocks in the system cache table.
+ */
+function ajaxblocks_update_cache() {
+  $ajax_block_ids = array();
+  $result = db_query('SELECT block_id FROM {ajaxblock} WHERE is_ajax = 1');
+  while ($data = db_fetch_object($result)) {
+    $ajax_block_ids[] = $data->block_id;
+  }
+  cache_set('ajaxblocks', $ajax_block_ids);
+  return $ajax_block_ids;
+}
+
+
+/**
+ * Returns TRUE if the block is configured to be loaded via AJAX.
+ */
+function ajaxblocks_is_ajax($block_id) {
+  static $ajax_blocks = NULL;
+
+  if (is_null($ajax_blocks)) {
+    if ($cached = cache_get('ajaxblocks')) {
+      $ajax_blocks = $cached->data;
+    }
+    else {
+      $ajax_blocks = ajaxblocks_update_cache();
+    }
+  }
+  return in_array($block_id, $ajax_blocks);
+}
+
+
+/**
+ * Handles AJAX request and returns the content of the appropriate blocks.
+ */
+function ajaxblocks_ajax_handler() {
+  header('Cache-Control: private, no-cache, no-store, must-revalidate, max-age=0');
+  header('Pragma: no-cache');
+  $content = array();
+  if (isset($_GET['blocks']) && isset($_GET['path'])) {
+    // Set 'q' parameter in order to make arg() work correctly.
+    $_GET['q'] = $_GET['path'];
+    // Block content goes through theme functions.
+    init_theme();
+
+    // Build the block content and return as json.
+    $ajax_blocks = explode('/', $_GET['blocks']);
+    
+    // rebuild the original GET params
+    $getParams = json_decode($_GET['getparams']);
+    foreach($getParams as $key => $val){
+    	$_GET[$key] = $val;
+    }
+    foreach ($ajax_blocks as $block_id) {
+      ajaxblocks_in_ajax_handler_impl($block_id);
+      if (!ajaxblocks_is_ajax($block_id)) {
+        continue;
+      }
+      // Drupal.settings can be changed by the block construction code. The handler returns the settings difference to the client.
+      $settings_old = array();
+      $js = drupal_add_js(NULL, NULL, NULL);
+      if (array_key_exists('header', $js)) {
+        if (array_key_exists('setting', $js['header'])) {
+          $settings_old = $js['header']['setting'];
+        }
+      }
+      $parts = explode("-", $block_id, 2);
+      $block_content = module_invoke($parts[0], 'block', 'view', $parts[1]);
+      $content[$block_id] = $block_content;
+      $settings_new = array();
+      $js = drupal_add_js(NULL, NULL, NULL);
+      if (array_key_exists('header', $js)) {
+        if (array_key_exists('setting', $js['header'])) {
+          $settings_new = $js['header']['setting'];
+        }
+      }
+      $settings_diff = array_diff_assoc($settings_new, $settings_old);
+      $content[$block_id]['ajaxblocks_settings'] = '';
+      if (count($settings_diff) > 0) {
+        $content[$block_id]['ajaxblocks_settings'] = call_user_func_array('array_merge_recursive', $settings_diff);
+      }
+      // if a apachesolr search result is set, reload it
+      //$current_query = apachesolr_current_query($query)
+    }
+  }
+  
+  // also store the original get parameters
+  ajaxblocks_json($content);
+  exit;
+}
+
+
+/**
+ * Stores AJAX block IDs temporarily to pass them from ajaxblocks_preprocess_block() to ajaxblocks_preprocess_page().
+ */
+function ajaxblocks_page_ajax_list($block_id = NULL) {
+  static $ajax_blocks = array();
+
+  if (is_null($block_id)) {
+    return $ajax_blocks;
+  }
+  else {
+    $ajax_blocks[$block_id] = TRUE;
+  }
+}
+
+
+/**
+ * Implements hook_preprocess_block().
+ */
+function ajaxblocks_preprocess_block(&$vars) {
+  $user = $GLOBALS['user'];
+  // Replace block content for cached pages only.
+  if ((arg(0) != 'ajaxblocks') /*&& ($user->uid == 0) */ && ($_SERVER['REQUEST_METHOD'] == 'GET')
+      /*&& ((variable_get('cache', CACHE_DISABLED) != CACHE_DISABLED) ||  ajaxblocks_boost_cacheable())*/) {
+    $id = $vars['block']->module .'-'. $vars['block']->delta;
+    if (ajaxblocks_is_ajax($id)) {
+      ajaxblocks_page_ajax_list($id);
+      $vars['block']->content = '<div id="block-' . $id . '-ajax-content" class="blocks-ajax-content"><noscript>' . $vars['block']->content . '</noscript></div>';
+    }
+  }
+}
+
+
+/**
+ * Implements hook_preprocess_page().
+ */
+function ajaxblocks_preprocess_page(&$vars) {
+  $user = $GLOBALS['user'];
+  // Replace block content for cached pages only.
+  if ((arg(0) != 'ajaxblocks') /*&& ($user->uid == 0)*/ && ($_SERVER['REQUEST_METHOD'] == 'GET')
+      /*&& ((variable_get('cache', CACHE_DISABLED) != CACHE_DISABLED) ||  ajaxblocks_boost_cacheable()) */) {
+    $ajax_blocks = ajaxblocks_page_ajax_list(NULL);
+    if (true || !empty($ajax_blocks)) {
+      drupal_add_js(drupal_get_path('module', 'ajaxblocks') . '/ajaxblocks.js');
+      drupal_add_js(array('ajaxblocks' => 'blocks=' . implode('/', array_keys($ajax_blocks)) . '&path=' . $_GET['q'],
+      	'ajaxblocks_getparams' => json_encode($_GET)), 'setting');
+      // Rewrite page-level js.
+      $vars['scripts'] = drupal_get_js();
+    }
+  }
+}
+
+
+/**
+ * Clone of drupal_json() utilizing fast json_encode() function if availible.
+ */
+function ajaxblocks_json($var = NULL) {
+
+  // We are returning JavaScript, so tell the browser.
+  drupal_set_header('Content-Type: text/javascript; charset=utf-8');
+
+  if (isset($var)) {
+    if (function_exists('json_encode')) {
+      //echo str_replace(array("<", ">", "&"), array('\x3c', '\x3e', '\x26'), json_encode($var));
+      echo json_encode($var);
+    }
+    else {
+      echo drupal_to_js($var);
+    }
+  }
+}
+
+
+/**
+ * Implements hook_help().
+ */
+function ajaxblocks_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#ajaxblocks':
+      return '<p>' . t('The AjaxBlocks module provides new settings for every block, which allow to choose the loading method ' .
+        'for this block content if the cached page is to be displayed for anonymous users:<br />' .
+        '1. within the page - the usual way for Drupal.<br />' .
+        '2. by additional AJAX request after loading the cached page.') . '</p>';
+  }
+}
+
+
+/**
+ * Internal function which sets and returns the flag indicating whether current operation is block loading via AJAX.
+ */
+function ajaxblocks_in_ajax_handler_impl($block_id = FALSE) {
+  static $in_ajax_handler = FALSE;
+  if ($block_id) {
+    $in_ajax_handler = $block_id;
+  }
+  return $in_ajax_handler;
+}
+
+
+/**
+ * Returns TRUE if current operation is block loading via AJAX.
+ * May be used by other modules in hook_block() implementations to decide what version of block to return.
+ */
+function ajaxblocks_in_ajax_handler() {
+  return ajaxblocks_in_ajax_handler_impl();
+}
+
+
+/**
+ * Returns TRUE if boost module is enabled and current page is cacheable by boost.
+ */
+function ajaxblocks_boost_cacheable() {
+  static $boost_cacheable = NULL;
+  if (!is_null($boost_cacheable)) {
+    return $boost_cacheable;
+  }
+
+  $boost_cacheable = (module_exists('boost') && $GLOBALS['_boost_cache_this']);
+  return $boost_cacheable;
+}

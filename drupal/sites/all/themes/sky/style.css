@@ -941,11 +941,18 @@ ul.menu .collapsed .leaf a {
 }
 #content-top .block,
 #content-bottom .block {
-  border: 1px dotted #ddd;
   margin: 1em 0 2em 0;
 }
+#sidebar-left .block .title-container, .block-nomus .title-container {
+	background: #fff url('images/bg-shade-light.png') repeat-x bottom left;
+	-moz-border-radius-topleft: 0.333em;
+  -webkit-border-top-left-radius: 0.333em;
+  -moz-border-radius-topright: 0.333em;
+  -webkit-border-top-right-radius: 0.333em;
+  border: solid 1px #ddd;
+  border-bottom: 0;
+}
 .block h3.title {
-  background: #fff url('images/bg-shade-light.png') repeat-x bottom left;
   color: #777;
   display: block;
   font-weight: 700;
@@ -956,12 +963,6 @@ ul.menu .collapsed .leaf a {
   margin: 0;
   text-shadow: #fff 1px 1px 1px;
   color: #555;
-  -moz-border-radius-topleft: 0.333em;
-  -webkit-border-top-left-radius: 0.333em;
-  -moz-border-radius-topright: 0.333em;
-  -webkit-border-top-right-radius: 0.333em;
-  border: solid 1px #ddd;
-  border-bottom: 0;
 }
 .block .content {
   border: 1px solid #ddd;
@@ -1823,7 +1824,7 @@ ul.menu a.ext {
 
 /* smaller sidebar */
 .left #sidebar-left {
-	width: 20%;
+	width: 330px;
 }
 .right #sidebar-right {
 	width: 20%;
@@ -1878,6 +1879,7 @@ fieldset .fieldset-wrapper {
 /* search */
 #content-top {
 	margin: 0 0;
+	text-align: center;
 }
 
 #content-top .block-search, #content-top .block-search .content {
@@ -1895,9 +1897,11 @@ fieldset .fieldset-wrapper {
 }
 
 .main-inner {
-	background: url("images/top-gradient-lg.jpg") repeat-x scroll left top #FFFFFF;
 	margin-top:12px;
 	padding:0.1em 2em;
+}
+#wrapper{
+	background: url("images/top-gradient-lg.jpg") repeat-x scroll left top #FFFFFF;
 }
 
 /* sortable table */
@@ -2098,6 +2102,51 @@ div.container-inline, .container-inline-block div.container-inline {
 	background: url("images/bg-shade-light.png") repeat-x scroll left bottom #FFFFFF;
 }
 
+.left #main{
+	max-width: 1000px;
+}
+.sidebar .inner{
+	padding: 0;
+}
+#sidebar-left{
+	margin-left:-150px;
+}
+#sidebar-left .content-wrapper{
+	
+}
+
+#sidebar-left .block .title-container{
+	width: 20px;
+	height: 130px;
+	text-align: center;
+	-moz-border-radius:0em 0.5em 0.5em 0em;
+	-webkit-border-radius:0em 0.5em 0.5em 0em;
+	margin-left:150px;
+}
+#sidebar-left .block .title-container .title-wrapper {
+	-moz-transform: rotate(90deg);
+	-webkit-transform: rotate(90deg);
+	writing-mode: tb-rl;
+}
+#sidebar-left .block .title-container .title-wrapper h3.title{
+	text-align: left;
+	white-space: nowrap;
+} 
+
+#sidebar-left .content{
+	width: 150px;
+	position: absolute;
+	margin-top:-130px;
+	z-index:100;
+	background: #FFFFFF;
+}
+#sidebar-left .block-bookmarks div.content{
+	width:136px;
+}
+
+.block-search .content {
+	text-align: center;
+}
 /* Metadata */
 div.group-metadata {
 	border: 1px solid #CDCDCD;
@@ -2229,6 +2278,8 @@ div.saveprint {
 	-moz-box-shadow:1px 1px #BBBBBB inset;
 	-webkit-box-shadow:1px 1px #BBBBBB inset;
 	border:1px solid #444444;
+	font-size:120%;
+   width:80%;
 }
 
 
@@ -2356,7 +2407,7 @@ td.case, td.legislation {
 
 /* bookmarks */
 .bookmark_commands div {
-	margin: 0.2em 0.8em 0em 0.8em;
+	/*margin: 0.2em 0.8em 0em 0.8em; */
 }
 
 /* sliders */
@@ -2397,3 +2448,64 @@ td.case, td.legislation {
 	 -webkit-border-radius:3px 3px 3px 3px;
 }
 
+/* autocomplete */
+.ui-autocomplete-category {
+	font-weight: bold;
+	padding: .2em .4em;
+	margin: .2em 0 .2em;
+	line-height: 1.2;
+}
+ul.ui-autocomplete .ui-menu-item a{
+	padding-left: 1em;
+}
+.ui-autocomplete-category .term {
+	font-style: italic;
+}
+
+.autocomplete-more a{
+	color:#444444;
+	font-style:italic;
+	font-weight:bold;
+}
+
+.block-apachesolr-search{
+	min-width: 140px;
+}
+.blocks-ajax-content{
+	background: url("images/throbber.gif") no-repeat scroll 0 -15px transparent;
+	margin-left: 20px;
+	margin-top: 4px;
+	width: 15px;
+	height: 20px;
+}
+
+
+/* search blocks */
+.block-nomus{
+	display: none;
+	width: 200px;
+	min-height: 10px;
+	vertical-align:top;
+}
+
+.block-pending .title-wrapper {
+	background: url("images/throbber.gif") no-repeat scroll 182px -15px transparent;
+}
+
+.block-nomus .content{
+	text-align: left;
+	padding: 0;
+}
+.block-nomus .content li{
+	border-top: 1px solid #DDDDDD;
+	padding: 0.1em 0.6em;
+}
+.block-nomus .content li:hover{
+	background-color: #eeeeee;
+}
+.block-nomus .content li:hover a{
+	color: black;
+}
+.block-nomus .content li.all-link{
+	background-color: #f0f0f0;
+}

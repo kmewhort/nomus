@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #compile plugins and copy to the jetty lib dir
-javac -classpath ./solr-1.5-dev/dist/apache-solr-core-1.5-dev.jar:./solr-1.5-dev/dist/apache-solr-dataimporthandler-1.5-dev.jar:./solr-1.5-dev/dist/apache-solr-solrj-1.5-dev.jar:./solr-1.5-dev/lib/lucene-fast-vector-highlighter-2.9.2-dev.jar:./solr-1.5-dev/lib/lucene-highlighter-2.9.2.jar:./solr-1.5-dev/lib/lucene-core-2.9.2.jar:./solr-1.5-dev/lib/lucene-analyzers-2.9.2.jar:./solr-1.5-dev/lib/commons-io-1.4.jar:./solr-1.5-dev/lib/lucene-queries-2.9.2.jar ./NomusSolrPlugins/*.java
+javac -classpath ./solr-1.4.1/dist/apache-solr-core-1.4.1.jar:./solr-1.4.1/dist/apache-solr-dataimporthandler-1.4.1.jar:./solr-1.4.1/dist/apache-solr-solrj-1.4.1.jar:./solr-1.4.1/lib/lucene-fast-vector-highlighter-2.9.3-dev.jar:./solr-1.4.1/lib/lucene-highlighter-2.9.3.jar:./solr-1.4.1/lib/lucene-core-2.9.3.jar:./solr-1.4.1/lib/lucene-analyzers-2.9.3.jar:./solr-1.4.1/lib/commons-io-1.4.jar:./solr-1.4.1/lib/lucene-queries-2.9.3.jar ./NomusSolrPlugins/*.java
 jar -cmf MANIFEST.MF NomusSolrPlugins.jar NomusSolrPlugins
 cp ./NomusSolrPlugins.jar ../config/solr_home/lib/
 

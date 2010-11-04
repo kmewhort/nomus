@@ -1,0 +1,292 @@
+<?php
+
+// $Id$
+
+/**
+ * @file
+ */
+
+/**
+ *  XHProf calls this both 'source' and 'run_type'.
+ *  It's basically a way to namespace XHProf runs.
+ */
+define('XHPROF_SOURCE', 'drupal_xhprof');
+
+/**
+ *  Set to true when XHProf profiling has started.
+ */
+$xhprof_profiling_started = false;
+
+/**
+ * Implementation of hook_menu().
+ */
+function xhprof_menu() {
+  $items = array();
+
+  $items['admin/settings/xhprof'] = array(
+    'title' => 'XHProf Settings',
+    'description' => 'XHProf Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('xhprof_admin_settings'),
+    'access arguments' => array('administer XHProf'),
+    'type' => MENU_NORMAL_ITEM
+  );  	
+  $items['admin/xhprof/runs'] = array(
+    'title' => 'XHProf Runs',
+    'description' => 'XHProf Runs',
+    'page callback' => 'xhprof_runs_view',
+    'access arguments' => array('view XHProf data'),
+    'type' => MENU_NORMAL_ITEM
+  );
+
+	return $items;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function xhprof_perm() {
+  return array('administer XHProf', 'view XHProf data');
+}
+
+/**
+ * Implementation of hook_boot().
+ */
+function xhprof_boot() {
+  if (!extension_loaded('xhprof') or !function_exists("xhprof_enable")) {
+    return;
+  }
+  
+  // So we don't waste time checking again on xhprof_exit()  
+  global $xhprof_profiling_started;
+
+  if (xhprof_profiling_enabled()) {
+    xhprof_enable(XHPROF_FLAGS_CPU + XHPROF_FLAGS_MEMORY);
+    $xhprof_profiling_started = true;
+  }
+}
+
+/**
+ * Implementation of hook_exit().
+ */
+function xhprof_exit() {
+  global $xhprof_profiling_started;
+  
+  if (!$xhprof_profiling_started) {
+    return;
+  }
+  
+  // Stop profiling and retrieve profile data
+  $xhprof_data = xhprof_disable();
+  
+  // Include xhprof utils
+  $mod_path = drupal_get_path('module', 'xhprof');
+  include_once $mod_path . '/xhprof_lib/utils/xhprof_lib.php';
+  include_once $mod_path . '/xhprof_lib/utils/xhprof_runs.php';
+  
+  // Generate xhprof run file
+  $xhprof_runs = new XHProfRuns_Default();
+  $run_id = $xhprof_runs->save_run($xhprof_data, XHPROF_SOURCE);
+  
+  // Calculate run totals  
+  $total_calls = array_reduce($xhprof_data, 'xhprof_sum_calls');
+  $total_memory = array_reduce($xhprof_data, 'xhprof_sum_memory');
+  $total_cpu = array_reduce($xhprof_data, 'xhprof_sum_cpu');
+  
+  // Record this run to the database
+  $query = "
+    INSERT INTO {xhprof_runs} 
+      (run_id, url, data, time, calls, memory, cpu, created) 
+    VALUES 
+      ('%s',  '%s', '%s',   %d,    %d,     %d,  %d,      %d)";
+  
+  $args = array(
+    $run_id,
+    $_GET['q'],
+    serialize($xhprof_data),
+    $xhprof_data['main()']['wt'],
+    $total_calls,
+    $total_memory,
+    $total_cpu,
+    time()
+  );
+  
+  db_query($query, $args);
+}
+
+/**
+ * XHProf admin settings
+ */
+function xhprof_admin_settings() {
+  $form = array();
+
+  $form['xhprof_include_paths'] = array( 
+    '#type' => 'textarea',
+    '#title' => t('Paths to include in profiling'), 
+    '#default_value' => variable_get('xhprof_include_paths', NULL), 
+    '#description' => t('XHProf will profile this list of paths.'), 
+  );
+  $form['xhprof_exclude_paths'] = array( 
+    '#type' => 'textarea',
+    '#title' => t('Paths to exclude in profiling'), 
+    '#default_value' => variable_get('xhprof_exclude_paths', NULL), 
+    '#description' => t('XHProf will NOT profile this list of paths.'), 
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * XHProf runs table form
+ */
+function xhprof_runs_view_form() {
+  $form = array();
+
+  $form['clear'] = array(
+    '#type' => 'submit',
+    '#value' => t('Clear All Runs'),
+    '#id' => 'xhprof-clear-runs'
+  );  
+  $form['refresh'] = array(
+    '#type' => 'submit',
+    '#value' => t('Refresh'),
+    '#id' => 'xhprof-refresh-runs'
+  );
+  
+  return $form;
+}
+
+/**
+ * XHProf runs table form submit handler
+ */
+function xhprof_runs_view_form_submit($form, &$form_state) {
+  $op = $form_state['clicked_button']['#value'];
+  
+  if ($op == t('Clear All Runs')) {
+    if (!user_access('administer XHProf')) {
+      drupal_set_message(t("You do not have permission to clear XHProf run data."), 'warning');
+      return;
+    }
+   
+    $result = db_query("SELECT * FROM {xhprof_runs}");
+    while ($run = db_fetch_object($result)) {
+      xhprof_delete_run_file($run->run_id, XHPROF_SOURCE);
+      db_query("DELETE FROM {xhprof_runs} WHERE run_id = '%s'", $run->run_id);
+    }
+    drupal_set_message('Cleared all XHProf runs.');
+  }
+}
+
+/**
+ * XHProf runs table
+ */
+function xhprof_runs_view() {
+  drupal_add_js(drupal_get_path("module", "xhprof") . "/xhprof.js");
+  drupal_add_css(drupal_get_path("module", "xhprof") . "/xhprof.css");
+  
+  // Table attributes
+  $attributes = array('id' => 'xhprof-runs-table');
+  
+  // Table header
+  $header = array();
+  $header[] = array('data' => 'View');
+  $header[] = array('data' => 'Url', 'field' => 'url');
+  $header[] = array('data' => 'Time', 'field' => 'time');
+  $header[] = array('data' => 'Function Calls', 'field' => 'calls');
+  $header[] = array('data' => 'Memory', 'field' => 'memory');
+  $header[] = array('data' => 'CPU Cycles', 'field' => 'cpu');
+  $header[] = array('data' => 'Created', 'field' => 'created', 'sort' => 'desc');
+  
+  $query = 'SELECT run_id, url, time, calls, memory, cpu, created FROM {xhprof_runs} '.tablesort_sql($header);
+  $result = pager_query($query, 25);
+  
+  // Table rows
+  $rows = array();
+  while ($data = db_fetch_object($result)) {
+    $row = array();
+    $row[] = array('data' => l(t('details'), xhprof_url('details', $data->run_id)).'&nbsp;&nbsp;'.l(t('graph'), xhprof_url('graph', $data->run_id)));
+    $row[] = array('data' => l($data->url, $data->url));
+    $row[] = array('data' => number_format($data->time / 1000) . ' ms', 'class' => xhprof_class_from_time($data->time));
+    $row[] = array('data' => number_format($data->calls));
+    $row[] = array('data' => number_format($data->memory / 1024) . ' KB');
+    $row[] = array('data' => number_format($data->cpu));    
+    $row[] = array('data' => format_date($data->created, 'small'));
+    $rows[] = $row;
+  }
+  
+  $content = array();
+  $content[] = drupal_get_form('xhprof_runs_view_form');
+  $content[] = theme_table($header, $rows, $attributes);
+  $content[] = theme_pager(NULL, 25);
+  
+  return implode("\n", $content);
+}
+
+/**
+ * Determines whether or not to profile the current request.
+ */
+function xhprof_profiling_enabled() {
+  require_once 'includes/path.inc';
+  
+  if (isset($_GET['XHPROF_ENABLED'])) {
+    return true;
+  }
+
+  if (isset($_GET['XHPROF_DISABLED'])) {
+    return false;
+  }
+  
+  drupal_init_path();
+  $path = drupal_get_path_alias($_GET['q']);
+
+  return (bool) (drupal_match_path($path, variable_get("xhprof_include_paths", '')) 
+      && !drupal_match_path($path, variable_get("xhprof_exclude_paths", '')));
+}
+
+/**
+ * Calculate totals from an xhprof run.
+ */
+function xhprof_sum_calls($total, $data) { return $total + $data['ct']; }
+function xhprof_sum_memory($total, $data) { return $total + $data['mu']; }
+function xhprof_sum_cpu($total, $data) { return $total + $data['cpu']; }
+
+/**
+ *  Return a CSS class indicating the relative speed of $time.
+ */
+function xhprof_class_from_time($time) {
+  $classes = array(
+    'xhprof-green' => 300000,   // < 300ms
+    'xhprof-yellow' => 1000000, // < 1s
+    'xhprof-red' => PHP_MAX_INT // > 1s
+  );
+  
+  foreach ($classes as $class => $threshold) {
+    if ($time <= $threshold) {
+      return $class;
+    }
+  }
+}
+
+/**
+ *  Delete a run file.
+ */
+function xhprof_delete_run_file($id, $source) {
+  $dir = ini_get("xhprof.output_dir");
+  $file = "$dir/$id.$source";
+  return (bool) (is_dir($dir) and is_file($file) and unlink($file));
+}
+
+function xhprof_url($type, $run_id) {
+  global $base_url;
+  $module_path = drupal_get_path('module', 'xhprof');
+  
+  switch($type) {
+    case 'details':
+      return "$base_url/$module_path/xhprof_html/index.php?run=$run_id&source=".XHPROF_SOURCE;
+    case 'graph':
+      return "$base_url/$module_path/xhprof_html/callgraph.php?run=$run_id&source=".XHPROF_SOURCE;
+    default:
+      return '';
+  }
+}
+

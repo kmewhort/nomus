@@ -1,0 +1,5 @@
+court:ss_cck_field_meta_court
+casename:ss_cck_field_meta_casename
+fulltext:body_en,body_fr
+citation:cs_cck_field_meta_citation,cm_cck_field_meta_citedas
+category:taxonomy_names

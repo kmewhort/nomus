@@ -166,62 +166,12 @@ function nomus_apachesolr_update_index(&$document, $node) {
 	}
 }
 
-// add template selection to search box
+// add template selection, and autocomplete, to search box
 function nomus_search_form_alter(&$form, &$form_state, $form_id) {
 	global $user;
-	if($form_id == 'search_block_form') {
-	
-		// need to use jquery selectable (http://jquery-ui.googlecode.com/svn/branches/labs/selectmenu/)
-		// so as to have edit/delete buttons
-		modalframe_parent_js();
-		jquery_ui_add(array('ui.widget', 'ui.mouse', 'ui.draggable', 'ui.selectmenu'));
-  		drupal_add_js(drupal_get_path('module', 'nomus')
-  			.'/searchtemplate_select.js');
-		
-		// get default templates
-		$options = array();
-		$dbresult = db_query("SELECT nid, title FROM {node} WHERE uid = '1' AND type = 'search_template' ORDER BY nid");
-		while($row = db_fetch_array($dbresult)) {
-			// default templates may be cloned, but not edited
-			$options[$row['nid']] = t($row['title']) . " clone" . $row['nid']; 
-		}
 
-		// get user templates		
-		if($user->uid) {
-			$dbresult = db_query("SELECT nid, title FROM {node} WHERE uid = '" . $user->uid ."' AND type = 'search_template' ORDER BY nid");
-			while($row = db_fetch_array($dbresult)) {
-				$options[$row['nid']] = t($row['title'])  . " edit" . $row['nid'] . " delete" . $row['nid'];
-			}
-		}
-		
-		// add new template button
-		$options['new'] = 'New...';
-			
-		// get session templates
-		if($_SESSION['nomus_session_templates']) {
-			// bail for security if the session var contains anything other than numbers
-			// seperated by commas
-			if(preg_match('/[^,\d]/', $_SESSION['nomus_session_templates']))
-				$_SESSION['nomus_session_templates'] = '';
-				drupal_access_denied();
-				return;
-			
-			$dbresult = db_query("SELECT nid, title FROM {node} WHERE uid = '0' AND type = 'search_template' AND nid IN '(" . $_SESSION['nomus_session_templates'] . ") ORDERY BY nid'");
-			while($row = db_fetch_array($dbresult)) {
-				$options[$row['nid']] = t($row['title'])  . " edit" . $row['nid'] . " delete" . $row['nid'];
-			}
-		}
-		
-		$form['template'] = array(
-  			'#type' => 'select',
-  			'#title' => t('Search template'),
-  			'#default_value' => t($templates[0]['nid']),
-  			'#options' => $options,
-  			'#weight' => 1,
-  		);
-  		$form['submit']['#weight'] = 2;
-  		
-  		// set defaults
+	if($form_id == 'search_block_form') {  		
+  		// set defaults for search templates
   		if($_SESSION['nomus_search_q']){
   			$form['search_block_form']['#default_value'] =
   				$_SESSION['nomus_search_q']; 
@@ -231,10 +181,14 @@ function nomus_search_form_alter(&$form, &$form_state, $form_id) {
   				$_SESSION['nomus_search_template']; 
   		}
   		
+  		// remove the submit button
+  		unset($form['submit']);
+  		
+  		// change the laber
+  		$form['searh_block_form']['#title'] = 'A new way to search:';
+  		
   		// add our own handler
   		$form['#submit'][] = 'nomus_search_form_submit';
-  		
-
 	}
 }
 
@@ -242,7 +196,12 @@ function nomus_search_form_submit($form, &$form_state) {
 	// set the session variables for the query and template
 	// (so they can be displayed as defaults on the next page)
 	$_SESSION['nomus_search_q'] = $form_state['values']['search_block_form'];
-	$_SESSION['nomus_search_template'] = $form_state['values']['template'];
+	if(!empty($form_state['value']['template'])){	
+		$_SESSION['nomus_search_template'] = $form_state['values']['template'];
+	}
+	else{
+		variable_get('nomus_search_default_template', '0');
+	}
 	
 	// add the template id to the redirect path
 	$form_state['redirect'] = array($form_state['redirect'],
@@ -251,7 +210,6 @@ function nomus_search_form_submit($form, &$form_state) {
 
 // prepare query
 function nomus_apachesolr_prepare_query(&$query, &$params, $caller) {
-
   // set additional sort options
   $query->set_available_sort('sort_ss_cck_field_meta_casename', array(
        'title' => t('Title'),
@@ -261,9 +219,19 @@ function nomus_apachesolr_prepare_query(&$query, &$params, $caller) {
        'title' => t('Date'),
        'default' => 'desc',
       ));
-   
+  nomus_search_template_search_params($_GET['template'], $params);
+  
+  // remove the apachesolr plugin's boost function
+  unset($params['bf']);
+}
+
+
+/*
+ * Get Solr search parameters from a template node
+ */
+function nomus_search_template_search_params($nid, &$params){
   // get the template
-  $templateNode = node_load($_GET['template']);  
+  $templateNode = node_load($nid);  
   
   // field list to return
   $params['fl'] .= ',ss_heading_en';
@@ -274,23 +242,44 @@ function nomus_apachesolr_prepare_query(&$query, &$params, $caller) {
   $params['fl'] .= ',tds_cck_field_meta_date';
   $params['fl'] .= ',tnid';
   
-  // regular query fields
-  if($templateNode->field_search_qf[0]['value'])
-  	$params['qf'] = $templateNode->field_search_qf[0]['value'];
-  else
-  	$params['qf'] = ' ';
+  // if any of 'pf', 'qf' or 'of' are set in the url parameters, use
+  // the URL parameters exclusively
+  if(!empty($_GET['pf']) || !empty($_GET['qf']) || !empty($_GET['of'])){
+    if(!empty($_GET['pf']))
+  	 	$params['pf'] = $_GET['pf'];
+  	 else
+  	 	$params['pf'] = '';
+  	 	
+  	 if(!empty($_GET['qf']))
+  	 	$params['qf'] = $_GET['qf'];
+  	 else
+  	 	$params['qf'] = '';
+  	 		
+    if(!empty($_GET['of']))
+  	 	$params['of'] = $_GET['of'];
+  	 else
+  	 	$params['of'] = '';	
+  }
+  // else, use the fields set in the template
+  else{
+  	// regular query fields
+  	if($templateNode->field_search_qf[0]['value'])
+  		$params['qf'] = $templateNode->field_search_qf[0]['value'];
+  	else
+  		$params['qf'] = ' ';
 
-	// phrase fields
-  if($templateNode->field_search_pf[0]['value'])
-  	$params['pf'] = $templateNode->field_search_pf[0]['value'];
-  else
-  	$params['pf'] = ' ';
+		// phrase fields
+  	if($templateNode->field_search_pf[0]['value'])
+  		$params['pf'] = $templateNode->field_search_pf[0]['value'];
+  	else
+  		$params['pf'] = ' ';
   	  
-  // optional/boost fields
-  if($templateNode->field_search_of[0]['value'])
-  	$params['of'] = $templateNode->field_search_of[0]['value'];
-  else
-  	$params['of'] = ' ';
+  	// optional/boost fields
+  	if($templateNode->field_search_of[0]['value'])
+  		$params['of'] = $templateNode->field_search_of[0]['value'];
+  	else
+  		$params['of'] = ' ';
+  }
   
   // filters
   if($templateNode->field_search_fq[0]['value'])
@@ -301,9 +290,6 @@ function nomus_apachesolr_prepare_query(&$query, &$params, $caller) {
 		if($params['sort'] = $template->field_search_sort[0]['value'])
 			$params['sort'] = $template->field_search_sort[0]['value'];
 	}
-	
-	// remove the apachesolr plugin's boost function
-	unset($params['bf']);
 }
 
 // alter individual result

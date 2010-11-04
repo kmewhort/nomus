@@ -6,17 +6,17 @@ var launchfixIframeHeight = function()
 
 var fixIframeHeight = function()
 {
-	var height = $('iframe').contents().get(0).height;
+	var height = $(".quicktabs_tabpage:not('div.quicktabs-hide') iframe").contents().get(0).height;
 		
 	// for IE
 	if(height==undefined)
 	{
-	   height = $('iframe').contents().get(0).body.scrollHeight;
+	   height = $(".quicktabs_tabpage:not('div.quicktabs-hide') iframe").contents().get(0).body.scrollHeight;
 	}
 	
 	if(height != 0)
 	{	
-		$("iframe").eq(0).css("height", height);
+		$(".quicktabs_tabpage:not('div.quicktabs-hide') iframe").eq(0).css("height", height+350);
 	}
 	else
 	{
@@ -26,5 +26,8 @@ var fixIframeHeight = function()
 
 $(document).ready(function()
 {
-	$("iframe").load(launchfixIframeHeight);
+	$(".quicktabs_tabpage:not('div.quicktabs-hide') iframe").load(launchfixIframeHeight);
+	
+	// resize on any tab change
+	$('ul.quicktabs_tabs li a').click(function(){ setTimeout('fixIframeHeight()', 1000); });
 });

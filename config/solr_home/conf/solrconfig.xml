@@ -436,7 +436,25 @@
      </lst>
 </requestHandler>
  SLAVE_REPLICATION_END -->
- 
+
+ <queryParser name="peek" class="NomusSolrPlugins.NomusDismaxQParserPlugin" />
+    <requestHandler name="/peek" class="solr.SearchHandler">
+    <lst name="defaults">
+	 <str name="wt">json</str>
+     <str name="hl">false</str>
+     <str name="rows">3</str>
+     <str name="defType">peek</str>
+     <str name="echoParams">none</str>
+	  <str name="mm">1</str>
+     <float name="tie">0.01</float>
+     <str name="qf"></str>
+     <str name="pf"></str>
+     <str name="of"></str>
+     <str name="fl">ss_heading_en ss_heading_fr nid</str>
+     <str name="sort">score desc</str>
+    </lst>
+  </requestHandler> 
+
  <queryParser name="nomusdismax" class="NomusSolrPlugins.NomusDismaxQParserPlugin" />
     <requestHandler name="/standard" class="solr.SearchHandler" default="true">
     <lst name="defaults">
@@ -465,6 +483,20 @@
      <str name="fl"></str>
      <str name="sort">score desc</str>
     </lst>
+  </requestHandler>
+
+  <!-- A component to return terms and document frequency of those terms.
+       This component does not yet support distributed search. -->
+  <searchComponent name="termsComponent" class="org.apache.solr.handler.component.TermsComponent"/>
+
+  <requestHandler name="/terms" class="org.apache.solr.handler.component.SearchHandler">
+     <lst name="defaults">
+      <bool name="terms">true</bool>
+      <str name="terms.fl">heading_en</str>
+    </lst>     
+    <arr name="components">
+      <str>termsComponent</str>
+    </arr>
   </requestHandler>
 
   <!-- DisMaxRequestHandler allows easy searching across multiple fields

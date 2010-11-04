@@ -1,0 +1,100 @@
+<?php
+function nomus_freebase_vocab_form(){
+	
+  // create the table of freebase-synced vocabularies
+  /*$header = array('VID', 'Vocabulary', 'MQL', 'Regexp Transform');
+  $rows = array();
+  $results = db_query("SELECT vid, name, mql, transform FROM {nomus_freebase_vocab}, {vocabulary} WHERE namus_freebase_vocab.vid = vocabulary.vid");
+  while ($row = db_fetch_array($results)) {
+    $rows[] = $row;
+  }
+  $table =  theme('table', $header, $rows);*/
+  $table = views_embed_view('freebase_vocab');
+  
+  $form['table'] = array(
+  		'#type' => 'markup',
+  		'#value' => $table);
+  		
+  $form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => t('New'),
+  		);
+  	
+  return $form;
+}
+
+/*
+ * Menu launch for a vocabulary pull
+  */
+function nomus_freebase_pull_vocab_launch(){
+	if(!empty($_GET['nid'])){
+		nomus_freebase_bulk_pull_vocab(array($_GET['nid']));
+	}
+}
+
+/*
+ * Pull vocabularies from freebase into a local
+ * taxonomy vocabulary
+ */
+function nomus_freebase_bulk_pull_vocab($nids){
+	foreach($nids as $nid){
+		$node = node_load($nid);
+
+		// check MQL query
+		$jsonMQL = json_decode('{"query": '. $node->field_mql_query[0]['value'] . '}');
+		if(!$jsonMQL){
+			print 'Error in MQL query syntax';
+		}
+		
+		//execute mql query
+		$query = json_encode($jsonMQL);
+		$apiendpoint = "http://api.freebase.com/api/service/mqlread?query";
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, "$apiendpoint=$query");
+		curl_setopt($ch, CURLOPT_HEADER, 0);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		$jsonresultstr = curl_exec($ch);
+		curl_close($ch);
+
+		// get the result
+		$resultarray = json_decode($jsonresultstr, true);
+		if($resultarray['status'] != '200 OK'){
+			print 'Query to Freebase failed: ' . $resultarray['status'];
+		}
+		$result = $resultarray["result"];
+		
+		// transform the result into a taxonomy array
+		dpm($query);
+		dpm($resultarray);		
+		eval($node->field_mql_result_transform[0]['value']);
+		dpm($taxonomy);
+		
+		// for each term currently in the vocabulary
+		$freebaseTerms = array_keys($taxonomy);
+		$db_result = db_query("SELECT tid, name, description FROM term_data WHERE vid = %d",
+				array($node->field_taxonomy[0]['value']));
+		while($row = db_fetch_array($db_result)){
+			// if the term no longer exists, delete it
+			if(!in_array($row['name'], $freebaseTerms)){
+				taxonomy_del_term($row['tid']);
+			}
+			else {
+				// if the term has a different freebase id, update it
+				$freebaseId = $taxonomy[$row['name']];
+				if($row['description'] != $freebaseId){
+					db_query("UPDATE {term_data} SET description = '%s' WHERE tid = %d",
+						array($freebaseId, $row['tid'])); 
+				}
+				unset($taxonomy[$row['name']]);
+			}
+		}
+		
+		// add any new terms
+		foreach($taxonomy as $term => $freebaseId){
+			db_query("INSERT INTO {term_data} (vid, name, description) VALUES (%d, %s, $s)",
+				array($node->field_taxonomy[0]['value'], $term, $freebaseId));
+		}
+		
+	}
+}
+?>

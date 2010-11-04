@@ -8,6 +8,8 @@ module_load_include('inc', 'nomus', 'nomus_search');
 module_load_include('inc', 'nomus', 'nomus_tags');
 module_load_include('inc', 'nomus', 'nomus_saveprint');
 module_load_include('inc', 'nomus', 'nomus_casebox');
+module_load_include('inc', 'nomus', 'nomus_freebase');
+module_load_include('inc', 'nomus', 'nomus_search_blocks');
 
 /* include content type hooks */
 if ($handle = opendir(dirname(__FILE__) . '/doctypes')) {
@@ -54,6 +56,15 @@ function nomus_admin() {
     '#maxlength' => 120,
     '#required' => TRUE,
   );
+  $form['nomus_search_default_template'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default search template (node id)'),
+    '#default_value' => variable_get('nomus_search_default_template',
+    	'0'),
+    '#size' => 60,
+    '#maxlength' => 120,
+    '#required' => TRUE,
+  );
 
   return system_settings_form($form);
 }
@@ -71,6 +82,23 @@ function nomus_menu() {
     'access arguments' => array('access administration pages'),
     'type' => MENU_NORMAL_ITEM,
    );
+   
+   // freebase vocabulary menu
+  $items['admin/content/taxonomy/freebase'] = array(
+  	  'title' => t('Sync vocabularies with Freebase'),
+  	  'page callback' => 'drupal_get_form',
+  	  'page arguments' => array('nomus_freebase_vocab_form'),
+  	  'access arguments' => array('access administration pages'),
+  	  'type' => MENU_LOCAL_TASK,
+  );
+  
+  // callback to pull in a freebase vocabulary
+  $items['nomus/freebase/pull'] = array(
+  	 'title' => 'Pull freebase vocabulary',
+  	 'page callback' => 'nomus_freebase_pull_vocab_launch',
+  	 'access arguments' => array('access administration pages'),
+  	 'type' => MENU_CALLBACK,
+  );
 
   // callback to perform a bulk load
   $items['nomus/documentloader/bulkload'] = array(
@@ -273,6 +301,7 @@ function nomus_nodeapi(&$node, $op, $teaser, $page) {
 				drupal_goto('login-required', 'dialog=1');
 			}	
 		}
+		
       break;
   	case 'presave':
   		// for gate applications, translate urls before saving
@@ -304,6 +333,7 @@ function nomus_nodeapi(&$node, $op, $teaser, $page) {
 /**
  * Blocks
  */
+ /*
 function nomus_block($op = 'list', $delta = 0, $edit = array()){
   switch ($op) {
     case 'view':
@@ -319,7 +349,7 @@ function nomus_block($op = 'list', $delta = 0, $edit = array()){
     	return $blocks;
     	break;
    }	
-}
+}*/
 
 /**
  * Document toolbox form
@@ -444,7 +474,12 @@ function nomus_node_operations() {
     'email' => array(
       'label' => t('E-mail'),
       'callback' => 'nomus_bulk_email',
-    ));
+    ),
+    'pull-vocab' => array(
+      'label' => t('Pull vocabulary'),
+      'callback' => 'nomus_freebase_pull_vocab',
+    ),
+    );
     return $operations;
 }
 

@@ -44,6 +44,8 @@ import org.apache.solr.util.SolrPluginUtils;
 import org.apache.solr.analysis.*;
 import org.apache.solr.search.*;
 
+import org.apache.solr.core.SolrResourceLoader;
+
 import java.util.*;
 import java.io.Reader;
 import java.io.IOException;
@@ -82,7 +84,6 @@ class NomusDismaxQParser extends QParser {
     /* :NOOP */
   }
 
-
   public NomusDismaxQParser(String qstr, SolrParams localParams, SolrParams params, SolrQueryRequest req) {
     super(qstr, localParams, params, req);
   }
@@ -98,32 +99,55 @@ class NomusDismaxQParser extends QParser {
   private QParser altQParser;
 
 
-  public Query parse() throws ParseException {
+  public Query parse() throws ParseException {  
+  
     SolrParams localParams = getLocalParams();
     SolrParams params = getParams();
-    
     SolrParams solrParams = localParams == null ? params : new DefaultSolrParams(localParams, params);
+     
+    // load the field name synonyms
+    HashMap<String, String> fieldSynonyms = new HashMap();
+    try{
+    	SolrResourceLoader loader = req.getCore().getResourceLoader();
+    
+	 	List<String> lines = loader.getLines("field-synonyms.txt");
+	 	for (String line : lines) {
+	 		String[] fieldSynStrs = line.split(":");
+	 		for(int i = 1; i < fieldSynStrs.length; i++){
+	 			fieldSynonyms.put(fieldSynStrs[0], fieldSynStrs[i]);
+	 		}
+	 	}
+	 }
+    catch(java.io.IOException e){
+    	throw new ParseException(e.toString());
+    }
 
     queryFields = U.parseFieldBoosts(solrParams.getParams(DMP.QF));
+    applyFieldSynonyms(fieldSynonyms, queryFields);
     /*if (0 == queryFields.size()) {
       queryFields.put(req.getSchema().getDefaultSearchFieldName(), 1.0f);
     }*/ //
-    
-
+             
     // Query for which the query is run only to boost
     // matches of the main results
     Map<String,Float> optionalFields = 
       U.parseFieldBoosts(solrParams.getParams("of"));
+    applyFieldSynonyms(fieldSynonyms, optionalFields);
           
     // Boosted phrase of the full query string
     Map<String,Float> phraseFields = 
       U.parseFieldBoosts(solrParams.getParams(DMP.PF));
+    applyFieldSynonyms(fieldSynonyms, phraseFields);
+    
     // Boosted Bi-Term Shingles from the query string
     Map<String,Float> phraseFields2 = 
       U.parseFieldBoosts(solrParams.getParams("pf2"));
+    applyFieldSynonyms(fieldSynonyms, phraseFields2);
+    
     // Boosted Tri-Term Shingles from the query string
     Map<String,Float> phraseFields3 = 
       U.parseFieldBoosts(solrParams.getParams("pf3"));
+    applyFieldSynonyms(fieldSynonyms, phraseFields3);
 
     float tiebreaker = solrParams.getFloat(DMP.TIE, 0.0f);
 
@@ -434,6 +458,26 @@ class NomusDismaxQParser extends QParser {
     return topQuery;
   }
 
+  // swap in actual field names for their synonyms
+  private void applyFieldSynonyms(Map<String,String> synonymDefs, Map<String,Float> fields) {
+        // for each field
+        Iterator it = fields.entrySet().iterator();
+        while (it.hasNext()) {
+          Map.Entry field = (Map.Entry)it.next();
+          if(synonymDefs.containsKey(field.getKey())){
+          	 Float fieldWeight = (Float)field.getValue();
+             
+             // add a field entry for each in the synonym list
+	 			 String[] syns = ((String)synonymDefs.get(field.getKey())).split(",");
+	 			 for(String syn: syns){
+	 			 	fields.put(syn,fieldWeight);
+	 			 }
+	 			 
+	 			 // remove the original
+	 			 fields.remove(field.getKey());
+	 		}
+	 	 }
+	 }
   /**
    * Modifies the main query by adding a new optional Query consisting
    * of shingled phrase queries across the specified clauses using the 
