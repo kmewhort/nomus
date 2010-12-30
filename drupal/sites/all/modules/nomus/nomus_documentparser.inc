@@ -420,6 +420,7 @@ function nomus_documentparser_gatedoc_vocabularies_url($dictionaryIds) {
  * Menu callback to retrieve GATE documents
  */
 function nomus_documentparser_gatedoc() {
+	header('Content-Type: text/plain; charset=utf-8');
 	$dictIds = $_GET['dictIds'];
 	$nodeId = $_GET['nodeId'];
 	
@@ -480,7 +481,21 @@ function nomus_documentparser_gatedoc() {
 	   		else {
 	   			$lstId = $_GET['lst'];
 	   			$gazField = $gateDoc->field_gate_gazetteer[$lstId]['value'];
-	   			$output = substr($gazField, strpos($gazField, "\n")+1);
+	   			$list = explode("\n", substr($gazField, strpos($gazField, "\n")+1));
+	   			
+	   			// double up any non-breaking space characters (0xA0) with
+	   			// a regular space (0x20) version, and vice-versa
+	   			$output = '';
+	   			foreach($list as $item){
+	   				$output .= $item . "\n";
+	   				$listItem = str_replace("\xC2\xA0", "\x20", $item, $count);
+	   				if($count)
+	   					$output .= $listItem . "\n";
+	   				$listItem = str_replace("\x20", "\xC2\xA0", $item, $count);
+	   				if($count)
+	   					$output .= $listItem . "\n";
+	   					 
+	   			}
 	   		}
 	   	}
 	

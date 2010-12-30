@@ -19,7 +19,7 @@ body {
 #wrapper {
   background: #fff;
   font-size: 12px;
-  -webkit-box-shadow: 1em 1em 1em rgba(0, 0, 0, 0.5);
+  /*-webkit-box-shadow: 1em 1em 1em rgba(0, 0, 0, 0.5);*/
 }
 /* @group Header */
 #header {
@@ -2266,6 +2266,11 @@ div.saveprint {
 #search-block-form .form-item label {
 	display: none;
 }
+.container-inline div.search-label {
+	display: block;
+	font-size: 110%;
+	color: #EEEEEE;	
+}
 
 .block-search {
 	margin: 0;
@@ -2508,4 +2513,34 @@ ul.ui-autocomplete .ui-menu-item a{
 }
 .block-nomus .content li.all-link{
 	background-color: #f0f0f0;
+}
+.block-nomus .title{
+	height: 18px;
+}
+.block-edit-link {
+  font-size:90%;
+  position:relative;
+  top:-7px;
+}
+.block-nomus h3.title {
+	padding-right: 0;
+}
+.block-nomus .title-wrapper{
+	display: inline-block;
+}
+
+/* stats */
+.stats_process {
+	font-weight: bold;
+	margin-left: 56px;
+	margin-bottom: 36px;
+}
+.stats_process li {
+	display: inline;
+	margin: 10px;
+	border: 1px solid black;
+	padding: 3px;
+}
+.stats-graph {
+	margin-bottom: 26px;
 }

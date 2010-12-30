@@ -326,7 +326,7 @@ public class DocConverter extends HttpServlet
 	{
 
 		// page magnification
-		final float magnification = (float)1.5;
+		final float magnification = (float)2.0;
 		
 		// create a temp directory
 		File tempDir = (File) getServletContext().
@@ -416,21 +416,51 @@ public class DocConverter extends HttpServlet
 						"class=\\\"" + newStyleId + "\\\"");
 				}
 			}
-			// get the height and width of the page from the image element 
+			// get the image element width and height 
 			// (from, eg <IMG width="612" height="792")
-			int height = 740;
-			int width = 612;
+			int imageHeight = 740;
+			int imageWidth = 612;
 			Matcher dimMatcher =
 					Pattern.compile("<IMG\\s*width=\\\"([^\\\">]*?)\\\"\\s*height=\\\"([^\\\">]*?)",
 						Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
 					.matcher(content);
 			if(dimMatcher.find())
 			{
-				height = Integer.parseInt(dimMatcher.group(1));
-				width = Integer.parseInt(dimMatcher.group(2));
+				imageHeight = Integer.parseInt(dimMatcher.group(1));
+				imageWidth = Integer.parseInt(dimMatcher.group(2));
+			}
+			int width = imageWidth;
+			int height = imageHeight;
+			
+			// find the top and bottom of the ACTUAL text
+			int top = 0;
+			int bottom = -1;
+			Matcher topPosMatcher =
+					Pattern.compile("position:absolute;top:(\\d+);",
+						Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
+					.matcher(content);
+			if(topPosMatcher.find())
+			{
+				top = Integer.parseInt(topPosMatcher.group(1)) - 15;
+				if(top < 0)
+					top = 0;
+				bottom = Integer.parseInt(topPosMatcher.group(1)) + 30;
+			}
+						
+			while(topPosMatcher.find())
+			{
+				bottom = Integer.parseInt(topPosMatcher.group(1)) + 30;
 			}
 			
-			// expand positions to the desired magnification
+			// TODO: need to count the number of breaks from the last top to the
+			// end and adjust bottom accordingly 
+			bottom += 40;
+			
+			// preferably, use the position of the bottom-most element for the height
+			if(bottom >= 0)
+				height = bottom - top;				
+		
+			// expand positions to the desired magnification and shift the page up
  			Matcher posMatcher =
  				Pattern.compile("(position:absolute;top:)(\\d+)(;left:)(\\d+)",
  					Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
@@ -438,22 +468,24 @@ public class DocConverter extends HttpServlet
  			StringBuffer posAdjustedContent = new StringBuffer();
 			while (posMatcher.find())
 			{
+				int elementTop = Integer.parseInt(posMatcher.group(2));
+				elementTop = (new Float(magnification * (elementTop-top))).intValue();
+				int elementLeft =  Integer.parseInt(posMatcher.group(4));
+				elementLeft = (new Float(magnification * elementLeft)).intValue();
+				
      			posMatcher.appendReplacement(posAdjustedContent,
      				posMatcher.group(1) +
-     				Integer.toString(
-     					(new Float(magnification * Integer.parseInt(posMatcher.group(2)))).intValue()) +
+     				Integer.toString(elementTop) +
      				posMatcher.group(3) +
-     				Integer.toString(
-     					(new Float(magnification * Integer.parseInt(posMatcher.group(4)))).intValue()));
+     				Integer.toString(elementLeft));
 			}
  			posMatcher.appendTail(posAdjustedContent);
  			content = posAdjustedContent.toString();
+ 			
  
-				
 			// expand page height and width
 			height *= magnification;
 			width *= magnification;
-				
 			
 			// append the content of this page to the body
 			body += "<div><div id=\"page" + Integer.toString(pageNum) +
@@ -484,7 +516,24 @@ public class DocConverter extends HttpServlet
      			fontMatcher.group(3));
 		}
  		fontMatcher.appendTail(sizeAdjustedStyle);
- 		style = sizeAdjustedStyle.toString();		
+ 		style = sizeAdjustedStyle.toString();
+ 		
+ 		// expand line heights to the desired magnification
+ 		Matcher lineheightMatcher =
+ 				Pattern.compile("(line-height:)(\\d+)(px)",
+ 					Pattern.CASE_INSENSITIVE | Pattern.DOTALL)
+ 				.matcher(style);
+ 		sizeAdjustedStyle = new StringBuffer();
+		while (lineheightMatcher.find())
+		{
+     		lineheightMatcher.appendReplacement(sizeAdjustedStyle,
+     			lineheightMatcher.group(1) +
+     			Integer.toString(
+     				(new Float(magnification * Integer.parseInt(lineheightMatcher.group(2)) - 1)).intValue()) +
+     			lineheightMatcher.group(3));
+		}
+ 		lineheightMatcher.appendTail(sizeAdjustedStyle);
+ 		style = sizeAdjustedStyle.toString();				
 		
 		
 		// if there"s nothing in the body, return an error

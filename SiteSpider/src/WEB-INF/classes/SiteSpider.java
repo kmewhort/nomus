@@ -737,6 +737,7 @@ public class SiteSpider extends HttpServlet
 		if(year != null)
 		{
 			string = string.replaceAll("\\#YEAR\\#", year);
+			string = string.replaceAll("\\#YEAR-TWO\\#", year.substring(2));
 		}
 		if(link != null)
 		{
@@ -870,7 +871,16 @@ public class SiteSpider extends HttpServlet
 		jsCommand += "var response = {}; ";
 		jsCommand += "response.uniqueId = " + (new Gson()).toJson(uniqueId) + "; ";
 		jsCommand += "response.link = " + (new Gson()).toJson(link) + "; ";
-		jsCommand += "response.linkText = " + (new Gson()).toJson(linkText) + "; ";
+		
+		if(linkText != null && linkText != "")
+		{
+			jsCommand += "response.linkText = " + (new Gson()).toJson(linkText) + "; ";
+		}
+		else
+		{
+			if(debug)
+				System.out.print("ERROR: No linktext associated with downloaded file.\r\n");	
+		}
 		if(forcedExtension != null)
 		{
 			jsCommand += "response.forcedExtension = "
@@ -885,7 +895,7 @@ public class SiteSpider extends HttpServlet
 		jsCommand += "req2.open('POST', '" + uploadUrl + "', false); ";
 		jsCommand += "req2.send(response); ";
 		
-      // launch command
+      // launch comman
 		sendCommand(userId, "*",
 					jsCommand,
 					false, responseUrl);

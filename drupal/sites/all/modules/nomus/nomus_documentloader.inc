@@ -332,6 +332,7 @@ function nomus_documentloader_nextcommand() {
  */
 function nomus_documentloader_fileupload() {
 	global $user;
+	dd('here');
 	
 	// get the raw post data
 	$inputData = json_decode(file_get_contents('php://input'));

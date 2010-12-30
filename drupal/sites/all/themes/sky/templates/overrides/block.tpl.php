@@ -11,7 +11,16 @@
 ?>
 <div<?php print $block_attributes; ?>>
   <?php if ($block->subject && $block->module != 'locale'): ?>
-    <div class="title-container"><div class="title-wrapper"><h3 class="title"><?php print $block->subject; ?></h3></div></div>
+    <div class="title-container">
+        <div class="title-wrapper">
+          <h3 class="title"><?php print $block->subject; ?></h3>
+        </div>
+         <?php if($block->edit_link): ?>
+    		   <span class="block-edit-link">
+    		     <a class="modal-link" href="<?php print $block->edit_link; ?>"><?php print t('edit'); ?></a>
+    		   </span>
+    	  <?php endif; ?>
+    </div>
   <?php endif; ?>
   <div class="content-wrapper">
   	<div class="content">

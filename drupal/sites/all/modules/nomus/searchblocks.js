@@ -219,12 +219,16 @@ $(document).ready(function(){
       	$('.block-nomus').each(function(){
       		// display the block
       		$(this).css('display', 'inline-block');
-      		$(this).addClass('block-pending');
       		
       		// get the search parameters for this block
       		var blockId = $(this).attr('id');
       		blockId = blockId.replace('block-nomus-', '');
       		var searchSettings = Drupal.settings['nomus_search_block_' + blockId];
+      		if(typeof(searchSettings) == 'undefined')
+      			return;
+      		
+      		// display throbber	
+      		$(this).addClass('block-pending');
       		
       		// abort any outstanding request
       		if(typeof(searchSettings.pendingRequest) != "undefined"){
@@ -233,7 +237,7 @@ $(document).ready(function(){
       		
       		// perform the search
       		var searchBlock = this;
-      		searchSettings.params.q = searchString;
+      		searchSettings.params.query = searchString;
       		var req = $.getJSON(searchSettings.url,
       			searchSettings.params,
       			function(data){
@@ -245,7 +249,8 @@ $(document).ready(function(){
       						list.append('<li><a href="' + Drupal.settings.basePath + data.results[i].url + '">' + data.results[i].label + '</a></li>');
       					}
       					var allResultsUrl = Drupal.settings.basePath +
-      						'search/apachesolr_search/' + searchString + '?template=' + blockId;
+      						'search/apachesolr_search/' + searchString + '?template=' + 
+      						Drupal.settings['nomus_search_block_' + blockId].template;
       					list.append('<li class="all-link"><a href="' + allResultsUrl + '">See all ' + data.numResults + '...</a></li>');
       				}
       				$(searchBlock).removeClass('block-pending');
@@ -257,4 +262,26 @@ $(document).ready(function(){
       }
 
 	});
+});
+
+// new / edit links
+Drupal.nomus_blocks_linkopen = function()
+{
+	// open the dialog
+	Drupal.modalFrame.open(
+	{
+		url: $(this).attr('href'),
+		autofit: false,
+		width: 600, height: 400,
+		onSubmit: function() { window.location.reload(); }
+	});
+	return false;
+};
+
+// register modal links
+$(document).ready(function()
+{
+	// register existing open-edit-dialog with edit buttons
+	$('.modal-link').click(
+		Drupal.nomus_blocks_linkopen);
 });

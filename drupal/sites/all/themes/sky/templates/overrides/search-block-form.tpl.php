@@ -33,5 +33,6 @@
  */
 ?>
 <div class="container-inline">
-  <?php print $search_form;  ?>
+	<div class="search-label"><?php print t('Type to start searching!'); ?></div>
+   <?php print $search_form;  ?>
 </div>

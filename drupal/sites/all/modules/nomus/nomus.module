@@ -10,6 +10,8 @@ module_load_include('inc', 'nomus', 'nomus_saveprint');
 module_load_include('inc', 'nomus', 'nomus_casebox');
 module_load_include('inc', 'nomus', 'nomus_freebase');
 module_load_include('inc', 'nomus', 'nomus_search_blocks');
+module_load_include('inc', 'nomus', 'nomus_api');
+module_load_include('inc', 'nomus', 'nomus_stats');
 
 /* include content type hooks */
 if ($handle = opendir(dirname(__FILE__) . '/doctypes')) {
@@ -61,6 +63,15 @@ function nomus_admin() {
     '#title' => t('Default search template (node id)'),
     '#default_value' => variable_get('nomus_search_default_template',
     	'0'),
+    '#size' => 60,
+    '#maxlength' => 120,
+    '#required' => TRUE,
+  );
+  $form['nomus_search_max_blocks'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum number of parallel search blocks'),
+    '#default_value' => variable_get('nomus_search_max_blocks',
+    	'8'),
     '#size' => 60,
     '#maxlength' => 120,
     '#required' => TRUE,
@@ -216,6 +227,51 @@ function nomus_menu() {
   	 'title' => 'Nomus - Scan Document for Citations',
   	 'page callback' => 'nomus_casebox_scan',
   	 'access arguments' => array('access casebox'),
+  	 'type' => MENU_CALLBACK,
+  );
+  
+  // retrieve node metadata (params: outputType/nid)
+  $items['nomus/api/metadata/%/%'] = array(
+  	 'title' => 'Nomus - Node metadata',
+  	 'page callback' => 'nomus_api_fetch_metadata',
+  	 'page arguments' => array(4,3),
+  	 'access arguments' => array('access content'),
+  	 'type' => MENU_CALLBACK,
+  );
+  
+ // perform query (params: outputType?query=[query]&qf=[queryFields]&pf=[phraseQueryFields]&of=[boostQueryFields])
+ $items['nomus/api/query/%'] = array(
+  	 'title' => 'Nomus - API query',
+  	 'page callback' => 'nomus_api_query',
+  	 'page arguments' => array(3),
+  	 'access arguments' => array('access content'),
+  	 'type' => MENU_CALLBACK,
+  );
+  
+ // get document statistics (graph)
+ $items['nomus/stats/graph/%/%'] = array(
+  	 'title' => 'Nomus - Statistics',
+  	 'page callback' => 'nomus_stats_graph',
+  	 'page arguments' => array(3,4),
+  	 'access arguments' => array('access administration pages'),
+  	 'type' => MENU_CALLBACK,
+  );
+  
+  // get document statistics (list nodes for a month)
+ $items['nomus/stats/nodes/%/%'] = array(
+  	 'title' => 'Nomus - Statistics',
+  	 'page callback' => 'nomus_stats_nodes',
+  	 'page arguments' => array(3,4),
+  	 'access arguments' => array('access administration pages'),
+  	 'type' => MENU_CALLBACK,
+  );
+  
+  // queue nodes listed in stats for processing
+ $items['nomus/stats/process/%/%/%'] = array(
+  	 'title' => 'Nomus - Statistics',
+  	 'page callback' => 'nomus_stats_process',
+  	 'page arguments' => array(3,4,5),
+  	 'access arguments' => array('access administration pages'),
   	 'type' => MENU_CALLBACK,
   );
 
